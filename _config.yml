@@ -1,0 +1,22 @@
+# for admin
+title: Kadir Semih Akgöz
+author: akakadir
+email: kaddir@tuta.io
+url: https://akakadir.github.io
+permalink: /:slug.html
+favicon: ""
+
+# for jekyll
+remote_theme: no-style-please
+theme_config:
+  appearance: "light"
+  back_home_text: "önceki"
+  date_format: "%Y-%m-%d"
+  show_description: false
+
+sass:
+  style: :compressed
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
