@@ -4,7 +4,7 @@ author: akakadir
 email: kaddir@tuta.io
 url: https://akakadir.github.io
 permalink: /:slug.html
-favicon: ""
+favicon: "logo.png"
 
 # for jekyll
 remote_theme: no-style-please
