@@ -16,8 +16,7 @@ entries:
   - title: tüm yazılarım
     post_list:
     limit: 7
-    category: yazılım
-    category: manipülasyon
+    categories: [yazılım, manipülasyon]
     show_more: true
     show_more_text: ...devamını okuyayım
     show_more_url: archive.html
