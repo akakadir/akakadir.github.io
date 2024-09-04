@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "başlanıç, ben kimim?"
-categories: yazılım
+category: yazılım
 ---
 
 Hoşgeldin, ben Kadir.
