@@ -14,8 +14,8 @@ entries:
         url: https://www.r10.net/profil/186385-akakadir.html
 
   - title: tüm yazılarım
-    post_list:
-    limit: 7
+    post_list: true
+    limit: 6
     show_more: true
     show_more_text: ...devamını okuyayım
     show_more_url: archive.html
