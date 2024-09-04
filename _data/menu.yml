@@ -1,0 +1,42 @@
+entries:
+  - title: hakkımda
+    url: false
+    entries:
+      - title: ben Kadir, şimdilik bu kadar.
+        url: false
+      - title: e-mail adresim
+        url: mailto:k4dir.semih@gmail.com
+      - title: github adresim
+        url: https://github.com/akakadir
+      - title: twitter adresim
+        url: https://twitter.com/kadirdotjar
+      - title: r10.net adresim
+        url: https://www.r10.net/profil/186385-akakadir.html
+
+  - title: tüm yazılarım
+    post_list: true
+    limit: 7
+    show_more: true
+    show_more_text: arşive göz at...
+    show_more_url: archive.html
+
+  - title: yazılım
+    post_list:
+      category: yazılım
+      limit: 7
+      show_more: true
+      show_more_text: yazılım arşivine göz at...
+      show_more_url: yazilim-archive.html
+
+  - title: manipülasyon
+    post_list:
+      category: manipülasyon
+      limit: 7
+      show_more: true
+      show_more_text: manipülasyon arşivine göz at...
+      show_more_url: manipulasyon-archive.html
+
+  - title: okunası
+    url: okunasi.html
+  - title: rss beslemesi
+    url: feed.xml
