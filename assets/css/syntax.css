@@ -1,15 +1,15 @@
 .highlight {
     color: #93a1a1;
     background-color: #002b36;
-    border-radius: 1px;
-    overflow: hidden;
+    border-radius: 1px; /* 모서리를 둥글게 만듭니다 */
+    overflow: hidden; /* 자식 요소가 부모 요소를 벗어나지 않도록 합니다 */
   }
   
   .highlight pre {
-    margin: 0;
-    padding: 1px;
-    border-radius: 1px;
-    background-color: #999999;
+    margin: 0; /* 여백을 제거합니다 */
+    padding: 1px; /* 내부 여백을 추가하여 텍스트가 경계에 닿지 않도록 합니다 */
+    border-radius: 1px; /* 모서리를 둥글게 만듭니다 */
+    background-color: #999999; /* 배경색을 부모 요소와 동일하게 합니다 */
   }
   
 
