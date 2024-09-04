@@ -16,7 +16,7 @@ entries:
   - title: tüm yazılarım
     post_list:
     limit: 7
-    categories: [yazılım, manipülasyon]
+    category: [yazılım, manipülasyon]
     show_more: true
     show_more_text: ...devamını okuyayım
     show_more_url: archive.html
