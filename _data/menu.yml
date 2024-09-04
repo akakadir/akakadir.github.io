@@ -17,7 +17,7 @@ entries:
     post_list: true
     limit: 7
     show_more: true
-    show_more_text: arşive göz at...
+    show_more_text: ...devamını okuyayım
     show_more_url: archive.html
 
   - title: yazılım
@@ -25,7 +25,7 @@ entries:
       category: yazılım
       limit: 7
       show_more: true
-      show_more_text: yazılım arşivine göz at...
+      show_more_text: ...devamını okuyayım
       show_more_url: yazilim-archive.html
 
   - title: manipülasyon
@@ -33,7 +33,7 @@ entries:
       category: manipülasyon
       limit: 7
       show_more: true
-      show_more_text: manipülasyon arşivine göz at...
+      show_more_text: ...devamını okuyayım
       show_more_url: manipulasyon-archive.html
 
   - title: okunası
