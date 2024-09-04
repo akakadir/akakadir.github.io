@@ -1,130 +1,103 @@
-/*!
- * GitHub Light v0.5.0
- * Copyright (c) 2012 - 2017 GitHub, Inc.
- * Licensed under MIT (https://github.com/primer/github-syntax-theme-generator/blob/master/LICENSE)
- */
+.highlight {
+    color: #93a1a1;
+    background-color: #002b36;
+    border-radius: 1px; /* 모서리를 둥글게 만듭니다 */
+    overflow: hidden; /* 자식 요소가 부모 요소를 벗어나지 않도록 합니다 */
+  }
+  
+  .highlight pre {
+    margin: 0; /* 여백을 제거합니다 */
+    padding: 1px; /* 내부 여백을 추가하여 텍스트가 경계에 닿지 않도록 합니다 */
+    border-radius: 1px; /* 모서리를 둥글게 만듭니다 */
+    background-color: #999999; /* 배경색을 부모 요소와 동일하게 합니다 */
+  }
+  
 
-.highlight .pl-c /* comment, punctuation.definition.comment, string.comment */ {
-  color: #6a737d;
+.highlight table td { padding: 5px; }
+.highlight table pre { margin: 0; }
+
+/* .highlight .err {
+  color: #002b36;
+  background-color: #dc322f;
+} */
+.highlight .c, .highlight .ch, .highlight .cd, .highlight .cm, .highlight .cpf, .highlight .c1, .highlight .cs {
+  color: #657b83;
 }
-
-.highlight .pl-c1 /* constant, entity.name.constant, variable.other.constant, variable.language, support, meta.property-name, support.constant, support.variable, meta.module-reference, markup.raw, meta.diff.header, meta.output */,
-.highlight .pl-s .highlight .pl-v /* string variable */ {
-  color: #005cc5;
+.highlight .cp {
+  color: #b58900;
 }
-
-.highlight .pl-e /* entity */,
-.highlight .pl-en /* entity.name */ {
-  color: #6f42c1;
+.highlight .nt {
+  color: #b58900;
 }
-
-.highlight .pl-smi /* variable.parameter.function, storage.modifier.package, storage.modifier.import, storage.type.java, variable.other */,
-.highlight .pl-s .pl-s1 /* string source */ {
-  color: #24292e;
+.highlight .o, .highlight .ow {
+  color: #93a1a1;
 }
-
-.highlight .pl-ent /* entity.name.tag, markup.quote */ {
-  color: #22863a;
+.highlight .p, .highlight .pi {
+  color: #93a1a1;
 }
-
-.highlight .pl-k /* keyword, storage, storage.type */ {
-  color: #d73a49;
+.highlight .gi {
+  color: #859900;
 }
-
-.highlight .pl-s /* string */,
-.highlight .pl-pds /* punctuation.definition.string, source.regexp, string.regexp.character-class */,
-.highlight .pl-s .pl-pse .pl-s1 /* string punctuation.section.embedded source */,
-.highlight .pl-sr /* string.regexp */,
-.highlight .pl-sr .pl-cce /* string.regexp constant.character.escape */,
-.highlight .pl-sr .pl-sre /* string.regexp source.ruby.embedded */,
-.highlight .pl-sr .pl-sra /* string.regexp string.regexp.arbitrary-repitition */ {
-  color: #032f62;
+.highlight .gd {
+  color: #dc322f;
 }
-
-.highlight .pl-v /* variable */,
-.highlight .pl-smw /* sublimelinter.mark.warning */ {
-  color: #e36209;
-}
-
-.highlight .pl-bu /* invalid.broken, invalid.deprecated, invalid.unimplemented, message.error, brackethighlighter.unmatched, sublimelinter.mark.error */ {
-  color: #b31d28;
-}
-
-.highlight .pl-ii /* invalid.illegal */ {
-  color: #fafbfc;
-  background-color: #b31d28;
-}
-
-.highlight .pl-c2 /* carriage-return */ {
-  color: #fafbfc;
-  background-color: #d73a49;
-}
-
-.highlight .pl-c2::before {
-  content: "^M";
-}
-
-.highlight .pl-sr .highlight .pl-cce /* string.regexp constant.character.escape */ {
+.highlight .gh {
+  color: #268bd2;
+  background-color: #002b36;
   font-weight: bold;
-  color: #22863a;
 }
-
-.highlight .pl-ml /* markup.list */ {
-  color: #735c0f;
-}
-
-.highlight .pl-mh /* markup.heading */,
-.highlight .pl-mh .pl-en /* markup.heading entity.name */,
-.highlight .pl-ms /* meta.separator */ {
-  font-weight: bold;
-  color: #005cc5;
-}
-
-.highlight .pl-mi {
+.highlight .ge {
   font-style: italic;
-  color: #24292e;
 }
-
-.highlight .pl-mb {
+.highlight .ges {
   font-weight: bold;
-  color: #24292e;
+  font-style: italic;
 }
-
-.highlight .pl-md {
-  color: #b31d28;
-  background-color: #ffeef0;
-}
-
-.highlight .pl-mi1 {
-  color: #22863a;
-  background-color: #f0fff4;
-}
-
-.highlight .pl-mc {
-  color: #e36209;
-  background-color: #ffebda;
-}
-
-.highlight .pl-mi2 {
-  color: #f6f8fa;
-  background-color: #005cc5;
-}
-
-.highlight .pl-mdr {
+.highlight .gs {
   font-weight: bold;
-  color: #6f42c1;
 }
-
-.highlight .pl-ba {
-  color: #586069;
+.highlight .k, .highlight .kn, .highlight .kp, .highlight .kr, .highlight .kv {
+  color: #6c71c4;
 }
-
-.highlight .pl-sg{
-  color: #959da5;
+.highlight .kc {
+  color: #cb4b16;
 }
-
-.highlight .pl-corl{
-  text-decoration: underline;
-  color: #032f62;
+.highlight .kt {
+  color: #cb4b16;
 }
-
+.highlight .kd {
+  color: #cb4b16;
+}
+.highlight .s, .highlight .sb, .highlight .sc, .highlight .dl, .highlight .sd, .highlight .s2, .highlight .sh, .highlight .sx, .highlight .s1 {
+  color: #859900;
+}
+.highlight .sa {
+  color: #6c71c4;
+}
+.highlight .sr {
+  color: #2aa198;
+}
+.highlight .si {
+  color: #d33682;
+}
+.highlight .se {
+  color: #d33682;
+}
+.highlight .nn {
+  color: #b58900;
+}
+.highlight .nc {
+  color: #b58900;
+}
+.highlight .no {
+  color: #b58900;
+}
+.highlight .na {
+  color: #268bd2;
+}
+.highlight .m, .highlight .mb, .highlight .mf, .highlight .mh, .highlight .mi, .highlight .il, .highlight .mo, .highlight .mx {
+  color: #859900;
+}
+.highlight .ss {
+  color: #859900;
+}
