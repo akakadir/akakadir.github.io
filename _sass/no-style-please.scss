@@ -124,10 +124,9 @@ a[href^="http"]::after {
 }
 
 #google_translate_element {
-  color: transparent;
-  float: left;
-  display: block;
+   float: left;
 }
-#google_translate_element a {
-  display: none;
+
+#google_translate_element img {
+    display: none !important;
 }
