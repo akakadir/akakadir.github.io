@@ -103,8 +103,13 @@ img {
     touch-action: manipulation;
     text-decoration:underline;
 }
-
 a[href^="http"]::after {
+  content: "";
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-left: 0.25em;
+
   background-size: 100%;
   background-image: url("https://akakadir.github.io/external.png");
 }
