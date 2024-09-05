@@ -4,6 +4,7 @@ email: kaddir@tuta.io
 url: https://akakadir.github.io
 permalink: /:slug.html
 favicon: "logo.png"
+goat_counter: akakadir
 
 theme_config:
   appearance: "light"
