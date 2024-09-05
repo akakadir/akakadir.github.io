@@ -64,6 +64,19 @@ table, th, td {
   padding: 0.4rem;
 }
 
+pre.code {
+  white-space: pre-wrap;
+}
+pre.code::before {
+  counter-reset: listing;
+}
+pre.code code {
+  counter-increment: listing;
+}
+pre.code code::before {
+  content: counter(listing) ". ";
+}
+
 code {
   padding: 0.1em 0.1em;
   border: 1px solid #d1d9e0;
