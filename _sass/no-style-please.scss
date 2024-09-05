@@ -66,13 +66,14 @@ table, th, td {
 
 code {
   padding: 0.1em 0.1em;
-  border: 1px solid #eeeeee;
+  border: thin solid #eeeeee;
   border-radius: 3px;
 }
 
 div.highlighter-rouge pre code {
   display: block;
   overflow-x: auto;
+  scrollbar-width: none;
   white-space: pre; 
   padding: 1rem;
   font-size: 15px;
