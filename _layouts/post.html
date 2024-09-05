@@ -4,6 +4,19 @@ layout: default
 
 {%-include back_link.html-%}
 
+<div id="google_translate_element"></div>
+
+<script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement(
+                {pageLanguage: ''},
+                'google_translate_element'
+            );
+        }
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
 <article>
   <p class="post-meta">
     <time datetime="{{ page.date }}">{{ page.date | date: site.theme_config.date_format }}</time>
