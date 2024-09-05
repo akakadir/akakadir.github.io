@@ -22,10 +22,10 @@ plugins:
   - jekyll-seo-tag
 
 markdown: kramdown
-  highlighter: pygments
+  highlighter: rouge
 kramdown:
   input: GFM
-syntax_highlighter: pygments
+syntax_highlighter: rouge
   syntax_highlighter_opts:
   css_class: 'highlight'
 span:
