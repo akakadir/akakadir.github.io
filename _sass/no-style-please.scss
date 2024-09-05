@@ -122,3 +122,12 @@ a[href^="http"]::after {
   nav {
     text-align: center;
 }
+
+#google_translate_element {
+  color: transparent;
+  float: left;
+  display: block;
+}
+#google_translate_element a {
+  display: none;
+}
