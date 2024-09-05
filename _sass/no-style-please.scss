@@ -104,6 +104,11 @@ img {
     text-decoration:underline;
 }
 
+a[href^="http"]::after {
+  background-size: 100%;
+  background-image: url("external-link-52.png");
+}
+
   nav {
     text-align: center;
 }
