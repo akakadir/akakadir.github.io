@@ -14,14 +14,12 @@ layout: default
   {{ content }}
 </article>
 
-<div id="google_translate_element"></div>
-<br>
-<br>
+<div id="translate"></div>
 <script type="text/javascript">
         function googleTranslateElementInit() {
             new google.translate.TranslateElement(
                 {pageLanguage: ''},
-                'google_translate_element'
+                'translate'
             );
         }
 </script>
@@ -52,7 +50,6 @@ layout: default
   {% endif %}
 {% endfor %}
 
-<br>
 <nav>
   {% if prev_post %}
   <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">« önceki</a></span>
