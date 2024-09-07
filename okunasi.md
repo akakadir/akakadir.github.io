@@ -3,7 +3,7 @@ layout: page
 title: okunası arşivi
 ---
 
-kitaplara erişmek için en üstteki "GET" levhasını kullan. 
+kitaplara erişmek için en üstteki `GET` levhasını kullan. 
 
 kırık linkler için bana e-mail üzerinden ulaşabilirsin.
 
