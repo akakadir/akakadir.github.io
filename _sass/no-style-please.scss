@@ -132,4 +132,17 @@ img {
 
   font {
     background-color: transparent !important;
-  box-shadow: none !important; 
+    box-shadow: none !important;
+}
+
+  .goog-tooltip {
+    display: none !important;
+}
+  .goog-tooltip:hover {
+    display: none !important;
+}
+  .goog-text-highlight {
+    background-color: transparent !important;
+    border: none !important; 
+    box-shadow: none !important;
+}
