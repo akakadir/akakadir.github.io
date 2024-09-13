@@ -18,3 +18,4 @@ kırık linkler için bana e-mail üzerinden ulaşabilirsin.
 9. [Oğuz Atay - Tehlikeli Oyunlar-İletişim Yayınları (1984)](https://libgen.li/ads.php?md5=d1cca7db105bbce700dd642c3a754b6d)
 10. [Kemal Tahir - Esir Şehrin İnsanları-İthaki Yayınları (2005)](https://library.lol/main/98f93f5e270bbe6d7fd61c8880ec4ad9)
 11. [Fyodor Mihayloviç Dostoyevski - Karamazov Kardeşler-Türkiye İş Bankası Kültür Yayınları (2016)](https://library.lol/main/a314d9dd494838116355cc3b3054dcf2)
+12. [Chuck Palahniuk - Dövüş Kulübü-Ayrıntı Yayınları (2001)](http://libgen.li/ads.php?md5=4f0bd514cd6ddae85a7458ade092a0cd)
