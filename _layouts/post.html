@@ -14,11 +14,11 @@ layout: default
   {{ content }}
 </article>
 
-<div id="translate"></div>
+<div class="select-wrapper" id="translate"></div>
 <script type="text/javascript">
         function googleTranslateElementInit() {
             new google.translate.TranslateElement(
-                {},
+                {includedLanguages:'tr,en,de,fr,es'},
                 'translate'
             );
         }
