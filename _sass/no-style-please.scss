@@ -146,3 +146,30 @@ img {
     border: none !important; 
     box-shadow: none !important;
 }
+
+  .select-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 200px;
+}
+
+  .select-wrapper select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 2px 6px;
+    background-color: #fff;
+    font-size: 13px;
+    line-height: 1.5;
+    width: 100%;
+    color: #007aff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+  .select-wrapper select:focus {
+    border-color: #007aff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,122,255,0.3);
+}
