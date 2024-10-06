@@ -82,6 +82,10 @@ code::-webkit-scrollbar-thumb {
   background-clip: padding-box;  
 }
 
+code::-webkit-scrollbar {
+  width: 16px;
+}
+
 div.highlighter-rouge pre code {
   display: block;
   overflow-x: auto;
