@@ -10,6 +10,7 @@
 .highlight .cp {
 }
 .highlight .k, .highlight .kc, .highlight .kd, .highlight .kn, .highlight .kr, .highlight .kv {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .kp {
@@ -17,48 +18,61 @@
 .highlight .kt {
 }
 .highlight .o, .highlight .ow {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .nc {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .nn {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .ne {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .ni {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .nt {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .s, .highlight .sb, .highlight .sc, .highlight .dl, .highlight .sd, .highlight .s2, .highlight .sh, .highlight .sx, .highlight .sr, .highlight .s1, .highlight .ss {
   font-style: italic;
 }
 .highlight .sa {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .si {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .se {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .gh {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .gu {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .ge {
   font-style: italic;
 }
 .highlight .gs {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .gp {
+  color: #53a245;
   font-weight: bold;
 }
 .highlight .err {
