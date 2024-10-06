@@ -72,8 +72,18 @@ table, th, td {
 code {
   padding: 0.1em 0.1em;
   border: 1px solid #d1d9e0;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
+  border-radius: 8px;
+}
+
+code::-webkit-scrollbar-thumb {
+  background-color: red;
+  border: 4px solid transparent;
+  border-radius: 8px;
+  background-clip: padding-box;  
+}
+
+code::-webkit-scrollbar {
+  width: 16px;
 }
 
 div.highlighter-rouge pre code {
