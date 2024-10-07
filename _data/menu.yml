@@ -41,5 +41,8 @@ entries:
     url: okunasi.html
   - title: temiz kurulum paketim
     url: https://pixeldrain.com/u/h3ZUQJai
+    attributes:
+    style:
+      - "background:url('https://akakadir.github.io/logo.png') no-repeat 0px 0px;background-size:3px 3px"
   - title: rss beslemesi
     url: feed.xml
