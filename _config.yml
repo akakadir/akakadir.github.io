@@ -2,6 +2,7 @@ title: Kadir Semih Akgöz
 author: akakadir
 email: kaddir@tuta.io
 url: https://akakadir.github.io
+baseurl: ""
 permalink: /:slug.html
 favicon: "logo.png"
 goat_counter: akakadir
