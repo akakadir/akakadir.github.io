@@ -1,12 +1,8 @@
 @import 'https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,400italic,700italic,600&subset=latin,latin-ext';
 
 @mixin dark-appearance {
-
-body {
 background-color:#000;
 color:#ccc;
-}
-
 }
 
 html, body { background: white; }
