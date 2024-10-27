@@ -4,6 +4,7 @@
   <body a="{{ site.theme_config.appearance | default: "auto" }}">
     <main class="page-content" aria-label="Content">
       <div class="w">
+	<button id="mode"><span id="mode-text">🌕</span></button>
         {{ content }}
       </div>
     </main>
@@ -17,5 +18,6 @@
         <script type="text/javascript" src="{{ site.baseurl }}/assets/js/{{ js_file }}.js"></script>
       {% endfor %}
     {% endif %}
+    <script src="{{ site.baseurl | append: '/assets/js' }}/mode-change.js"></script>
   </body>
 </html>
