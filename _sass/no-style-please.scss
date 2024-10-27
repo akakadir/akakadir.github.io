@@ -183,3 +183,15 @@ img {
     outline: none;
     box-shadow: 0 0 0 2px rgba(0,122,255,0.3);
 }
+
+#mode {
+  background: white;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  z-index: 100;
+  border: 2px solid #fff;
+  border-radius: 100%;
+  transform: rotate(45deg);
+}
