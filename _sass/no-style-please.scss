@@ -108,13 +108,10 @@ img {
 }
 // mode button rounded
 #mode {
-  background: white;
+  background: transparent;
   position: fixed;
   top: 1rem;
   right: 1rem;
   font-size: 1.5rem;
   z-index: 100;
-  border: 2px solid #fff;
-  border-radius: 100%;
-  transform: rotate(45deg);
 }
