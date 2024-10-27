@@ -4,10 +4,28 @@
   background-color: #000; // Koyu arka plan rengi
   color: #ccc; // Açık yazı rengi
 
+  // Utteranc.es "github-dark" renkleri
+  .utterances {
+    background-color: #1e1e1e; // Koyu arka plan
+    color: #c9d1d9; // Açık yazı rengi
+    border-color: #444d56; // Kenar rengi
+
+    // Link rengi
+    a {
+      color: #58a6ff; // Mavi link rengi
+    }
+
+    // Hover durumu
+    a:hover {
+      color: #1f6feb; // Hover rengi
+    }
+  }
+
   img {
     filter: none; // Resimlerin rengi değişmeyecek
   }
 }
+
 
 body[data-theme="dark"] {
   @include dark-appearance;
