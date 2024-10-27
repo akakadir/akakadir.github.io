@@ -1,17 +1,16 @@
 @import 'https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,400italic,700italic,600&subset=latin,latin-ext';
 
 @mixin dark-appearance {
-  background-color: #000;
-  color: #ccc;
+  filter: invert(1);
   img {
-    filter: none;
-    &.ioda { 
-      filter: none;
-    }
+    filter: invert(1);
+
+    &.ioda { filter: invert(0); }
   }
 }
 
 body[a="dark"] { @include dark-appearance; }
+
 
 @media (prefers-color-scheme: dark) {
   body[a="auto"] { @include dark-appearance; }
