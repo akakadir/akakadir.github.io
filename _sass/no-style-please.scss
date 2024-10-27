@@ -6,10 +6,11 @@
     filter: invert(1);
     &.ioda {
       filter: invert(0);
-      a {
-       filter: invert(0); 
-      }
     }
+  }
+  a {
+    filter: invert(1);
+    color: #53a245;
   }
 }
 body[data-theme="dark"] {
@@ -117,7 +118,6 @@ img {
   a {
     color: #53a245;
     text-decoration: none;
-    color: inherit;
 }
   a:hover {
     cursor: pointer;
