@@ -6,6 +6,9 @@
     filter: invert(1);
     &.ioda {
       filter: invert(0);
+      a {
+       filter: invert(0); 
+      }
     }
   }
 }
