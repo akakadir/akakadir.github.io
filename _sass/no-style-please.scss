@@ -4,16 +4,18 @@
   filter: invert(1);
   img {
     filter: invert(1);
-
-    &.ioda { filter: invert(0); }
+    &.ioda {
+      filter: invert(0);
+    }
   }
 }
-
-body[a="dark"] { @include dark-appearance; }
-
-
+body[data-theme="dark"] {
+  @include dark-appearance;
+}
 @media (prefers-color-scheme: dark) {
-  body[a="auto"] { @include dark-appearance; }
+  body[data-theme="auto"] {
+    @include dark-appearance;
+  }
 }
 
 html, body { background: white; }
