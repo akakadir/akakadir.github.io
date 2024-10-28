@@ -1,3 +1,16 @@
+@mixin dark-appearance {
+  filter: invert(1);
+}
+
+body[data-theme="dark"] {
+  @include dark-appearance;
+}
+@media (prefers-color-scheme: dark) {
+  body[data-theme="auto"] {
+    @include dark-appearance;
+  }
+}
+
 .highlight table td { padding: 5px; }
 .highlight table pre { margin: 0; }
 .highlight .cm {
