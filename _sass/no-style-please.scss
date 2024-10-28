@@ -5,11 +5,11 @@
   img {
     filter: invert(1);
     &.ioda {
-      filter: invert(1);
+      filter: invert(0);
     }
   }
   a {
-    filter: invert(0);
+    filter: invert(1);
     color:#53a245;
   }
 }
