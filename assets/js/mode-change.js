@@ -43,10 +43,14 @@ function setTheme(theme) {
 
     if (theme === 'dark') {
         lightDiv.style.display = 'none';
+        lightDiv.style.visibility = 'hidden';
         darkDiv.style.display = 'block';
+        darkDiv.style.visibility = 'visible';
     } else {
         lightDiv.style.display = 'block';
+        lightDiv.style.visibility = 'visible';
         darkDiv.style.display = 'none';
+        darkDiv.style.visibility = 'hidden';
     }
 }
 
