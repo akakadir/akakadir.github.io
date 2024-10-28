@@ -8,20 +8,8 @@
     border: 1px solid #333;
     background-color: #121212;
     color: #ccc;
-  }
-
-  code {
-    filter: invert(1);
-  }
-
-  code::-webkit-scrollbar-thumb {
-    filter: invert(1);
-  }
-
-  div.highlighter-rouge pre code {
-    filter: invert(1);
 }
-  }
+ }
 
 body[data-theme="dark"] {
   @include dark-appearance;
