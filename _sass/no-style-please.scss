@@ -10,9 +10,45 @@
   }
   a {
     filter: invert(1);
-    color:#53a245;
+    color: #53a245;
   }
 }
+
+// Sadece body'ye veya belirli bir sınıfa uygulanacak şekilde
+body[data-theme="dark"] {
+  @include dark-appearance;
+
+  // Utterances bileşeninin etkilenmemesi için
+  #utterances-light,
+  #utterances-dark {
+    filter: none !important; // Filtre uygulanmasın
+    img {
+      filter: none !important; // Görseller için de filtre uygulanmasın
+    }
+    a {
+      filter: none !important; // Linkler için de filtre uygulanmasın
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body[data-theme="auto"] {
+    @include dark-appearance;
+
+    // Utterances bileşeninin etkilenmemesi için
+    #utterances-light,
+    #utterances-dark {
+      filter: none !important; // Filtre uygulanmasın
+      img {
+        filter: none !important; // Görseller için de filtre uygulanmasın
+      }
+      a {
+        filter: none !important; // Linkler için de filtre uygulanmasın
+      }
+    }
+  }
+}
+
 
 body[data-theme="dark"] {
   @include dark-appearance;
