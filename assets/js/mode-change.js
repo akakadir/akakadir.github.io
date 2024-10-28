@@ -63,7 +63,7 @@ function setTheme(theme) {
 }
 
 // Tema değişimi için buton veya olay dinleyici
-const themeToggleButton = document.getElementById('theme-toggle-button'); // Tema değiştirme butonunun ID'si
+const themeToggleButton = document.getElementById('mode'); // Tema değiştirme butonunun ID'si
 themeToggleButton.addEventListener('click', () => {
   const currentTheme = document.body.dataset.theme;
   const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
