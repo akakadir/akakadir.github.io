@@ -2,8 +2,15 @@
 
 @mixin dark-appearance {
   background-color: #121212;
-  color: #ffffff;
+  color: #ccc;
+
+  .select-wrapper select {
+    border: 1px solid #333;
+    background-color: #121212;
+    color: #ccc;
+  }
 }
+
 
 body[data-theme="dark"] {
   @include dark-appearance;
