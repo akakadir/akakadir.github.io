@@ -57,5 +57,5 @@ const icon = document.getElementById('mode-text');
 
     button.addEventListener('click', () => {
     toggle = !toggle;
-    icon.textContent = toggle ? '&#9680;' : '&#9681;';
+    icon.textContent = toggle ? '◐' : '◑';
 })
