@@ -43,14 +43,10 @@ function setTheme(theme) {
 
     if (theme === 'dark') {
         lightDiv.style.display = 'none';
-        lightDiv.style.visibility = 'hidden';
-        darkDiv.style.display = 'inline-block';
-        darkDiv.style.visibility = 'visible';
+        darkDiv.style.display = 'block';
     } else {
-        lightDiv.style.display = 'inline-block';
-        lightDiv.style.visibility = 'visible';
+        lightDiv.style.display = 'block';
         darkDiv.style.display = 'none';
-        darkDiv.style.visibility = 'hidden';
     }
 }
 
