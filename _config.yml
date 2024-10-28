@@ -8,7 +8,7 @@ favicon: "logo.png"
 goat_counter: akakadir
 
 theme_config:
-  appearance: "light"
+  appearance: "auto"
   back_home_text: "ana sayfa"
   date_format: "%d.%m.%Y"
   show_description: false
