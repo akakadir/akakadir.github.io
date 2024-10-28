@@ -10,13 +10,16 @@
     color: #ccc;
   }
 
-code {
-  border: 1px solid 333;
-  background-color:#121212;
-}
+  code {
+    filter: invert(1);
+  }
 
-code::-webkit-scrollbar-thumb {
-  background-color: #333;
+  code::-webkit-scrollbar-thumb {
+    filter: invert(1);
+  }
+
+  div.highlighter-rouge pre code {
+    filter: invert(1);
 }
   }
 
