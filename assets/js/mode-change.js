@@ -48,3 +48,31 @@ document.addEventListener("DOMContentLoaded", function () {
     // add event listener to auto change mode
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
 });
+
+function setTheme(theme) {
+  const lightDiv = document.getElementById('utterances-light');
+  const darkDiv = document.getElementById('utterances-dark');
+
+  if (theme === 'dark') {
+    lightDiv.style.display = 'none';
+    darkDiv.style.display = 'block';
+  } else {
+    lightDiv.style.display = 'block';
+    darkDiv.style.display = 'none';
+  }
+}
+
+// Tema değişimi için buton veya olay dinleyici
+const themeToggleButton = document.getElementById('theme-toggle-button'); // Tema değiştirme butonunun ID'si
+themeToggleButton.addEventListener('click', () => {
+  const currentTheme = document.body.dataset.theme;
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.body.dataset.theme = newTheme;
+  setTheme(newTheme);
+});
+
+// Sayfa yüklendiğinde mevcut temayı kontrol et
+document.addEventListener('DOMContentLoaded', () => {
+  const currentTheme = document.body.dataset.theme || 'light'; // Varsayılan tema
+  setTheme(currentTheme);
+});
