@@ -1,63 +1,22 @@
 @import 'https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,400italic,700italic,600&subset=latin,latin-ext';
 
 @mixin dark-appearance {
-  filter: invert(1); 
+  background-color: #000;
+  color: #ccc;
+
   img {
-    filter: invert(1);
-    &.ioda {
-      filter: invert(0);
-    }
-  }
-  a {
-    filter: invert(1);
-    color: #53a245;
+    filter: none;
+
+    &.ioda { filter: none; }
   }
 }
 
-// Sadece body'ye veya belirli bir sınıfa uygulanacak şekilde
-body[data-theme="dark"] {
-  @include dark-appearance;
-
-  // Utterances bileşeninin etkilenmemesi için
-  #utterances-light,
-  #utterances-dark {
-    filter: none !important; // Filtre uygulanmasın
-    img {
-      filter: none !important; // Görseller için de filtre uygulanmasın
-    }
-    a {
-      filter: none !important; // Linkler için de filtre uygulanmasın
-    }
-  }
-}
+body[a="dark"] { @include dark-appearance; }
 
 @media (prefers-color-scheme: dark) {
-  body[data-theme="auto"] {
-    @include dark-appearance;
-
-    // Utterances bileşeninin etkilenmemesi için
-    #utterances-light,
-    #utterances-dark {
-      filter: none !important; // Filtre uygulanmasın
-      img {
-        filter: none !important; // Görseller için de filtre uygulanmasın
-      }
-      a {
-        filter: none !important; // Linkler için de filtre uygulanmasın
-      }
-    }
-  }
+  body[a="auto"] { @include dark-appearance; }
 }
 
-
-body[data-theme="dark"] {
-  @include dark-appearance;
-}
-@media (prefers-color-scheme: dark) {
-  body[data-theme="auto"] {
-    @include dark-appearance;
-  }
-}
 
 html, body { background: white; }
 
