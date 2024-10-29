@@ -29,18 +29,20 @@ function autoChangeMode() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.body.setAttribute("data-theme", theme);
+    setTheme(theme); // Hemen tema ayarlarını yap
+    autoChangeMode(); // Otomatik mod ayarları
+
     document.getElementById("mode").addEventListener("click", changeMode);
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
-
-    const theme = getCookie("theme");
-    document.body.setAttribute("data-theme", theme || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
-    autoChangeMode();
 });
 
 function setTheme(theme) {
     const lightDiv = document.getElementById('utterances-light');
     const darkDiv = document.getElementById('utterances-dark');
 
+    // Tema ayarlarına göre görünürlüğü ayarlayın
     if (theme === 'dark') {
         lightDiv.style.display = 'none';
         darkDiv.style.display = 'block';
@@ -50,12 +52,12 @@ function setTheme(theme) {
     }
 }
 
+// Tema değiştirme butonu için ikon ayarlama
 const button = document.getElementById('mode');
 const icon = document.getElementById('mode-text');
+let toggle = true;
 
-    let toggle = true;
-
-    button.addEventListener('click', () => {
+button.addEventListener('click', () => {
     toggle = !toggle;
     icon.textContent = toggle ? '◐' : '◑';
-})
+});
