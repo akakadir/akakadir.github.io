@@ -9,7 +9,6 @@ function changeMode() {
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
 
     setTheme(theme);
-    icon.textContent = theme === 'dark' ? '◑' : '◐';
 }
 
 function getCookie(name) {
@@ -36,8 +35,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const theme = getCookie("theme");
     document.body.setAttribute("data-theme", theme || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
     autoChangeMode();
-
-    icon.textContent = document.body.getAttribute("data-theme") === 'dark' ? '◑' : '◐';
 });
 
 function setTheme(theme) {
@@ -52,3 +49,13 @@ function setTheme(theme) {
         darkDiv.style.display = 'none';
     }
 }
+
+const button = document.getElementById('mode');
+const icon = document.getElementById('mode-text');
+
+    let toggle = true;
+
+    button.addEventListener('click', () => {
+    toggle = !toggle;
+    icon.textContent = toggle ? '◐' : '◑';
+})
