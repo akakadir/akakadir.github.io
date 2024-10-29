@@ -31,8 +31,8 @@ function autoChangeMode() {
 document.addEventListener("DOMContentLoaded", function () {
     const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.body.setAttribute("data-theme", theme);
-    setTheme(theme); // Hemen tema ayarlarını yap
-    autoChangeMode(); // Otomatik mod ayarları
+    setTheme(theme);
+    autoChangeMode();
 
     document.getElementById("mode").addEventListener("click", changeMode);
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
@@ -42,21 +42,19 @@ function setTheme(theme) {
     const lightDiv = document.getElementById('utterances-light');
     const darkDiv = document.getElementById('utterances-dark');
 
-    // Tema ayarlarına göre görünürlüğü ayarlayın
     if (theme === 'dark') {
         lightDiv.style.display = 'none';
         darkDiv.style.display = 'block';
-        darkDiv.style.visibility = 'visible'; // Hızla görünür yap
-        lightDiv.style.visibility = 'hidden'; // Gizle
+        darkDiv.style.visibility = 'visible';
+        lightDiv.style.visibility = 'hidden';
     } else {
         lightDiv.style.display = 'block';
         darkDiv.style.display = 'none';
-        lightDiv.style.visibility = 'visible'; // Hızla görünür yap
-        darkDiv.style.visibility = 'hidden'; // Gizle
+        lightDiv.style.visibility = 'visible';
+        darkDiv.style.visibility = 'hidden';
     }
 }
 
-// Tema değiştirme butonu için ikon ayarlama
 const button = document.getElementById('mode');
 const icon = document.getElementById('mode-text');
 let toggle = true;
