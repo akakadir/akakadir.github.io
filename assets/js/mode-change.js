@@ -1,11 +1,14 @@
 function changeMode() {
-    let currentTheme = document.body.getAttribute("data-theme");
-    let newTheme = currentTheme === "dark" ? "light" : "dark";
+    let theme = document.body.getAttribute("data-theme");
+    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (theme === null) {
+        theme = isDark ? "dark" : "light";
+    }
+    theme = theme === "dark" ? "light" : "dark";
+    document.body.setAttribute("data-theme", theme);
+    document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
     
-    document.body.setAttribute("data-theme", newTheme);
-    document.cookie = `theme=${newTheme}; max-age=31536000; SameSite=Lax; path=/`;
-    
-    setTheme(newTheme);
+    setTheme(theme);
 }
 
 function getCookie(name) {
@@ -15,6 +18,25 @@ function getCookie(name) {
         return parts.pop().split(";").shift();
     }
 }
+
+function autoChangeMode() {
+    let theme = document.body.getAttribute("data-theme");
+    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (theme === null) {
+        theme = isDark ? "dark" : "light";
+    }
+    setTheme(theme);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.body.setAttribute("data-theme", theme);
+    setTheme(theme);
+    autoChangeMode();
+
+    document.getElementById("mode").addEventListener("click", changeMode);
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
+});
 
 function setTheme(theme) {
     const lightDiv = document.getElementById('utterances-light');
@@ -29,17 +51,11 @@ function setTheme(theme) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    document.body.setAttribute("data-theme", theme);
-    setTheme(theme);
+const button = document.getElementById('mode');
+const icon = document.getElementById('mode-text');
+let toggle = true;
 
-    document.getElementById("mode").addEventListener("click", changeMode);
-    
-    // Otomatik tema değiştirme
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
-        const newTheme = event.matches ? "dark" : "light";
-        document.body.setAttribute("data-theme", newTheme);
-        setTheme(newTheme);
-    });
+button.addEventListener('click', () => {
+    toggle = !toggle;
+    icon.textContent = toggle ? '◐' : '◑';
 });
