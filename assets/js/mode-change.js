@@ -9,14 +9,25 @@ function changeMode() {
     document.body.setAttribute("data-theme", theme);
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
     
-    setTheme(theme); // Tema değiştikten sonra setTheme'i çağır
+    setTheme(theme);
+    icon.textContent = theme === 'dark' ? '◑' : '◐';
 }
+
+const button = document.getElementById('mode');
+const icon = document.getElementById('mode-text');
+let toggle = true;
+
+button.addEventListener('click', () => {
+    toggle = !toggle;
+    changeMode();
+});
 
 window.addEventListener("load", () => {
     const theme = getCookie("theme");
     if (theme) {
         document.body.setAttribute("data-theme", theme);
-        setTheme(theme); // Sayfa yüklendiğinde mevcut temayı ayarla
+        setTheme(theme);
+        icon.textContent = theme === 'dark' ? '◑' : '◐';
     }
 });
 
@@ -27,7 +38,8 @@ function autoChangeMode() {
         theme = isDark ? "dark" : "light";
     }
 
-    setTheme(theme); // Otomatik tema değişiminde setTheme'i çağır
+    setTheme(theme);
+    icon.textContent = theme === 'dark' ? '◑' : '◐';
 }
 
 function getCookie(name) {
