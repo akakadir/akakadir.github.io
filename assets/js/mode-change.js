@@ -1,13 +1,7 @@
 function changeMode() {
-    let theme = document.body.getAttribute("data-theme");
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (theme === null) {
-        theme = isDark ? "dark" : "light";
-    }
-    theme = theme === "dark" ? "light" : "dark";
+    let theme = document.body.getAttribute("data-theme") === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
-    
     setTheme(theme);
 }
 
@@ -18,25 +12,6 @@ function getCookie(name) {
         return parts.pop().split(";").shift();
     }
 }
-
-function autoChangeMode() {
-    let theme = document.body.getAttribute("data-theme");
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (theme === null) {
-        theme = isDark ? "dark" : "light";
-    }
-    setTheme(theme);
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-    const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    document.body.setAttribute("data-theme", theme);
-    setTheme(theme);
-    autoChangeMode();
-
-    document.getElementById("mode").addEventListener("click", changeMode);
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
-});
 
 function setTheme(theme) {
     const lightDiv = document.getElementById('utterances-light');
@@ -51,11 +26,17 @@ function setTheme(theme) {
     }
 }
 
-const button = document.getElementById('mode');
-const icon = document.getElementById('mode-text');
-let toggle = true;
+document.addEventListener("DOMContentLoaded", function () {
+    const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.body.setAttribute("data-theme", theme);
+    setTheme(theme);
 
-button.addEventListener('click', () => {
-    toggle = !toggle;
-    icon.textContent = toggle ? '◐' : '◑';
+    document.getElementById("mode").addEventListener("click", changeMode);
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
 });
+
+function autoChangeMode(event) {
+    const theme = event.matches ? "dark" : "light";
+    document.body.setAttribute("data-theme", theme);
+    setTheme(theme);
+}
