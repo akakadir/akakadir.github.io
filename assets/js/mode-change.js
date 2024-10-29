@@ -1,8 +1,11 @@
 function changeMode() {
-    let theme = document.body.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    document.body.setAttribute("data-theme", theme);
-    document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
-    setTheme(theme);
+    let currentTheme = document.body.getAttribute("data-theme");
+    let newTheme = currentTheme === "dark" ? "light" : "dark";
+    
+    document.body.setAttribute("data-theme", newTheme);
+    document.cookie = `theme=${newTheme}; max-age=31536000; SameSite=Lax; path=/`;
+    
+    setTheme(newTheme);
 }
 
 function getCookie(name) {
@@ -32,11 +35,11 @@ document.addEventListener("DOMContentLoaded", function () {
     setTheme(theme);
 
     document.getElementById("mode").addEventListener("click", changeMode);
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
+    
+    // Otomatik tema değiştirme
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        const newTheme = event.matches ? "dark" : "light";
+        document.body.setAttribute("data-theme", newTheme);
+        setTheme(newTheme);
+    });
 });
-
-function autoChangeMode(event) {
-    const theme = event.matches ? "dark" : "light";
-    document.body.setAttribute("data-theme", theme);
-    setTheme(theme);
-}
