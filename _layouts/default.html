@@ -15,10 +15,10 @@
 
     {% if page.custom_js %}
       {% for js_file in page.custom_js %}
-      <script src="//zeptojs.com/zepto.min.js"></script>
      <script src="{{ site.baseurl | append: '/assets/js' }}/spotify.js"></script>
     <script src="{{ site.baseurl | append: '/assets/js' }}/mode-change.js"></script>
       {% endfor %}
     {% endif %}
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   </body>
 </html>
