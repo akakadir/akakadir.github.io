@@ -28,16 +28,6 @@ function autoChangeMode() {
     setTheme(theme);
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    document.body.setAttribute("data-theme", theme);
-    setTheme(theme);
-    autoChangeMode();
-
-    document.getElementById("mode").addEventListener("click", changeMode);
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
-});
-
 function setTheme(theme) {
     const lightDiv = document.getElementById('utterances-light');
     const darkDiv = document.getElementById('utterances-dark');
@@ -50,6 +40,16 @@ function setTheme(theme) {
         darkDiv.style.display = 'none';
     }
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.body.setAttribute("data-theme", theme);
+    setTheme(theme);
+    autoChangeMode();
+
+    document.getElementById("mode").addEventListener("click", changeMode);
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
+});
 
 const button = document.getElementById('mode');
 const icon = document.getElementById('mode-text');
