@@ -29,13 +29,12 @@ function autoChangeMode() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    document.body.setAttribute("data-theme", theme);
-    setTheme(theme);
-    autoChangeMode();
-
     document.getElementById("mode").addEventListener("click", changeMode);
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
+
+    const theme = getCookie("theme");
+    document.body.setAttribute("data-theme", theme || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+    autoChangeMode();
 });
 
 function setTheme(theme) {
@@ -57,9 +56,10 @@ function setTheme(theme) {
 
 const button = document.getElementById('mode');
 const icon = document.getElementById('mode-text');
-let toggle = true;
 
-button.addEventListener('click', () => {
+    let toggle = true;
+
+    button.addEventListener('click', () => {
     toggle = !toggle;
     icon.textContent = toggle ? '◐' : '◑';
-});
+})
