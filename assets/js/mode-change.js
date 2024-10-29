@@ -29,30 +29,14 @@ function autoChangeMode() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    const initialTheme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    
-    document.body.setAttribute("data-theme", initialTheme);
-    setTheme(initialTheme);
-
-    const autoChangeMode = () => {
-        const currentTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        document.body.setAttribute("data-theme", currentTheme);
-        setTheme(currentTheme);
-    };
-
-    const changeMode = () => {
-        const currentTheme = document.body.getAttribute("data-theme");
-        const newTheme = currentTheme === "dark" ? "light" : "dark";
-        document.body.setAttribute("data-theme", newTheme);
-        setTheme(newTheme);
-    };
-
     document.getElementById("mode").addEventListener("click", changeMode);
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
-    
+
+    const theme = getCookie("theme");
+    document.body.setAttribute("data-theme", theme || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+
     autoChangeMode();
 });
-
 
 function setTheme(theme) {
     const lightDiv = document.getElementById('utterances-light');
@@ -76,4 +60,3 @@ const icon = document.getElementById('mode-text');
     toggle = !toggle;
     icon.textContent = toggle ? '◐' : '◑';
 })
-
