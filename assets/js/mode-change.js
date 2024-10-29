@@ -45,13 +45,9 @@ function setTheme(theme) {
     if (theme === 'dark') {
         lightDiv.style.display = 'none';
         darkDiv.style.display = 'block';
-        darkDiv.style.visibility = 'visible';
-        lightDiv.style.visibility = 'hidden';
     } else {
         lightDiv.style.display = 'block';
         darkDiv.style.display = 'none';
-        lightDiv.style.visibility = 'visible';
-        darkDiv.style.visibility = 'hidden';
     }
 }
 
