@@ -4,11 +4,30 @@ function changeMode() {
     if (theme === null) {
         theme = isDark ? "dark" : "light";
     }
+
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
     
-    setTheme(theme);
+    setTheme(theme); // Tema değiştikten sonra setTheme'i çağır
+}
+
+window.addEventListener("load", () => {
+    const theme = getCookie("theme");
+    if (theme) {
+        document.body.setAttribute("data-theme", theme);
+        setTheme(theme); // Sayfa yüklendiğinde mevcut temayı ayarla
+    }
+});
+
+function autoChangeMode() {
+    let theme = document.body.getAttribute("data-theme");
+    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (theme === null) {
+        theme = isDark ? "dark" : "light";
+    }
+
+    setTheme(theme); // Otomatik tema değişiminde setTheme'i çağır
 }
 
 function getCookie(name) {
@@ -18,25 +37,6 @@ function getCookie(name) {
         return parts.pop().split(";").shift();
     }
 }
-
-function autoChangeMode() {
-    let theme = document.body.getAttribute("data-theme");
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (theme === null) {
-        theme = isDark ? "dark" : "light";
-    }
-    setTheme(theme);
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-    const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    document.body.setAttribute("data-theme", theme);
-    setTheme(theme);
-    autoChangeMode();
-
-    document.getElementById("mode").addEventListener("click", changeMode);
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
-});
 
 function setTheme(theme) {
     const lightDiv = document.getElementById('utterances-light');
@@ -51,11 +51,7 @@ function setTheme(theme) {
     }
 }
 
-const button = document.getElementById('mode');
-const icon = document.getElementById('mode-text');
-let toggle = true;
-
-button.addEventListener('click', () => {
-    toggle = !toggle;
-    icon.textContent = toggle ? '◐' : '◑';
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("mode").addEventListener("click", changeMode);
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
 });
