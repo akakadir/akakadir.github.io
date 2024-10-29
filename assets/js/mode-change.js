@@ -46,9 +46,13 @@ function setTheme(theme) {
     if (theme === 'dark') {
         lightDiv.style.display = 'none';
         darkDiv.style.display = 'block';
+        darkDiv.style.visibility = 'visible'; // Hızla görünür yap
+        lightDiv.style.visibility = 'hidden'; // Gizle
     } else {
         lightDiv.style.display = 'block';
         darkDiv.style.display = 'none';
+        lightDiv.style.visibility = 'visible'; // Hızla görünür yap
+        darkDiv.style.visibility = 'hidden'; // Gizle
     }
 }
 
