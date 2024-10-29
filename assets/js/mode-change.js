@@ -60,3 +60,4 @@ const icon = document.getElementById('mode-text');
     toggle = !toggle;
     icon.textContent = toggle ? '◐' : '◑';
 })
+
