@@ -15,9 +15,9 @@
 
     {% if page.custom_js %}
       {% for js_file in page.custom_js %}
-        <script type="text/javascript" src="{{ site.baseurl }}/assets/js/{{ js_file }}.js"></script>
+        <script src="//zeptojs.com/zepto.min.js"></script>
+    <script src="{{ site.baseurl | append: '/assets/js' }}/mode-change.js"></script>
       {% endfor %}
     {% endif %}
-    <script src="{{ site.baseurl | append: '/assets/js' }}/mode-change.js"></script>
   </body>
 </html>
