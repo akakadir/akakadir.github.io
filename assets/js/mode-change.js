@@ -28,7 +28,15 @@ function autoChangeMode() {
     setTheme(theme);
 }
 
-function setTheme(theme) {
+document.addEventListener("DOMContentLoaded", function () {
+    const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.body.setAttribute("data-theme", theme);
+    setTheme(theme);
+    autoChangeMode();
+
+    document.getElementById("mode").addEventListener("click", changeMode);
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
+
     const lightDiv = document.getElementById('utterances-light');
     const darkDiv = document.getElementById('utterances-dark');
 
@@ -39,16 +47,6 @@ function setTheme(theme) {
         lightDiv.style.display = 'block';
         darkDiv.style.display = 'none';
     }
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-    const theme = getCookie("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    document.body.setAttribute("data-theme", theme);
-    setTheme(theme);
-    autoChangeMode();
-
-    document.getElementById("mode").addEventListener("click", changeMode);
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
 });
 
 const button = document.getElementById('mode');
