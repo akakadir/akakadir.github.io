@@ -36,7 +36,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.getElementById("mode").addEventListener("click", changeMode);
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
+});
 
+function setTheme(theme) {
     const lightDiv = document.getElementById('utterances-light');
     const darkDiv = document.getElementById('utterances-dark');
 
@@ -47,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
         lightDiv.style.display = 'block';
         darkDiv.style.display = 'none';
     }
-});
+}
 
 const button = document.getElementById('mode');
 const icon = document.getElementById('mode-text');
