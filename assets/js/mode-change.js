@@ -37,14 +37,3 @@ document.addEventListener("DOMContentLoaded", function () {
 
     autoChangeMode();
 });
-
-
-const button = document.getElementById('mode');
-const icon = document.getElementById('mode-text');
-
-let toggle = true;
-
-button.addEventListener('click', () => {
-    toggle = !toggle;
-    icon.textContent = toggle ? '◐' : '◑';
-});
