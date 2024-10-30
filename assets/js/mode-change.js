@@ -1,4 +1,3 @@
-// değişim modu ve çerezi kaydetme
 function changeMode() {
     let theme = document.body.getAttribute("data-theme");
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -10,7 +9,6 @@ function changeMode() {
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
 }
 
-// sayfa yüklendiğinde çerezden tema tercihlerini kontrol et
 window.addEventListener("load", () => {
     const theme = getCookie("theme");
     if (theme) {
@@ -18,7 +16,6 @@ window.addEventListener("load", () => {
     }
 });
 
-// çerezi isme göre almak için
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -27,7 +24,6 @@ function getCookie(name) {
     }
 }
 
-// diğer scriptlerden önce yüklenmesi için
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("mode").addEventListener("click", changeMode);
 });
