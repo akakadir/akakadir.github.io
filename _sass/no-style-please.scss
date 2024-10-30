@@ -20,44 +20,37 @@
 }
 
 body {
-  display: flex; // Flexbox kullanımı
-  flex-direction: column; // Dikey düzen
-  margin: 0; // Sayfa marjını sıfırla
-  padding: 0; // Sayfa paddingini sıfırla
-  min-height: 100vh; // Sayfanın en az 100% yüksekliğini ayarla
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
 
-  // Varsayılan tema ayarları
   #utterances-light,
   #utterances-dark {
-    display: none; // Varsayılan olarak gizli
+    display: none; 
     height: 0;
-    margin: 0; // Margin sıfırla
-    padding: 0; // Padding sıfırla
-    overflow: hidden; // Taşma engelle
+    margin: 0;
+    padding: 0;
+    overflow: hidden; 
   }
 
   #utterances-light {
-    display: block; // İlk başta light tema gösterilsin
+    display: block; 
     height: auto;
     overflow: visible;
   }
 
-  #utterances-dark {
-    display: none; // İlk başta dark tema gizlensin
-    height: 0;
-    overflow: hidden;
-  }
-
   &[data-theme="light"] {
     #utterances-light {
-      display: block; // Light tema seçildiğinde göster
+      display: block; 
       height: auto; 
       overflow: visible;
     }
 
     #utterances-dark {
       display: none; 
-      height: 0;
+      height: 0; 
       overflow: hidden;
     }
   }
@@ -66,13 +59,13 @@ body {
     @include dark-appearance;
 
     #utterances-light {
-      display: none; // Light tema gizlensin
-      height: 0;
+      display: none; 
+      height: 0; 
       overflow: hidden;
     }
 
     #utterances-dark {
-      display: block; // Dark tema seçildiğinde göster
+      display: block; 
       height: auto; 
       overflow: visible;
     }
@@ -84,12 +77,12 @@ body {
 
       #utterances-light {
         display: none; 
-        height: 0;
+        height: 0; 
         overflow: hidden;
       }
 
       #utterances-dark {
-        display: block; // Dark tema seçildiğinde göster
+        display: block; 
         height: auto; 
         overflow: visible;
       }
@@ -97,19 +90,20 @@ body {
 
     @media (prefers-color-scheme: light) {
       #utterances-light {
-        display: block; // Light tema seçildiğinde göster
+        display: block; 
         height: auto; 
         overflow: visible;
       }
 
       #utterances-dark {
         display: none; 
-        height: 0;
+        height: 0; 
         overflow: hidden;
       }
     }
   }
 }
+
 
 html, body { background: white; }
 
