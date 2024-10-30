@@ -24,40 +24,66 @@ layout: default
         }
 </script>
 
-<div id="utterances-light">
-<script src="https://giscus.app/client.js"
-        data-repo="akakadir/akakadir.github.io"
-        data-repo-id="R_kgDOMseKEw"
-        data-category="General"
-        data-category-id="DIC_kwDOMseKE84Cj2AA"
-        data-mapping="title"
-        data-strict="0"
-        data-reactions-enabled="0"
-        data-emit-metadata="0"
-        data-input-position="bottom"
-        data-theme="dark"
-        data-lang="tr"
-        crossorigin="anonymous"
-        async>
+<script>
+  function getTheme() {
+      const theme = getCookie("theme");
+      return theme ? theme : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  }
+
+  function setGiscusTheme() {
+      const giscusTheme = getTheme();
+      let giscusAttributes = {
+          "src": "https://giscus.app/client.js",
+          "data-repo": "akakadir/akakadir.github.io",
+          "data-repo-id": "R_kgDOMseKEw",
+          "data-category": "General",
+          "data-category-id": "DIC_kwDOMseKE84Cj2AA",
+          "data-mapping": "title",
+          "data-reactions-enabled": "0",
+          "data-emit-metadata": "0",
+          "data-input-position": "bottom",
+          "data-theme": giscusTheme,
+          "data-lang": "tr",
+          "crossorigin": "anonymous",
+          "async": "",
+      };
+
+      let giscusScript = document.createElement("script");
+      Object.entries(giscusAttributes).forEach(([key, value]) => giscusScript.setAttribute(key, value));
+      document.body.appendChild(giscusScript);
+  }
+
+  function changeMode() {
+      let theme = document.body.getAttribute("data-theme");
+      const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (theme === null) {
+          theme = isDark ? "dark" : "light";
+      }
+      theme = theme === "dark" ? "light" : "dark";
+      document.body.setAttribute("data-theme", theme);
+      document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
+      setGiscusTheme();
+  }
+
+  window.addEventListener("load", () => {
+      const theme = getTheme();
+      document.body.setAttribute("data-theme", theme);
+      setGiscusTheme();
+  });
+
+  function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) {
+          return parts.pop().split(";").shift();
+      }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("mode").addEventListener("click", changeMode);
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", changeMode);
+  });
 </script>
-</div>
-<div id="utterances-dark">
-<script src="https://giscus.app/client.js"
-        data-repo="akakadir/akakadir.github.io"
-        data-repo-id="R_kgDOMseKEw"
-        data-category="General"
-        data-category-id="DIC_kwDOMseKE84Cj2AA"
-        data-mapping="title"
-        data-strict="0"
-        data-reactions-enabled="0"
-        data-emit-metadata="0"
-        data-input-position="bottom"
-        data-theme="light"
-        data-lang="tr"
-        crossorigin="anonymous"
-        async>
-</script>
-</div>
 
 {% assign cat = page.categories[0] %}
 {% assign cat_list = site.categories[cat] %}
