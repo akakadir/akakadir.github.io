@@ -1,18 +1,5 @@
 (() => {
-  // Determine the preferred color scheme (dark or light)
-  const theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "github-dark" : "github-light";
-
-  // Get the current URL and check for the 'utterances' parameter in the query string
-  const url = new URL(location.href);
-  const session = url.searchParams.get("utterances");
-
-  // If 'utterances' parameter is present, store it in local storage, remove it from the URL, and update the browser history
-  if (session) {
-    localStorage.setItem("utterances-session", session);
-    url.searchParams.delete("utterances");
-    history.replaceState(undefined, document.title, url.href);
-  }
-
+  
   // Get the current script element or find it by matching the script source URL
   let script = document.currentScript;
   if (script === undefined) {
@@ -24,11 +11,6 @@
   for (let i = 0; i < script.attributes.length; i++) {
     const attribute = script.attributes.item(i);
     attrs[attribute.name.replace(/^data-/, "")] = attribute.value;
-  }
-
-  // If the theme is set to "preferred-color-scheme," update it with the actual preferred theme
-  if (attrs.theme === "preferred-color-scheme") {
-    attrs.theme = theme;
   }
 
   // Gather page attributes
@@ -60,7 +42,6 @@
         margin-right: auto;
       }
       .utterances-frame {
-        color-scheme: light;
         position: absolute;
         left: 0;
         right: 0;
