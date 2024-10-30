@@ -22,19 +22,25 @@
 body {
   #utterances-light {
     display: block;
+    overflow: visible;
   }
 
   #utterances-dark {
     display: none;
+    height: 0;
+    overflow: hidden;
   }
 
   &[data-theme="light"] {
     #utterances-light {
-      display: block;
+    display: block;
+    overflow: visible;
     }
 
     #utterances-dark {
-      display: none;
+    display: none;
+    height: 0;
+    overflow: hidden;
     }
   }
 
@@ -42,11 +48,14 @@ body {
     @include dark-appearance;
 
     #utterances-light {
-      display: none;
+    display: none;
+    height: 0;
+    overflow: hidden;
     }
 
     #utterances-dark {
-      display: block;
+    display: block;
+    overflow: visible;
     }
   }
 
@@ -55,30 +64,30 @@ body {
       @include dark-appearance;
 
       #utterances-light {
-        display: none;
+    display: none;
+    height: 0;
+    overflow: hidden;
       }
 
       #utterances-dark {
-        display: block;
+    display: block;
+    overflow: visible;
       }
     }
 
     @media (prefers-color-scheme: light) {
       #utterances-light {
-        display: block;
+    display: block;
+    overflow: visible;
       }
 
       #utterances-dark {
-        display: none;
+    display: none;
+    height: 0;
+    overflow: hidden;
       }
     }
   }
-}
-
-#utterances-light,
-#utterances-dark {
-  height: 0;
-  overflow: hidden;
 }
 
 html, body { background: white; }
