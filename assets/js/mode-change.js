@@ -1,16 +1,29 @@
+// change theme mode and save to cookie
 function changeMode() {
+    // detect body data-theme attribute
     let theme = document.body.getAttribute("data-theme");
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (theme === null) {
-        theme = isDark ? "dark" : "light";
-    }
+    // toggle theme
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
+    // save theme preference to cookie for 1 year and set SameSite to all pages
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
-    
-    setTheme(theme);
 }
 
+// auto change theme based on user's preference and cookie
+function autoChangeMode() {
+    let theme = document.body.getAttribute("data-theme");
+    // check if user has a preference in cookie
+    const cookieTheme = getCookie("theme");
+    if (cookieTheme) {
+        theme = cookieTheme;
+    } else {
+        const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        theme = isDark ? "dark" : "light";
+    }
+    document.body.setAttribute("data-theme", theme);
+}
+
+// get cookie by name
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -19,41 +32,14 @@ function getCookie(name) {
     }
 }
 
-function autoChangeMode() {
-    let theme = document.body.getAttribute("data-theme");
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (theme === null) {
-        theme = isDark ? "dark" : "light";
-    }
-    setTheme(theme);
-}
-
+// make it priority to load before other scripts
 document.addEventListener("DOMContentLoaded", function () {
-    const button = document.getElementById("mode");
-    const icon = document.getElementById("mode-text");
-    
-    button.addEventListener("click", () => {
-        changeMode();
-        icon.textContent = document.body.getAttribute("data-theme") === "dark" ? '◑' : '◐';
-    });
-
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
-
-    const theme = getCookie("theme");
-    document.body.setAttribute("data-theme", theme || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
-
+    // set initial theme based on cookie or preference
     autoChangeMode();
+
+    // add event listener to mode button
+    document.getElementById("mode").addEventListener("click", changeMode);
+
+    // add event listener to auto change mode
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
 });
-
-function setTheme(theme) {
-    const lightDiv = document.getElementById('utterances-light');
-    const darkDiv = document.getElementById('utterances-dark');
-
-    if (theme === 'dark') {
-        lightDiv.style.display = 'none';
-        darkDiv.style.display = 'block';
-    } else {
-        lightDiv.style.display = 'block';
-        darkDiv.style.display = 'none';
-    }
-}
