@@ -44,11 +44,16 @@ function setTheme(theme) {
     if (theme === 'dark') {
         lightDiv.style.display = 'none';
         darkDiv.style.display = 'block';
+        darkDiv.style.height = 'auto';
+        lightDiv.remove();
     } else {
         lightDiv.style.display = 'block';
         darkDiv.style.display = 'none';
+        lightDiv.style.height = 'auto';
+        darkDiv.remove();
     }
 }
+
 
 const button = document.getElementById('mode');
 const icon = document.getElementById('mode-text');
