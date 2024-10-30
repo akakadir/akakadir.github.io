@@ -24,6 +24,7 @@ body {
   flex-direction: column; // Dikey düzen
   margin: 0; // Sayfa marjını sıfırla
   padding: 0; // Sayfa paddingini sıfırla
+  min-height: 100vh; // Sayfanın en az 100% yüksekliğini ayarla
 
   // Varsayılan tema ayarları
   #utterances-light,
