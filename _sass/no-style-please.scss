@@ -77,10 +77,9 @@ body {
 
 #utterances-light,
 #utterances-dark {
-  margin: 0;
-  padding: 0;
+  height: 0;
+  overflow: hidden;
 }
-
 
 html, body { background: white; }
 
