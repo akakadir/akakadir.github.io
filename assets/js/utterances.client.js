@@ -27,7 +27,7 @@
   // Get the current script element or find it by matching the script source URL
   let script = document.currentScript;
   if (script === undefined) {
-    script = document.querySelector('script[src^="https://prolkh.github.io/asserts/js/utterances.client.js"],script[src^="http://localhost:4000/client.js"]');
+    script = document.querySelector('script[src^="https://akakadir.github.io/assets/js/utterances.client.js"],script[src^="http://localhost:4000/client.js"]');
   }
 
   // Gather attributes from the script element
