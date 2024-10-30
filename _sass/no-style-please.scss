@@ -8,25 +8,65 @@
     border: 1px solid #333;
     background-color: #121212;
     color: #ccc;
-}
+  }
 
   code {
-  border: 1px solid #333;
-}
+    border: 1px solid #333;
+  }
 
-code::-webkit-scrollbar-thumb {
-  background-color: #333;
+  code::-webkit-scrollbar-thumb {
+    background-color: #333;
+  }
 }
- }
 
 body[data-theme="dark"] {
   @include dark-appearance;
+  
+  #utterances-light {
+    display: none; // Açık tema divini gizle
+  }
+
+  #utterances-dark {
+    display: block; // Koyu tema divini göster
+  }
 }
+
+body[data-theme="light"] {
+  #utterances-light {
+    display: block; // Açık tema divini göster
+  }
+
+  #utterances-dark {
+    display: none; // Koyu tema divini gizle
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   body[data-theme="auto"] {
     @include dark-appearance;
+    
+    #utterances-light {
+      display: none;
+    }
+
+    #utterances-dark {
+      display: block;
+    }
   }
 }
+
+@media (prefers-color-scheme: light) {
+  body[data-theme="auto"] {
+    #utterances-light {
+      display: block;
+    }
+
+    #utterances-dark {
+      display: none;
+    }
+  }
+}
+
 
 
 html, body { background: white; }
