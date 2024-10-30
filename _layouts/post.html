@@ -31,6 +31,16 @@ layout: default
 <script src="https://utteranc.es/client.js" repo="akakadir/akakadir.github.io" issue-term="title" label="💬" theme="github-dark" crossorigin="anonymous" async></script>
 </div>
 
+<nav>
+  {% if prev_post %}
+  <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">« önceki</a></span>
+  {% endif %}
+  |
+  {% if next_post %}
+  <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki »</a></span>
+  {% endif %}
+</nav>
+
 {% assign cat = page.categories[0] %}
 {% assign cat_list = site.categories[cat] %}
 {% for post in cat_list %}
@@ -46,13 +56,3 @@ layout: default
   	{% break %}
   {% endif %}
 {% endfor %}
-
-<nav>
-  {% if prev_post %}
-  <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">« önceki</a></span>
-  {% endif %}
-  |
-  {% if next_post %}
-  <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki »</a></span>
-  {% endif %}
-</nav>
