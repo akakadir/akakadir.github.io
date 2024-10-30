@@ -21,6 +21,15 @@
 
 body {
   // Varsayılan tema ayarları
+  #utterances-light,
+  #utterances-dark {
+    display: none; // Varsayılan olarak gizli
+    height: 0;
+    margin: 0; // Margin sıfırla
+    padding: 0; // Padding sıfırla
+    overflow: hidden; // Taşma engelle
+  }
+
   #utterances-light {
     display: block; // İlk başta light tema gösterilsin
     height: auto;
@@ -95,6 +104,7 @@ body {
     }
   }
 }
+
 
 
 
