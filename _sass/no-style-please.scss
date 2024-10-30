@@ -20,80 +20,55 @@
 }
 
 body {
-  #utterances-light {
-    display: block;
-    height: auto;
-    overflow: visible;
-  }
-
+  #utterances-light,
   #utterances-dark {
-    display: none;
+    display: none; // İlk başta her ikisi de gizli
     height: 0;
     overflow: hidden;
   }
 
+  // Varsayılan olarak light tema ayarları
   &[data-theme="light"] {
     #utterances-light {
-    display: block;
-    height: auto;
-    overflow: visible;
-    }
-
-    #utterances-dark {
-    display: none;
-    height: 0;
-    overflow: hidden;
+      display: block; // Light tema seçildiğinde göster
+      height: auto; 
+      overflow: visible;
     }
   }
 
+  // Koyu tema ayarları
   &[data-theme="dark"] {
     @include dark-appearance;
 
-    #utterances-light {
-    display: none;
-    height: 0;
-    overflow: hidden;
-    }
-
     #utterances-dark {
-    display: block;
-    height: auto;
-    overflow: visible;
+      display: block; // Dark tema seçildiğinde göster
+      height: auto; 
+      overflow: visible;
     }
   }
 
+  // Otomatik tema ayarları
   &[data-theme="auto"] {
     @media (prefers-color-scheme: dark) {
       @include dark-appearance;
 
-      #utterances-light {
-    display: none;
-    height: 0;
-    overflow: hidden;
-      }
-
       #utterances-dark {
-    display: block;
-    height: auto;
-    overflow: visible;
+        display: block; // Dark tema seçildiğinde göster
+        height: auto; 
+        overflow: visible;
       }
     }
 
     @media (prefers-color-scheme: light) {
       #utterances-light {
-    display: block;
-    height: auto;
-    overflow: visible;
-      }
-
-      #utterances-dark {
-    display: none;
-    height: 0;
-    overflow: hidden;
+        display: block; // Light tema seçildiğinde göster
+        height: auto; 
+        overflow: visible;
       }
     }
   }
 }
+
 
 html, body { background: white; }
 
