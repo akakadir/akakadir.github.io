@@ -23,21 +23,21 @@ body[data-theme="dark"] {
   @include dark-appearance;
   
   #utterances-light {
-    display: none; // Açık tema divini gizle
+    display: none;
   }
 
   #utterances-dark {
-    display: block; // Koyu tema divini göster
+    display: block;
   }
 }
 
 body[data-theme="light"] {
   #utterances-light {
-    display: block; // Açık tema divini göster
+    display: block;
   }
 
   #utterances-dark {
-    display: none; // Koyu tema divini gizle
+    display: none;
   }
 }
 
@@ -66,8 +66,6 @@ body[data-theme="light"] {
     }
   }
 }
-
-
 
 html, body { background: white; }
 
