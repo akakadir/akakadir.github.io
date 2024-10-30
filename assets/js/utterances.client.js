@@ -2,6 +2,17 @@
   // Determine the preferred color scheme (dark or light)
   const theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "github-dark" : "github-light";
 
+  // Function to set the theme
+  const setTheme = (theme) => {
+    const script = document.currentScript;
+    script.setAttribute('data-theme', theme);
+    const frameUrl = `https://utteranc.es/utterances.html?theme=${theme}`;
+    const iframe = document.querySelector('.utterances-frame');
+    if (iframe) {
+      iframe.src = frameUrl; // Update iframe source
+    }
+  };
+
   // Get the current URL and check for the 'utterances' parameter in the query string
   const url = new URL(location.href);
   const session = url.searchParams.get("utterances");
@@ -29,6 +40,8 @@
   // If the theme is set to "preferred-color-scheme," update it with the actual preferred theme
   if (attrs.theme === "preferred-color-scheme") {
     attrs.theme = theme;
+  } else {
+    attrs.theme = theme; // Set initial theme
   }
 
   // Gather page attributes
@@ -74,12 +87,12 @@
   );
 
   // Create the comments iframe and its responsive container
-  const frameUrl = `https://utteranc.es/utterances.html`;
+  setTheme(attrs.theme); // Set initial theme for the iframe
 
   script.insertAdjacentHTML(
     "afterend",
     `<div class="utterances">
-      <iframe class="utterances-frame" title="Comments" scrolling="no" src="${frameUrl}?${new URLSearchParams(attrs)}" loading="lazy"></iframe>
+      <iframe class="utterances-frame" title="Comments" scrolling="no" loading="lazy"></iframe>
     </div>`
   );
 
@@ -96,10 +109,24 @@
       container.style.height = `${data.height}px`;
     }
 
-    // remove loadingDiv
-    utterances_skeleton = document.querySelector('body > main > div > div.utterances_skeleton')
-    if (utterances_skeleton) {
-      utterances_skeleton.remove();
+    // Remove loadingDiv
+    const utterancesSkeleton = document.querySelector('body > main > div > div.utterances_skeleton');
+    if (utterancesSkeleton) {
+      utterancesSkeleton.remove();
+    }
+  });
+
+  // Button click event for theme toggle
+  document.getElementById('mode').addEventListener('click', () => {
+    const currentTheme = document.body.classList.toggle('dark-theme');
+    const modeText = document.getElementById('mode-text');
+
+    if (currentTheme) {
+      modeText.innerHTML = '&#9679;'; // Koyu tema simgesi
+      setTheme("github-dark"); // Koyu tema
+    } else {
+      modeText.innerHTML = '&#9680;'; // Açık tema simgesi
+      setTheme("github-light"); // Açık tema
     }
   });
 })();
