@@ -22,6 +22,7 @@
 body {
   #utterances-light {
     display: block;
+    height: auto;
     overflow: visible;
   }
 
@@ -34,6 +35,7 @@ body {
   &[data-theme="light"] {
     #utterances-light {
     display: block;
+    height: auto;
     overflow: visible;
     }
 
@@ -55,6 +57,7 @@ body {
 
     #utterances-dark {
     display: block;
+    height: auto;
     overflow: visible;
     }
   }
@@ -71,6 +74,7 @@ body {
 
       #utterances-dark {
     display: block;
+    height: auto;
     overflow: visible;
       }
     }
@@ -78,6 +82,7 @@ body {
     @media (prefers-color-scheme: light) {
       #utterances-light {
     display: block;
+    height: auto;
     overflow: visible;
       }
 
