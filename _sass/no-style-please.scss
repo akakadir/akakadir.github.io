@@ -20,6 +20,11 @@
 }
 
 body {
+  display: flex; // Flexbox kullanımı
+  flex-direction: column; // Dikey düzen
+  margin: 0; // Sayfa marjını sıfırla
+  padding: 0; // Sayfa paddingini sıfırla
+
   // Varsayılan tema ayarları
   #utterances-light,
   #utterances-dark {
@@ -104,9 +109,6 @@ body {
     }
   }
 }
-
-
-
 
 html, body { background: white; }
 
