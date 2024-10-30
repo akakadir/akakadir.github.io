@@ -20,25 +20,41 @@
 }
 
 body {
-  #utterances-light,
+  // Varsayılan tema ayarları
+  #utterances-light {
+    display: block; // İlk başta light tema gösterilsin
+    height: auto;
+    overflow: visible;
+  }
+
   #utterances-dark {
-    display: none; // İlk başta her ikisi de gizli
+    display: none; // İlk başta dark tema gizlensin
     height: 0;
     overflow: hidden;
   }
 
-  // Varsayılan olarak light tema ayarları
   &[data-theme="light"] {
     #utterances-light {
       display: block; // Light tema seçildiğinde göster
       height: auto; 
       overflow: visible;
     }
+
+    #utterances-dark {
+      display: none; 
+      height: 0;
+      overflow: hidden;
+    }
   }
 
-  // Koyu tema ayarları
   &[data-theme="dark"] {
     @include dark-appearance;
+
+    #utterances-light {
+      display: none; // Light tema gizlensin
+      height: 0;
+      overflow: hidden;
+    }
 
     #utterances-dark {
       display: block; // Dark tema seçildiğinde göster
@@ -47,10 +63,15 @@ body {
     }
   }
 
-  // Otomatik tema ayarları
   &[data-theme="auto"] {
     @media (prefers-color-scheme: dark) {
       @include dark-appearance;
+
+      #utterances-light {
+        display: none; 
+        height: 0;
+        overflow: hidden;
+      }
 
       #utterances-dark {
         display: block; // Dark tema seçildiğinde göster
@@ -65,9 +86,16 @@ body {
         height: auto; 
         overflow: visible;
       }
+
+      #utterances-dark {
+        display: none; 
+        height: 0;
+        overflow: hidden;
+      }
     }
   }
 }
+
 
 
 html, body { background: white; }
