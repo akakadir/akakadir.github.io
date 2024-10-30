@@ -19,7 +19,17 @@
   }
 }
 
+// Varsayılan tema ayarlamaları
 body {
+  // Varsayılan olarak light temayı ayarla
+  #utterances-light {
+    display: block;
+  }
+
+  #utterances-dark {
+    display: none;
+  }
+
   &[data-theme="light"] {
     #utterances-light {
       display: block;
@@ -66,6 +76,7 @@ body {
     }
   }
 }
+
 
 html, body { background: white; }
 
