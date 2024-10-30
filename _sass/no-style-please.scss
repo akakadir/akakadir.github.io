@@ -21,51 +21,22 @@
 
 body[data-theme="dark"] {
   @include dark-appearance;
-
-  #utterances-light {
-    display: none;
-  }
-
-  #utterances-dark {
-    display: block;
-  }
 }
 
 body[data-theme="light"] {
-  #utterances-light {
-    display: block;
-  }
-
-  #utterances-dark {
-    display: none;
-  }
 }
 
 @media (prefers-color-scheme: dark) {
   body[data-theme="auto"] {
     @include dark-appearance;
 
-    #utterances-light {
-      display: none;
-    }
-
-    #utterances-dark {
-      display: block;
     }
   }
-}
 
 @media (prefers-color-scheme: light) {
   body[data-theme="auto"] {
-    #utterances-light {
-      display: block;
-    }
-
-    #utterances-dark {
-      display: none;
     }
   }
-}
 
 html, body { background: white; }
 
