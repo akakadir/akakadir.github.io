@@ -76,13 +76,17 @@
   // Create the comments iframe and its responsive container
   const frameUrl = `https://utteranc.es/utterances.html`;
 
-  script.insertAdjacentHTML(
-    "afterend",
-    `<div class="utterances">
-      <iframe class="utterances-frame" title="Comments" scrolling="no" src="${frameUrl}?${new URLSearchParams(attrs)}" loading="lazy"></iframe>
-    </div>`
-  );
+  const utterancesContainer = document.createElement('div');
+  utterancesContainer.className = 'utterances';
+  const iframe = document.createElement('iframe');
+  iframe.className = 'utterances-frame';
+  iframe.title = "Comments";
+  iframe.scrolling = "no";
+  iframe.src = `${frameUrl}?${new URLSearchParams(attrs)}`;
+  iframe.loading = "lazy";
 
+  utterancesContainer.appendChild(iframe);
+  script.insertAdjacentElement("afterend", utterancesContainer);
   const container = script.nextElementSibling;
   script.parentElement.removeChild(script);
 
@@ -97,9 +101,20 @@
     }
 
     // remove loadingDiv
-    utterances_skeleton = document.querySelector('body > main > div > div.utterances_skeleton')
-    if (utterances_skeleton) {
-      utterances_skeleton.remove();
+    const utterancesSkeleton = document.querySelector('body > main > div > div.utterances_skeleton');
+    if (utterancesSkeleton) {
+      utterancesSkeleton.remove();
     }
+  });
+
+  // Function to update theme
+  const updateTheme = (newTheme) => {
+    iframe.src = `${frameUrl}?${new URLSearchParams({...attrs, theme: newTheme})}`;
+  };
+
+  // Listen for theme changes
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+    const newTheme = e.matches ? "github-dark" : "github-light";
+    updateTheme(newTheme);
   });
 })();
