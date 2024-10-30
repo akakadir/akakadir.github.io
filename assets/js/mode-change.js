@@ -19,21 +19,10 @@ function getCookie(name) {
     }
 }
 
-function autoChangeMode() {
-    let theme = document.body.getAttribute("data-theme");
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (theme === null) {
-        theme = isDark ? "dark" : "light";
-    }
-    setTheme(theme);
-}
-
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("mode").addEventListener("click", changeMode);
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change");
 
     const theme = getCookie("theme");
     document.body.setAttribute("data-theme", theme || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
-
-    autoChangeMode();
 });
