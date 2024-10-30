@@ -24,7 +24,12 @@ layout: default
         }
 </script>
 
-<script src="https://akakadir.github.io/assets/js/utterances.client.js" repo="akakadir/akakadir.github.io" issue-term="title" label="💬" theme="github-light" async></script>
+<div id="utterances-light">
+<script src="https://utteranc.es/client.js" repo="akakadir/akakadir.github.io" issue-term="title" label="💬" theme="github-light" async></script>
+</div>
+<div id="utterances-dark">
+<script src="https://utteranc.es/client.js" repo="akakadir/akakadir.github.io" issue-term="title" label="💬" theme="github-dark" async></script>
+</div>
 
 {% assign cat = page.categories[0] %}
 {% assign cat_list = site.categories[cat] %}
