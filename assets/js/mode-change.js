@@ -9,19 +9,23 @@ function changeMode() {
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
-    changeUtterancesTheme(); // Utterances temasını güncelle
+    reloadUtterances(); // Utterances'ı yeniden yükle
 }
 
-function changeUtterancesTheme() {
-    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'github-dark' : 'github-light';
-
+function reloadUtterances() {
     const utterances = document.querySelector('script[src="https://utteranc.es/client.js"]');
     if (utterances) {
-        utterances.setAttribute('data-theme', theme);
-        // Refresh utterances comments
-        const iframe = document.querySelector('iframe.utterances-frame');
-        if (iframe) {
-            iframe.contentWindow.postMessage({ type: 'set-theme', theme: theme }, '*');
+        const container = document.getElementById('utterances');
+        if (container) {
+            container.innerHTML = ''; // Eski içeriği temizle
+            const newUtterances = document.createElement('script');
+            newUtterances.setAttribute('src', 'https://utteranc.es/client.js');
+            newUtterances.setAttribute('repo', 'akakadir/akakadir.github.io'); // Kendi GitHub reposunu ekle
+            newUtterances.setAttribute('issue-term', 'title');
+            newUtterances.setAttribute('theme', document.body.getAttribute('data-theme') === 'dark' ? 'github-dark' : 'github-light');
+            newUtterances.setAttribute('crossorigin', 'anonymous');
+            newUtterances.setAttribute('async', true);
+            container.appendChild(newUtterances);
         }
     } else {
         console.error('Utterances script bulunamadı.');
@@ -36,7 +40,7 @@ function checkThemeOnLoad() {
         const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         document.body.setAttribute("data-theme", isDark ? "dark" : "light");
     }
-    changeUtterancesTheme();
+    reloadUtterances();
 }
 
 function getCookie(name) {
@@ -47,15 +51,6 @@ function getCookie(name) {
     }
 }
 
-function initUtterances() {
-    const utterances = document.querySelector('script[src="https://utteranc.es/client.js"]');
-    if (utterances) {
-        changeUtterancesTheme();
-    } else {
-        console.error('Utterances script henüz yüklenmedi.');
-    }
-}
-
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("mode").addEventListener("click", changeMode);
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", changeMode);
@@ -63,5 +58,4 @@ document.addEventListener("DOMContentLoaded", function () {
 
 window.addEventListener("load", () => {
     checkThemeOnLoad();
-    initUtterances();
 });
