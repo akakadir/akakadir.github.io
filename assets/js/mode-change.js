@@ -9,20 +9,23 @@ function changeMode() {
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
-    changeGiscusTheme(); // Giscus temasını güncelle
+    changeUtterancesTheme(); // Utterances temasını güncelle
 }
 
-function changeGiscusTheme() {
-    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'noborder_gray' : 'light';
+function changeUtterancesTheme() {
+    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'github-dark' : 'github-light';
 
-    function sendMessage(message) {
-        const iframe = document.querySelector('iframe.giscus-frame');
-        if (!iframe) return console.error('Giscus iframe bulunamadı.');
-
-        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+    const utterances = document.querySelector('script[src="https://utteranc.es/client.js"]');
+    if (utterances) {
+        utterances.setAttribute('data-theme', theme);
+        // Refresh utterances comments
+        const iframe = document.querySelector('iframe.utterances-frame');
+        if (iframe) {
+            iframe.contentWindow.postMessage({ type: 'set-theme', theme: theme }, '*');
+        }
+    } else {
+        console.error('Utterances script bulunamadı.');
     }
-
-    sendMessage({ setConfig: { theme: theme } });
 }
 
 function checkThemeOnLoad() {
@@ -33,7 +36,7 @@ function checkThemeOnLoad() {
         const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         document.body.setAttribute("data-theme", isDark ? "dark" : "light");
     }
-    changeGiscusTheme();
+    changeUtterancesTheme();
 }
 
 function getCookie(name) {
@@ -44,12 +47,12 @@ function getCookie(name) {
     }
 }
 
-function initGiscus() {
-    const iframe = document.querySelector('iframe.giscus-frame');
-    if (iframe) {
-        changeGiscusTheme();
+function initUtterances() {
+    const utterances = document.querySelector('script[src="https://utteranc.es/client.js"]');
+    if (utterances) {
+        changeUtterancesTheme();
     } else {
-        console.error('Giscus iframe henüz yüklenmedi.');
+        console.error('Utterances script henüz yüklenmedi.');
     }
 }
 
@@ -60,11 +63,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
 window.addEventListener("load", () => {
     checkThemeOnLoad();
-    initGiscus();
-});
-
-window.addEventListener("message", (event) => {
-    if (event.origin === "https://giscus.app") {
-        changeGiscusTheme();
-    }
+    initUtterances();
 });
