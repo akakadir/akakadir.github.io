@@ -13,7 +13,7 @@ function changeMode() {
 }
 
 function changeGiscusTheme() {
-    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'noborder_gray' : 'light';
+    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
 
     function sendMessage(message) {
         const iframe = document.querySelector('iframe.giscus-frame');
