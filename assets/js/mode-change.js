@@ -9,7 +9,7 @@ function changeMode() {
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
-    changeGiscusTheme(); // Giscus temasını güncelle
+    changeGiscusTheme();
 }
 
 function changeGiscusTheme() {
