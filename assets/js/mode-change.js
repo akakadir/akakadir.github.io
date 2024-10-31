@@ -29,7 +29,7 @@ function changeGiscusTheme() {
 }
 
 // Sayfa yüklendiğinde tema ayarlarını kontrol et
-window.addEventListener("load", () => {
+function checkThemeOnLoad() {
     const theme = getCookie("theme");
     if (theme) {
         document.body.setAttribute("data-theme", theme);
@@ -38,7 +38,7 @@ window.addEventListener("load", () => {
         document.body.setAttribute("data-theme", isDark ? "dark" : "light");
     }
     changeGiscusTheme(); // İlk tema ayarını Giscus'a gönder
-});
+}
 
 // Çerezden değer alma fonksiyonu
 function getCookie(name) {
@@ -63,6 +63,10 @@ function initGiscus() {
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("mode").addEventListener("click", changeMode);
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", changeMode);
-    // Giscus iframe'i yüklenince değişimi kontrol et
-    window.addEventListener("load", initGiscus);
+});
+
+// Sayfa yüklendiğinde tema kontrolü yap
+window.addEventListener("load", () => {
+    checkThemeOnLoad(); // Tema kontrolü
+    initGiscus(); // Giscus'u başlat
 });
