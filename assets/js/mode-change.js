@@ -18,14 +18,11 @@ function changeMode() {
 
 // Giscus temasını değiştirme fonksiyonu
 function changeGiscusTheme() {
-    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
 
     function sendMessage(message) {
-        const iframe = document.querySelector('iframe'); // iframe'i bul
-        if (!iframe) {
-            console.error('Giscus iframe bulunamadı.');
-            return;
-        }
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) return;
         iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
     }
 
