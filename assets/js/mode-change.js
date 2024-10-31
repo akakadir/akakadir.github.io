@@ -70,3 +70,11 @@ window.addEventListener("load", () => {
     checkThemeOnLoad(); // Tema kontrolü
     initGiscus(); // Giscus'u başlat
 });
+
+// Giscus iframe yüklendiğinde temayı güncelle
+window.addEventListener("message", (event) => {
+    if (event.origin === "https://giscus.app") {
+        // Giscus iframe yüklenip mesaj alındığında temayı kontrol et
+        changeGiscusTheme();
+    }
+});
