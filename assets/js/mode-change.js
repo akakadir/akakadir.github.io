@@ -22,7 +22,10 @@ function changeGiscusTheme() {
 
     function sendMessage(message) {
         const iframe = document.querySelector('iframe.giscus-frame');
-        if (!iframe) return;
+        if (!iframe) {
+            console.error('Giscus iframe bulunamadı.');
+            return;
+        }
         iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
     }
 
