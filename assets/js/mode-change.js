@@ -9,27 +9,20 @@ function changeMode() {
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
-    reloadUtterances(); // Utterances'ı yeniden yükle
+    changeGiscusTheme(); // Giscus temasını güncelle
 }
 
-function reloadUtterances() {
-    const utterances = document.querySelector('script[src="https://utteranc.es/client.js"]');
-    if (utterances) {
-        const container = document.getElementById('utterances');
-        if (container) {
-            container.innerHTML = ''; // Eski içeriği temizle
-            const newUtterances = document.createElement('script');
-            newUtterances.setAttribute('src', 'https://utteranc.es/client.js');
-            newUtterances.setAttribute('repo', 'akakadir/akakadir.github.io'); // Kendi GitHub reposunu ekle
-            newUtterances.setAttribute('issue-term', 'title');
-            newUtterances.setAttribute('theme', document.body.getAttribute('data-theme') === 'dark' ? 'github-dark' : 'github-light');
-            newUtterances.setAttribute('crossorigin', 'anonymous');
-            newUtterances.setAttribute('async', true);
-            container.appendChild(newUtterances);
-        }
-    } else {
-        console.error('Utterances script bulunamadı.');
+function changeGiscusTheme() {
+    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'noborder_gray' : 'light';
+
+    function sendMessage(message) {
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) return console.error('Giscus iframe bulunamadı.');
+
+        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
     }
+
+    sendMessage({ setConfig: { theme: theme } });
 }
 
 function checkThemeOnLoad() {
@@ -40,7 +33,7 @@ function checkThemeOnLoad() {
         const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         document.body.setAttribute("data-theme", isDark ? "dark" : "light");
     }
-    reloadUtterances();
+    changeGiscusTheme();
 }
 
 function getCookie(name) {
@@ -51,6 +44,15 @@ function getCookie(name) {
     }
 }
 
+function initGiscus() {
+    const iframe = document.querySelector('iframe.giscus-frame');
+    if (iframe) {
+        changeGiscusTheme();
+    } else {
+        console.error('Giscus iframe henüz yüklenmedi.');
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("mode").addEventListener("click", changeMode);
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", changeMode);
@@ -58,4 +60,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
 window.addEventListener("load", () => {
     checkThemeOnLoad();
+    initGiscus();
+});
+
+window.addEventListener("message", (event) => {
+    if (event.origin === "https://giscus.app") {
+        changeGiscusTheme();
+    }
 });
