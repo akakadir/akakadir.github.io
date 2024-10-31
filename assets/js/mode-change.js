@@ -1,39 +1,52 @@
-// change theme mode and save to cookie
+// Tema değiştirme ve çerezde kaydetme fonksiyonu
 function changeMode() {
-    // detect body data-theme attribute
+    // Mevcut tema değerini al
     let theme = document.body.getAttribute("data-theme");
-    // on first load, check if user has a preference in cookie
+    // Kullanıcı tercihini kontrol et
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     if (theme === null) {
         theme = isDark ? "dark" : "light";
     }
-    // toggle theme
+    // Temayı değiştir
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
-    // save theme preference to cookie for 1 year and set SameSite to all pages
+    // Temayı çerezde kaydet
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
+
+    changeGiscusTheme(); // Giscus temasını güncelle
 }
 
-// add event load to check cookie for theme preference and set the theme
+// Giscus temasını değiştirme fonksiyonu
+function changeGiscusTheme() {
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+
+    function sendMessage(message) {
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) return;
+        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+    }
+
+    sendMessage({
+        setConfig: {
+            theme: theme
+        }
+    });
+}
+
+// Sayfa yüklendiğinde tema ayarlarını kontrol et
 window.addEventListener("load", () => {
-    // check if user has a preference in cookie
     const theme = getCookie("theme");
     if (theme) {
         document.body.setAttribute("data-theme", theme);
+    } else {
+        // Varsayılan olarak tema ayarı
+        const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.body.setAttribute("data-theme", isDark ? "dark" : "light");
     }
+    changeGiscusTheme(); // İlk tema ayarını Giscus'a gönder
 });
-// auto change theme based data-theme attribute
-function autoChangeMode() {
-    // detect body data-theme attribute
-    let theme = document.body.getAttribute("data-theme");
-    // on first load, check if user has a preference in cookie
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (theme === null) {
-        theme = isDark ? "dark" : "light";
-    }
-}
 
-// get cookie by name
+// Çerezden değer alma fonksiyonu
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -41,10 +54,9 @@ function getCookie(name) {
         return parts.pop().split(";").shift();
     }
 }
-// make it priority to load before other scripts
+
+// DOMContentLoaded olayı ile başlangıç ayarlarını yap
 document.addEventListener("DOMContentLoaded", function () {
-    // add event listener to mode button
     document.getElementById("mode").addEventListener("click", changeMode);
-    // add event listener to auto change mode
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", changeMode);
 });
