@@ -1,4 +1,3 @@
-// Tema değiştirme ve çerezde kaydetme fonksiyonu
 function changeMode() {
     let theme = document.body.getAttribute("data-theme");
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -13,7 +12,6 @@ function changeMode() {
     changeGiscusTheme(); // Giscus temasını güncelle
 }
 
-// Giscus temasını değiştirme fonksiyonu
 function changeGiscusTheme() {
     const theme = document.body.getAttribute('data-theme') === 'dark' ? 'noborder_gray' : 'light';
 
@@ -21,14 +19,12 @@ function changeGiscusTheme() {
         const iframe = document.querySelector('iframe.giscus-frame');
         if (!iframe) return console.error('Giscus iframe bulunamadı.');
 
-        // Mesajı gönder
         iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
     }
 
     sendMessage({ setConfig: { theme: theme } });
 }
 
-// Sayfa yüklendiğinde tema ayarlarını kontrol et
 function checkThemeOnLoad() {
     const theme = getCookie("theme");
     if (theme) {
@@ -37,10 +33,9 @@ function checkThemeOnLoad() {
         const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         document.body.setAttribute("data-theme", isDark ? "dark" : "light");
     }
-    changeGiscusTheme(); // İlk tema ayarını Giscus'a gönder
+    changeGiscusTheme();
 }
 
-// Çerezden değer alma fonksiyonu
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -49,7 +44,6 @@ function getCookie(name) {
     }
 }
 
-// Giscus iframe'i yüklendikten sonra tema değişimini sağla
 function initGiscus() {
     const iframe = document.querySelector('iframe.giscus-frame');
     if (iframe) {
@@ -59,22 +53,18 @@ function initGiscus() {
     }
 }
 
-// DOMContentLoaded olayı ile başlangıç ayarlarını yap
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("mode").addEventListener("click", changeMode);
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", changeMode);
 });
 
-// Sayfa yüklendiğinde tema kontrolü yap
 window.addEventListener("load", () => {
-    checkThemeOnLoad(); // Tema kontrolü
-    initGiscus(); // Giscus'u başlat
+    checkThemeOnLoad();
+    initGiscus();
 });
 
-// Giscus iframe yüklendiğinde temayı güncelle
 window.addEventListener("message", (event) => {
     if (event.origin === "https://giscus.app") {
-        // Giscus iframe yüklenip mesaj alındığında temayı kontrol et
         changeGiscusTheme();
     }
 });
