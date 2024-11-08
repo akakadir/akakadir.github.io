@@ -13,7 +13,7 @@ function changeMode() {
 }
 
 function changeGiscusTheme() {
-    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'https://files.catbox.moe/hxivkd.css' : 'light';
 
     function sendMessage(message) {
         const iframe = document.querySelector('iframe.giscus-frame');
