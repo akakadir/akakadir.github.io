@@ -17,7 +17,7 @@ function changeGiscusTheme() {
 
     function sendMessage(message) {
         const iframe = document.querySelector('iframe.giscus-frame');
-        if (!iframe) return console.error('Giscus iframe bulunamadı.');
+        if (!iframe) return console.error('Giscus yüklenemedi! (eğer post sayfasında değilsen bu hatayı yok say.)');
 
         iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
     }
@@ -49,7 +49,7 @@ function initGiscus() {
     if (iframe) {
         changeGiscusTheme();
     } else {
-        console.error('Giscus iframe henüz yüklenmedi.');
+        console.error('Giscus yüklenemedi! (eğer post sayfasında değilsen bu hatayı yok say.)');
     }
 }
 
