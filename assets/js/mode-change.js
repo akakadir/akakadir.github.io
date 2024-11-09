@@ -13,7 +13,7 @@ function changeMode() {
 }
 
 function changeGiscusTheme() {
-    const theme = document.body.getAttribute('data-theme') === 'https://akakadir.github.io/assets/css/giscus_dark.css' ? 'https://akakadir.github.io/assets/css/giscus_dark.css' : 'https://akakadir.github.io/assets/css/giscus_light.css';
+    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'https://akakadir.github.io/assets/css/giscus_dark.css' : 'https://akakadir.github.io/assets/css/giscus_light.css';
 
     function sendMessage(message) {
         const iframe = document.querySelector('iframe.giscus-frame');
