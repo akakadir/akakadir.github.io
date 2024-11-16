@@ -100,5 +100,9 @@ main .gsc-loading-image {
 }
 
 main .gsc-header {
-display:none;
+display: none;
+}
+
+main .gsc-comments {
+margin-top: 1rem;
 }
