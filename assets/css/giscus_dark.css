@@ -1,6 +1,7 @@
 /*! MIT License
  * Copyright (c) 2018 GitHub Inc.
  * https://github.com/primer/primitives/blob/main/LICENSE
+ * re-worked for https://akakadir.github.io
  */
 
 main {
@@ -34,8 +35,8 @@ main {
   --color-prettylights-syntax-brackethighlighter-angle: #8b949e;
   --color-prettylights-syntax-sublimelinter-gutter-mark: #484f58;
   --color-prettylights-syntax-constant-other-reference-link: #a5d6ff;
-  --color-btn-text: #c9d1d9;
-  --color-btn-bg: #21262d;
+  --color-btn-text: #cccccc;
+  --color-btn-bg: #1e1e1e;
   --color-btn-border: rgb(240 246 252 / 10%);
   --color-btn-shadow: 0 0 transparent;
   --color-btn-inset-shadow: 0 0 transparent;
@@ -57,23 +58,23 @@ main {
   --color-btn-primary-disabled-bg: rgb(35 134 54 / 60%);
   --color-btn-primary-disabled-border: rgb(240 246 252 / 10%);
   --color-action-list-item-default-hover-bg: rgb(177 186 196 / 12%);
-  --color-segmented-control-bg: #333333;
-  --color-segmented-control-button-bg: #111111;
-  --color-segmented-control-button-selected-border: #333333;
+  --color-segmented-control-bg: rgb(110 118 129 / 10%);
+  --color-segmented-control-button-bg: #0d1117;
+  --color-segmented-control-button-selected-border: #6e7681;
   --color-fg-default: #cccccc;
-  --color-fg-muted: #888888;
-  --color-fg-subtle: #333333;
+  --color-fg-muted: #acacac;
+  --color-fg-subtle: 3f3f3f;
   --color-canvas-default: #111111;
-  --color-canvas-overlay: #222222;
+  --color-canvas-overlay: #101010;
   --color-canvas-inset: #111111;
-  --color-canvas-subtle: #222222;
+  --color-canvas-subtle: #171717;
   --color-border-default: #333333;
-  --color-border-muted: #222222;
-  --color-neutral-muted: #222222;
+  --color-border-muted: #1e1e1e;
+  --color-neutral-muted: rgb(31 31 31 / 40%);
   --color-accent-fg: #53a245;
-  --color-accent-emphasis: #53a245;
-  --color-accent-muted: #333333;
-  --color-accent-subtle: #333333;
+  --color-accent-emphasis: #539245;
+  --color-accent-muted: rgb(87 168 69 / 40%);
+  --color-accent-subtle: rgb(87 168 69 / 10%);
   --color-success-fg: #3fb950;
   --color-attention-fg: #d29922;
   --color-attention-muted: rgb(187 128 9 / 40%);
@@ -82,12 +83,12 @@ main {
   --color-danger-muted: rgb(248 81 73 / 40%);
   --color-danger-subtle: rgb(248 81 73 / 10%);
   --color-primer-shadow-inset: 0 0 transparent;
-  --color-scale-gray-3: #333333;
-  --color-scale-green-8: #53a245;
+  --color-scale-gray-7: #21262d;
+  --color-scale-blue-8: #0c2d6b;
 
   /*! Extensions from @primer/css/alerts/flash.scss */
-  --color-social-reaction-bg-hover: var(--color-scale-gray-3);
-  --color-social-reaction-bg-reacted-hover: var(--color-scale-green-8);
+  --color-social-reaction-bg-hover: var(--color-scale-gray-7);
+  --color-social-reaction-bg-reacted-hover: var(--color-scale-blue-8);
 }
 
 main .pagination-loader-container {
