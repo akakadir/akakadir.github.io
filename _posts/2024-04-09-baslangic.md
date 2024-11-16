@@ -10,9 +10,16 @@ Uzun zaman sonra klavye başına geçip bildiklerimi ya da yaşadığım ve dök
 Elimden geldiğince burda olmaya çalışacağım.
 
 Proje oluşumunda kullanılan bütün yazılımlar ektedir:
+ekleme durumuna göre alttaki liste güncellenecektir.
 
 sunucu: [github](https://pages.github.com/)
 
 temel yapı: [jekyll](https://jekyllrb.com/)
 
-jekyll teması: [no-style-please](https://github.com/riggraz/no-style-please)
+jekyll teması: [no-style-please](https://github.com/riggraz/no-style-please/)
+
+-edit-
+
+çeviri eklentisi: [google-translate](https://translate.google.com/)
+
+yorum modülü: [giscus](https://giscus.app/)
