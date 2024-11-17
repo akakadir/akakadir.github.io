@@ -107,3 +107,18 @@ main .gsc-comments {
 margin-top: 1rem;
 margin-bottom: 1rem;
 }
+
+main .btn-primary {
+  background: linear-gradient(#407045, #305530);
+  border-color: #083;
+  color: #e2e2e2;
+}
+
+main .btn-primary:hover {
+  background: linear-gradient(#508055, #407045);
+}
+
+main .btn-primary:disabled {
+  background: linear-gradient(#203522, #152715);
+  border-color: #041;
+}
