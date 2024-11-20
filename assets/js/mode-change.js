@@ -16,15 +16,14 @@ function changeMode() {
 function changeGiscusTheme() {
     const theme = document.body.getAttribute('data-theme') === 'dark' ? 'https://akakadir.github.io/assets/css/giscus_dark.css' : 'https://akakadir.github.io/assets/css/giscus_light.css';
 
-    function sendMessage(message) {
-        const iframe = document.querySelector('iframe.giscus-frame');
-        if (!iframe) return console.error('Giscus yüklenemedi!');
-
-        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+    // Giscus iframe'inin temayı hemen güncellemeye çalışalım
+    const iframe = document.querySelector('iframe.giscus-frame');
+    if (iframe) {
+        iframe.contentWindow.postMessage({ giscus: { setConfig: { theme: theme } } }, 'https://giscus.app');
+        document.cookie = `giscusTheme=${theme}; max-age=31536000; SameSite=Lax; path=/`; // Çerez güncelleme
+    } else {
+        console.error('Giscus iframe bulunamadı!');
     }
-
-    sendMessage({ setConfig: { theme: theme } });
-    document.cookie = `giscusTheme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
 }
 
 function checkThemeOnLoad() {
@@ -38,9 +37,10 @@ function checkThemeOnLoad() {
 
     const giscusTheme = getCookie("giscusTheme");
     if (giscusTheme) {
+        // Giscus teması çerezden alınıp doğru tema uygulanacak
         changeGiscusTheme();
     } else {
-        // Eğer Giscus teması çereze kaydedilmemişse, sayfa temasına göre Giscus temasını ayarla
+        // Giscus teması çereze kaydedilmemişse, sayfa temasına göre Giscus temasını ayarla
         changeGiscusTheme();
     }
 }
