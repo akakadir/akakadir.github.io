@@ -33,10 +33,10 @@ function setThemeFromCookie() {
   changeGiscusTheme();
 }
 
-const modeToggle = document.getElementsByClassName("mode-toggle")[0];
+const modeButton = document.getElementById("mode");
 
-if (modeToggle) {
-  modeToggle.addEventListener('click', () => {
+if (modeButton) {
+  modeButton.addEventListener('click', () => {
     const currentTheme = document.body.getAttribute("data-theme");
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     document.body.setAttribute("data-theme", newTheme);
