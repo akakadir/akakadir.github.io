@@ -10,7 +10,7 @@ function changeMode() {
     document.body.setAttribute("data-theme", theme);
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
 
-    changeGiscusTheme();
+    changeGiscusTheme();  // Tema değiştirildiğinde Giscus temasını da güncelle
 }
 
 function changeGiscusTheme() {
@@ -38,8 +38,10 @@ function checkThemeOnLoad() {
 
     const giscusTheme = getCookie("giscusTheme");
     if (giscusTheme) {
+        // Sayfa yüklendiğinde giscus temasını doğru şekilde ayarla
         changeGiscusTheme();
     } else {
+        // Giscus teması yoksa, varsayılan olarak uygun temayı ayarla
         changeGiscusTheme();
     }
 }
@@ -55,7 +57,7 @@ function getCookie(name) {
 function initGiscus() {
     const iframe = document.querySelector('iframe.giscus-frame');
     if (iframe) {
-        changeGiscusTheme();
+        changeGiscusTheme(); // Giscus temasını başlat
     } else {
         console.error('Giscus yüklenemedi!');
     }
@@ -67,12 +69,12 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 window.addEventListener("load", () => {
-    checkThemeOnLoad();
-    initGiscus();
+    checkThemeOnLoad();  // Sayfa yüklendiğinde temayı ve Giscus temasını kontrol et
+    initGiscus();        // Giscus'ı başlat
 });
 
 window.addEventListener("message", (event) => {
     if (event.origin === "https://giscus.app") {
-        changeGiscusTheme();
+        changeGiscusTheme();  // Giscus mesajı aldığında temayı güncelle
     }
 });
