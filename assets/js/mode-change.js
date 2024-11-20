@@ -9,6 +9,7 @@ function changeMode() {
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
+
     changeGiscusTheme();
 }
 
@@ -17,7 +18,7 @@ function changeGiscusTheme() {
 
     function sendMessage(message) {
         const iframe = document.querySelector('iframe.giscus-frame');
-        if (!iframe) return console.error('Giscus yüklenemedi! (eğer post sayfasında değilsen bu hatayı yok say.)');
+        if (!iframe) return console.error('Giscus yüklenemedi!');
 
         iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
     }
@@ -49,7 +50,7 @@ function initGiscus() {
     if (iframe) {
         changeGiscusTheme();
     } else {
-        console.error('Giscus yüklenemedi! (eğer post sayfasında değilsen bu hatayı yok say.)');
+        console.error('Giscus yüklenemedi!');
     }
 }
 
