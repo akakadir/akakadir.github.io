@@ -1,20 +1,6 @@
-function changeMode() {
-    let theme = document.body.getAttribute("data-theme");
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-    if (theme === null) {
-        theme = isDark ? "dark" : "light";
-    }
-
-    theme = theme === "dark" ? "light" : "dark";
-    document.body.setAttribute("data-theme", theme);
-    document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
-
-    changeGiscusTheme();
-}
-
 function changeGiscusTheme() {
     const theme = document.body.getAttribute('data-theme') === 'dark' ? 'https://akakadir.github.io/assets/css/giscus_dark.css' : 'https://akakadir.github.io/assets/css/giscus_light.css';
+    const language = getCookie("language") || "tr";  // Dil parametresini çerezden al, varsayılan olarak 'tr'
 
     function sendMessage(message) {
         const iframe = document.querySelector('iframe.giscus-frame');
@@ -23,8 +9,9 @@ function changeGiscusTheme() {
         iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
     }
 
-    sendMessage({ setConfig: { theme: theme } });
+    sendMessage({ setConfig: { theme: theme, language: language } });
     document.cookie = `giscusTheme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
+    document.cookie = `giscusLanguage=${language}; max-age=31536000; SameSite=Lax; path=/`;  // Giscus dilini çerezde sakla
 }
 
 function checkThemeOnLoad() {
@@ -42,6 +29,11 @@ function checkThemeOnLoad() {
     } else {
         changeGiscusTheme();
     }
+
+    const giscusLanguage = getCookie("giscusLanguage");
+    if (giscusLanguage) {
+        document.querySelector('iframe.giscus-frame').setAttribute('data-language', giscusLanguage);
+    }
 }
 
 function getCookie(name) {
@@ -49,15 +41,6 @@ function getCookie(name) {
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) {
         return parts.pop().split(";").shift();
-    }
-}
-
-function initGiscus() {
-    const iframe = document.querySelector('iframe.giscus-frame');
-    if (iframe) {
-        changeGiscusTheme();
-    } else {
-        console.error('Giscus yüklenemedi!');
     }
 }
 
