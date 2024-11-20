@@ -9,13 +9,12 @@ function changeMode() {
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
     document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
-
-    changeGiscusTheme();
+    changeGiscusTheme(theme);
 }
 
-function changeGiscusTheme() {
-    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'https://akakadir.github.io/assets/css/giscus_dark.css' : 'https://akakadir.github.io/assets/css/giscus_light.css';
-
+function changeGiscusTheme(theme) {
+    theme = theme || document.body.getAttribute('data-theme') === 'dark' ? 'https://akakadir.github.io/assets/css/giscus_dark.css' : 'https://akakadir.github.io/assets/css/giscus_light.css';
+    
     function sendMessage(message) {
         const iframe = document.querySelector('iframe.giscus-frame');
         if (!iframe) return console.error('Giscus yüklenemedi!');
@@ -34,7 +33,9 @@ function checkThemeOnLoad() {
         const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         document.body.setAttribute("data-theme", isDark ? "dark" : "light");
     }
-    changeGiscusTheme();
+
+    const currentTheme = document.body.getAttribute("data-theme");
+    changeGiscusTheme(currentTheme);
 }
 
 function getCookie(name) {
@@ -48,7 +49,8 @@ function getCookie(name) {
 function initGiscus() {
     const iframe = document.querySelector('iframe.giscus-frame');
     if (iframe) {
-        changeGiscusTheme();
+        const currentTheme = document.body.getAttribute("data-theme");
+        changeGiscusTheme(currentTheme);
     } else {
         console.error('Giscus yüklenemedi!');
     }
