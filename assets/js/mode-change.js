@@ -26,6 +26,7 @@ function changeGiscusTheme() {
 }
 
 function checkThemeOnLoad() {
+    // Tema çerezi kontrolü
     const theme = getCookie("theme");
     if (theme) {
         document.body.setAttribute("data-theme", theme);
@@ -34,11 +35,16 @@ function checkThemeOnLoad() {
         document.body.setAttribute("data-theme", isDark ? "dark" : "light");
     }
 
+    // Giscus tema çerezi kontrolü
     const giscusTheme = getCookie("giscusTheme");
     if (giscusTheme) {
-        changeGiscusTheme();
+        // Giscus temasını çerezden ayarla
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (iframe) {
+            iframe.contentWindow.postMessage({ giscus: { setConfig: { theme: giscusTheme } } }, 'https://giscus.app');
+        }
     } else {
-        changeGiscusTheme();
+        changeGiscusTheme(); // Tema çerezi yoksa varsayılan olarak ayarla
     }
 }
 
@@ -67,12 +73,12 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 window.addEventListener("load", () => {
-    checkThemeOnLoad();
-    initGiscus();
+    checkThemeOnLoad();  // Sayfa yüklendiğinde temayı kontrol et ve ayarla
+    initGiscus();        // Giscus'ü başlat
 });
 
 window.addEventListener("message", (event) => {
     if (event.origin === "https://giscus.app") {
-        changeGiscusTheme();
+        changeGiscusTheme();  // Giscus'tan gelen mesajı dinleyerek temayı güncelle
     }
 });
