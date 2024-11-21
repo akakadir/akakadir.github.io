@@ -56,7 +56,10 @@ function getCookie(name) {
 function initGiscus() {
     const iframe = document.querySelector('iframe.giscus-frame');
     if (iframe) {
-        changeGiscusTheme();
+        iframe.onload = function() {
+            // Giscus iframe yüklendikten sonra temayı ayarla
+            changeGiscusTheme();
+        };
     } else {
         console.error('Giscus yüklenemedi!');
     }
