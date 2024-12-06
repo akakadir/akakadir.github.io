@@ -9,7 +9,7 @@ function changeMode() {
     // Tema değiştirme
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
-    
+
     // LocalStorage'da sakla
     localStorage.setItem("theme", theme);
 
@@ -70,6 +70,12 @@ function autoChangeMode() {
     changeGiscusTheme(document.body.getAttribute("data-theme"));
 }
 
+// Tema değişikliğinde Giscus temasını güncellemek için kullanılır
+function syncGiscusWithPageTheme() {
+    const theme = document.body.getAttribute("data-theme");
+    changeGiscusTheme(theme);
+}
+
 // DOMContentLoaded olayı ile tema butonuna tıklama olayını dinleyin
 document.addEventListener("DOMContentLoaded", function () {
     // Tema değiştirme butonuna event listener ekleyin
@@ -77,4 +83,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Cihazın tema değişimini takip etmek için
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
+
+    // Sayfa değişikliği (önceki/sonraki) sonrası Giscus temasını senkronize et
+    window.addEventListener('popstate', syncGiscusWithPageTheme);  // Geçiş sonrası Giscus temasını güncelle
+
+    // Eğer AJAX yüklemesi varsa, sayfa yüklenirken Giscus'u senkronize et
+    // AJAX ile yapılan geçişleri de takip edebilmek için şu şekilde bir kontrol ekleyebilirsiniz:
+    const observer = new MutationObserver(syncGiscusWithPageTheme);
+    observer.observe(document.body, { childList: true, subtree: true });
 });
