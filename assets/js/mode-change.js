@@ -1,50 +1,71 @@
-// change theme mode and save to cookie
+// Tema modunu değiştir ve localStorage'da sakla
 function changeMode() {
-    // detect body data-theme attribute
     let theme = document.body.getAttribute("data-theme");
-    // on first load, check if user has a preference in cookie
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     if (theme === null) {
         theme = isDark ? "dark" : "light";
     }
-    // toggle theme
+
+    // Tema değiştirme
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
-    // save theme preference to cookie for 1 year and set SameSite to all pages
-    document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
+    
+    // LocalStorage'da sakla
+    localStorage.setItem("theme", theme);
+
+    // Giscus temasını güncelle
+    changeGiscusTheme(theme);
 }
 
-// add event load to check cookie for theme preference and set the theme
-window.addEventListener("load", () => {
-    // check if user has a preference in cookie
-    const theme = getCookie("theme");
-    if (theme) {
-        document.body.setAttribute("data-theme", theme);
+// Giscus teması güncelleme
+function changeGiscusTheme(theme) {
+    const giscusTheme = theme === 'dark' ? 'https://akakadir.github.io/assets/css/giscus_dark.css' : 'https://akakadir.github.io/assets/css/giscus_light.css';
+    const iframe = document.querySelector('iframe.giscus-frame');
+    
+    // İframe'i bulup Giscus temasını güncelleme
+    if (iframe) {
+        try {
+            iframe.contentWindow.postMessage({
+                giscus: {
+                    setConfig: {
+                        theme: giscusTheme
+                    }
+                }
+            }, 'https://giscus.app');
+            // Giscus temasını localStorage'a kaydet
+            localStorage.setItem('giscusTheme', giscusTheme);
+        } catch (error) {
+            console.error("Giscus iframe güncellenemedi", error);
+        }
     }
+}
+
+// Sayfa yüklendiğinde tema ayarlarını kontrol et
+window.addEventListener("load", () => {
+    // LocalStorage'dan tema bilgisi al
+    const theme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.body.setAttribute("data-theme", theme);
+
+    // Giscus temasını yükle
+    changeGiscusTheme(theme);
 });
-// auto change theme based data-theme attribute
+
+// Auto-change mode fonksiyonu, cihaz tema tercihini takip eder
 function autoChangeMode() {
-    // detect body data-theme attribute
-    let theme = document.body.getAttribute("data-theme");
-    // on first load, check if user has a preference in cookie
+    const theme = document.body.getAttribute("data-theme");
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     if (theme === null) {
-        theme = isDark ? "dark" : "light";
+        document.body.setAttribute("data-theme", isDark ? "dark" : "light");
     }
+    // Giscus temasını otomatik güncelle
+    changeGiscusTheme(document.body.getAttribute("data-theme"));
 }
 
-// get cookie by name
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) {
-        return parts.pop().split(";").shift();
-    }
-}
-// make it priority to load before other scripts
+// DOMContentLoaded olayı ile tema butonuna tıklama olayını dinleyin
 document.addEventListener("DOMContentLoaded", function () {
-    // add event listener to mode button
+    // Tema değiştirme butonuna event listener ekleyin
     document.getElementById("mode").addEventListener("click", changeMode);
-    // add event listener to auto change mode
+
+    // Cihazın tema değişimini takip etmek için
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
 });
