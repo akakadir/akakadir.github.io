@@ -87,8 +87,15 @@ document.addEventListener("DOMContentLoaded", function () {
     // Sayfa değişikliği (önceki/sonraki) sonrası Giscus temasını senkronize et
     window.addEventListener('popstate', syncGiscusWithPageTheme);  // Geçiş sonrası Giscus temasını güncelle
 
+    // Sayfa geçişlerinde Giscus temasını güncelle
+    document.body.addEventListener('click', () => {
+        setTimeout(() => {
+            const theme = document.body.getAttribute("data-theme");
+            changeGiscusTheme(theme);
+        }, 100);  // 100ms gecikmeli senkronizasyon
+    });
+
     // Eğer AJAX yüklemesi varsa, sayfa yüklenirken Giscus'u senkronize et
-    // AJAX ile yapılan geçişleri de takip edebilmek için şu şekilde bir kontrol ekleyebilirsiniz:
     const observer = new MutationObserver(syncGiscusWithPageTheme);
     observer.observe(document.body, { childList: true, subtree: true });
 });
