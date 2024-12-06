@@ -1,101 +1,84 @@
-// Tema modunu değiştir ve localStorage'da sakla
 function changeMode() {
     let theme = document.body.getAttribute("data-theme");
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
     if (theme === null) {
         theme = isDark ? "dark" : "light";
     }
 
-    // Tema değiştirme
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
+    document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
 
-    // LocalStorage'da sakla
-    localStorage.setItem("theme", theme);
-
-    // Giscus temasını güncelle
-    changeGiscusTheme(theme);
+    changeGiscusTheme();
 }
 
-// Giscus teması güncelleme
-function changeGiscusTheme(theme) {
-    const giscusTheme = theme === 'dark' ? 'https://akakadir.github.io/assets/css/giscus_dark.css' : 'https://akakadir.github.io/assets/css/giscus_light.css';
+function changeGiscusTheme() {
+    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'https://akakadir.github.io/assets/css/giscus_dark.css' : 'https://akakadir.github.io/assets/css/giscus_light.css';
+
     const iframe = document.querySelector('iframe.giscus-frame');
-    
-    // İframe'i bulup Giscus temasını güncelleme
     if (iframe) {
-        try {
-            iframe.contentWindow.postMessage({
-                giscus: {
-                    setConfig: {
-                        theme: giscusTheme
-                    }
-                }
-            }, 'https://giscus.app');
-            // Giscus temasını localStorage'a kaydet
-            localStorage.setItem('giscusTheme', giscusTheme);
-        } catch (error) {
-            console.error("Giscus iframe güncellenemedi", error);
-        }
+        iframe.contentWindow.postMessage({ giscus: { setConfig: { theme: theme } } }, 'https://giscus.app');
+        document.cookie = `giscusTheme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
+    } else {
+        console.error('Giscus iframe bulunamadı!');
     }
 }
 
-// Sayfa yüklendiğinde tema ayarlarını kontrol et
-window.addEventListener("load", () => {
-    // LocalStorage'dan tema bilgisi al
-    const theme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    document.body.setAttribute("data-theme", theme);
-
-    // Giscus temasını yükle
-    changeGiscusTheme(theme);
-
-    // Eğer Giscus iframe'i varsa, temayı yeniden güncelle
-    const iframe = document.querySelector('iframe.giscus-frame');
-    if (iframe) {
-        iframe.onload = () => {
-            // Giscus iframe'i yüklendiğinde, tema güncelleme
-            changeGiscusTheme(theme);
-        }
-    }
-});
-
-// Auto-change mode fonksiyonu, cihaz tema tercihini takip eder
-function autoChangeMode() {
-    const theme = document.body.getAttribute("data-theme");
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (theme === null) {
+function checkThemeOnLoad() {
+    // Tema çerezi kontrolü
+    const theme = getCookie("theme");
+    if (theme) {
+        document.body.setAttribute("data-theme", theme);
+    } else {
+        const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         document.body.setAttribute("data-theme", isDark ? "dark" : "light");
     }
-    // Giscus temasını otomatik güncelle
-    changeGiscusTheme(document.body.getAttribute("data-theme"));
+
+    // Giscus tema çerezi kontrolü
+    const giscusTheme = getCookie("giscusTheme");
+    if (giscusTheme) {
+        // Giscus temasını çerezden ayarla
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (iframe) {
+            iframe.contentWindow.postMessage({ giscus: { setConfig: { theme: giscusTheme } } }, 'https://giscus.app');
+        }
+    } else {
+        changeGiscusTheme(); // Tema çerezi yoksa varsayılan olarak ayarla
+    }
 }
 
-// Tema değişikliğinde Giscus temasını güncellemek için kullanılır
-function syncGiscusWithPageTheme() {
-    const theme = document.body.getAttribute("data-theme");
-    changeGiscusTheme(theme);
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return parts.pop().split(";").shift();
+    }
 }
 
-// DOMContentLoaded olayı ile tema butonuna tıklama olayını dinleyin
+function initGiscus() {
+    const iframe = document.querySelector('iframe.giscus-frame');
+    if (iframe) {
+        iframe.onload = function() {
+            changeGiscusTheme();
+        };
+    } else {
+        console.error('Giscus yüklenemedi!');
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
-    // Tema değiştirme butonuna event listener ekleyin
     document.getElementById("mode").addEventListener("click", changeMode);
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", changeMode);
+});
 
-    // Cihazın tema değişimini takip etmek için
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
+window.addEventListener("load", () => {
+    checkThemeOnLoad();  // Sayfa yüklendiğinde temayı kontrol et ve ayarla
+    initGiscus();        // Giscus'ü başlat
+});
 
-    // Sayfa değişikliği (önceki/sonraki) sonrası Giscus temasını senkronize et
-    window.addEventListener('popstate', syncGiscusWithPageTheme);  // Geçiş sonrası Giscus temasını güncelle
-
-    // Sayfa geçişlerinde Giscus temasını güncelle
-    document.body.addEventListener('click', () => {
-        setTimeout(() => {
-            const theme = document.body.getAttribute("data-theme");
-            changeGiscusTheme(theme);
-        }, 100);  // 100ms gecikmeli senkronizasyon
-    });
-
-    // Eğer AJAX yüklemesi varsa, sayfa yüklenirken Giscus'u senkronize et
-    const observer = new MutationObserver(syncGiscusWithPageTheme);
-    observer.observe(document.body, { childList: true, subtree: true });
+window.addEventListener("message", (event) => {
+    if (event.origin === "https://giscus.app") {
+        changeGiscusTheme();  // Giscus'tan gelen mesajı dinleyerek temayı güncelle
+    }
 });
