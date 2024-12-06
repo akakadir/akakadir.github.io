@@ -48,6 +48,15 @@ window.addEventListener("load", () => {
 
     // Giscus temasını yükle
     changeGiscusTheme(theme);
+
+    // Eğer Giscus iframe'i varsa, temayı yeniden güncelle
+    const iframe = document.querySelector('iframe.giscus-frame');
+    if (iframe) {
+        iframe.onload = () => {
+            // Giscus iframe'i yüklendiğinde, tema güncelleme
+            changeGiscusTheme(theme);
+        }
+    }
 });
 
 // Auto-change mode fonksiyonu, cihaz tema tercihini takip eder
