@@ -96,7 +96,7 @@ main .pagination-loader-container {
 }
 
 main .gsc-loading-image {
-  background-image: url("https://files.catbox.moe/lmx47g.gif");
+  display:none;
 }
 
 main .gsc-header {
