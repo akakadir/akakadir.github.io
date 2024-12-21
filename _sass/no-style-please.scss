@@ -17,7 +17,14 @@
   code::-webkit-scrollbar-thumb {
     background-color: #1f1f1f;
   }
+
+  .goog-te-gadget a.VIpgJd-ZVi9od-l4eHX-hSRGPd {
+  color: #bbb;
 }
+.goog-te-gadget a.VIpgJd-ZVi9od-l4eHX-hSRGPd::before {
+  content: "Google ";
+}
+ }
 
 body[data-theme="dark"] {
   @include dark-appearance;
