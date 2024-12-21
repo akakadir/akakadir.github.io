@@ -8,7 +8,7 @@ function changeMode() {
 
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
-    document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
+    localStorage.setItem("theme", theme);  // localStorage'a kaydediyoruz
 
     // Giscus temasını da güncelle
     changeGiscusTheme(theme);
@@ -22,16 +22,16 @@ function changeGiscusTheme(theme) {
     const iframe = document.querySelector('iframe.giscus-frame');
     if (iframe) {
         iframe.contentWindow.postMessage({ giscus: { setConfig: { theme: giscusTheme } } }, 'https://giscus.app');
-        document.cookie = `giscusTheme=${giscusTheme}; max-age=31536000; SameSite=Lax; path=/`;
+        localStorage.setItem("giscusTheme", giscusTheme);  // Giscus teması localStorage'a kaydediliyor
     } else {
         console.error('Giscus iframe bulunamadı!');
     }
 }
 
 function checkThemeOnLoad() {
-    // Sayfa temasını çerezden kontrol et
-    const theme = getCookie("theme");
-    const giscusTheme = getCookie("giscusTheme");
+    // Sayfa temasını localStorage'dan kontrol et
+    const theme = localStorage.getItem("theme");
+    const giscusTheme = localStorage.getItem("giscusTheme");
 
     if (theme) {
         document.body.setAttribute("data-theme", theme);
@@ -40,9 +40,9 @@ function checkThemeOnLoad() {
         document.body.setAttribute("data-theme", isDark ? "dark" : "light");
     }
 
-    // Giscus temasını çerezden kontrol et ve uygula
+    // Giscus temasını localStorage'dan kontrol et ve uygula
     if (giscusTheme) {
-        // Giscus temasını çerezden ayarla
+        // Giscus temasını localStorage'dan ayarla
         const iframe = document.querySelector('iframe.giscus-frame');
         if (iframe) {
             iframe.contentWindow.postMessage({ giscus: { setConfig: { theme: giscusTheme } } }, 'https://giscus.app');
@@ -51,15 +51,6 @@ function checkThemeOnLoad() {
         // Giscus temasını varsayılan olarak ayarla
         const currentTheme = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
         changeGiscusTheme(currentTheme);
-    }
-}
-
-function getCookie(name) {
-    const value = document.cookie;
-    const parts = value.split(`; ${name}=`);
-
-    if (parts.length === 2) {
-        return parts.pop().split(";").shift();
     }
 }
 
