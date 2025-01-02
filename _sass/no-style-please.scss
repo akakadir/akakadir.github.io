@@ -10,11 +10,14 @@
     color: #ccc;
   }
 
-  .language-plaintext {
+.language-plaintext {
+    border-radius: 0px;
     background-color: #1f1f1f;
     border-color: #1f1f1f;
+    font-family: Source Sans Pro, sans-serif;
+    border: 0px;
     padding: 0px 0px;
-}
+  }
 
   code {
     border: 1px solid #333;
