@@ -177,14 +177,11 @@ img {
 }
 
 .goog-te-gadget a.VIpgJd-ZVi9od-l4eHX-hSRGPd::before {
-  content: "Google ";
+    content: "Google ";
 }
 
 .goog-te-gadget a.VIpgJd-ZVi9od-l4eHX-hSRGPd[href^="http"]::after {
-    background-image: none;
-    margin-left: 0em;
-    width: 0em;
-    height: 0em;
+    background-image: url("https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Google_Translate_logo.svg/1024px-Google_Translate_logo.svg.png");
 }
 
   font {
