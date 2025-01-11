@@ -13,15 +13,19 @@ layout: default
 
   {{ content }}
 </article>
-<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
 <div class="select-wrapper" id="translate"></div>
 <script>
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement(
-                {includedLanguages:'tr,en,de,fr,es'},
-                'translate'
-            );
-        }
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement(
+            { includedLanguages: 'tr,en,de,fr,es' },
+            'translate'
+        );
+    }
+    window.addEventListener("popstate", function () {
+        document.getElementById("translate").innerHTML = "";
+        googleTranslateElementInit();
+    });
 </script>
 
 <script src="https://giscus.app/client.js"
