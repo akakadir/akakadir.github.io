@@ -13,7 +13,6 @@ layout: default
 
   {{ content }}
 </article>
-<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 <div class="select-wrapper" id="translate"></div>
 <script>
     function googleTranslateElementInit() {
@@ -23,16 +22,24 @@ layout: default
         );
     }
 
-    function initializeTranslate() {
+    function resetGoogleTranslate() {
         const translateElement = document.getElementById('translate');
-        if (!translateElement.innerHTML.trim()) {
-            googleTranslateElementInit();
+        translateElement.innerHTML = "";
+        const scriptId = 'google-translate-script';
+        const existingScript = document.getElementById(scriptId);
+        if (existingScript) {
+            existingScript.remove();
         }
+        const script = document.createElement('script');
+        script.id = scriptId;
+        script.src = `https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit&ts=${Date.now()}`;
+        document.head.appendChild(script);
     }
-
-    window.addEventListener('popstate', initializeTranslate);
-    document.addEventListener('DOMContentLoaded', initializeTranslate);
+    window.addEventListener('DOMContentLoaded', resetGoogleTranslate);
+    window.addEventListener('pageshow', resetGoogleTranslate);
+    window.addEventListener('popstate', resetGoogleTranslate);
 </script>
+
 
 <script src="https://giscus.app/client.js"
     data-repo="akakadir/akakadir.github.io"
