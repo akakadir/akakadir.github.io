@@ -1,10 +1,6 @@
 @import 'https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,400italic,700italic,600&subset=latin,latin-ext';
 
 @mixin dark-appearance {
-  html {
-    background: #111;
-  }
-
   
   .select-wrapper select {
     border: 1px solid #333;
@@ -39,6 +35,10 @@ body[data-theme="dark"] {
   background: #111;
   color: #ccc;
 }
+
+html[data-theme="dark"] {
+    background: #111;
+  }
 
 body[data-theme="light"] {
 }
