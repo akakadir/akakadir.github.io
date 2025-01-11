@@ -39,11 +39,10 @@ body[data-theme="dark"] {
 body[data-theme="light"] {
 }
 
-body { background: white; }
-
 html { height: 100%; }
 
 body {
+  background: #fff; 
   color: #333;
   font-family: Source Sans Pro, sans-serif;
   font-size: 16px;
