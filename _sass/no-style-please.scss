@@ -30,7 +30,7 @@
 }
  }
 
-html, body[data-theme="dark"] {
+body[data-theme="dark"] {
   @include dark-appearance;
   background: #111;
   color: #ccc;
@@ -39,19 +39,7 @@ html, body[data-theme="dark"] {
 body[data-theme="light"] {
 }
 
-@media (prefers-color-scheme: dark) {
-  body[data-theme="auto"] {
-    @include dark-appearance;
-
-    }
-  }
-
-@media (prefers-color-scheme: light) {
-  body[data-theme="auto"] {
-    }
-  }
-
-html, body { background: white; }
+body { background: white; }
 
 html { height: 100%; }
 
