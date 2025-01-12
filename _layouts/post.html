@@ -70,39 +70,30 @@ layout: default
 </script>
 
 <script>
-    function loadGiscusOnPageLoad() {
-        const giscusScript = document.getElementById('giscus-script');
-        if (giscusScript && !document.querySelector('iframe.giscus-frame')) {
-            document.body.appendChild(giscusScript);
-        }
-    }
-    function ensureGiscusLoad() {
-        if (typeof giscus !== 'undefined') {
-            const iframe = document.querySelector('iframe.giscus-frame');
-            if (iframe) {
-                iframe.style.display = 'block';
-            }
-        }
-    }
-    function periodicCheckGiscus() {
-        const iframe = document.querySelector('iframe.giscus-frame');
-        if (iframe) {
-            ensureGiscusLoad();
-        }
-    }
-    window.addEventListener('load', function() {
-        loadGiscusOnPageLoad();
-        ensureGiscusLoad();
-        setInterval(periodicCheckGiscus, 3000);
-    });
+let giscusIsLoaded = false;
+function loadGiscusIfNeeded() {
+    if (giscusIsLoaded) return;
 
-    window.addEventListener('pageshow', function() {
-        loadGiscusOnPageLoad();
+    const giscusScript = document.getElementById('giscus-script');
+    if (giscusScript && !document.querySelector('iframe.giscus-frame')) {
+        document.body.appendChild(giscusScript);
+        giscusIsLoaded = true;
+    }
+}
+
+function ensureGiscusLoad() {
+    const iframe = document.querySelector('iframe.giscus-frame');
+    if (iframe) {
+        iframe.style.display = 'block';
+    }
+}
+['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => {
+    window.addEventListener(event, function () {
+        loadGiscusIfNeeded();
         ensureGiscusLoad();
     });
-    window.addEventListener('popstate', loadGiscusOnPageLoad);
+});
 </script>
-
 
 
 {% assign cat = page.categories[0] %}
