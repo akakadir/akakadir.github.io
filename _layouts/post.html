@@ -84,16 +84,25 @@ layout: default
             }
         }
     }
+    function periodicCheckGiscus() {
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (iframe) {
+            ensureGiscusLoad();
+        }
+    }
     window.addEventListener('load', function() {
         loadGiscusOnPageLoad();
         ensureGiscusLoad();
+        setInterval(periodicCheckGiscus, 3000);
     });
+
     window.addEventListener('pageshow', function() {
         loadGiscusOnPageLoad();
         ensureGiscusLoad();
     });
     window.addEventListener('popstate', loadGiscusOnPageLoad);
 </script>
+
 
 
 {% assign cat = page.categories[0] %}
