@@ -66,7 +66,7 @@ layout: default
     data-lang="tr"
     data-loading="lazy"
     crossorigin="anonymous"
-    async>
+    defer>
 </script>
 
 <script>
@@ -76,10 +76,25 @@ layout: default
             document.body.appendChild(giscusScript);
         }
     }
-    window.addEventListener('load', loadGiscusOnPageLoad);
-    window.addEventListener('pageshow', loadGiscusOnPageLoad);
+    function ensureGiscusLoad() {
+        if (typeof giscus !== 'undefined') {
+            const iframe = document.querySelector('iframe.giscus-frame');
+            if (iframe) {
+                iframe.style.display = 'block';
+            }
+        }
+    }
+    window.addEventListener('load', function() {
+        loadGiscusOnPageLoad();
+        ensureGiscusLoad();
+    });
+    window.addEventListener('pageshow', function() {
+        loadGiscusOnPageLoad();
+        ensureGiscusLoad();
+    });
     window.addEventListener('popstate', loadGiscusOnPageLoad);
 </script>
+
 
 {% assign cat = page.categories[0] %}
 {% assign cat_list = site.categories[cat] %}
