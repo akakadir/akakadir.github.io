@@ -15,20 +15,14 @@ layout: default
 </article>
 <div class="select-wrapper" id="translate"></div>
 <script>
-    let isWidgetLoading = false;
-    let debounceTimer;
-
+    let isLoading = false, debounceTimer;
     function googleTranslateElementInit() {
-        new google.translate.TranslateElement(
-            { includedLanguages: 'tr,en,de,fr,es' },
-            'translate'
-        );
-        isWidgetLoading = false;
+        new google.translate.TranslateElement({ includedLanguages: 'tr,en,de,fr,es' }, 'translate');
+        isLoading = false;
     }
-
     function resetGoogleTranslate() {
-        if (isWidgetLoading) return;
-        isWidgetLoading = true;
+        if (isLoading) return;
+        isLoading = true;
 
         const translateElement = document.getElementById('translate');
         translateElement.innerHTML = "";
@@ -40,20 +34,23 @@ layout: default
         const script = document.createElement('script');
         script.id = 'google-translate-script';
         script.src = `https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit&ts=${Date.now()}`;
+        script.onload = () => {
+            isLoading = false;
+        };
+
+        script.onerror = () => {
+            isLoading = false;
+            console.error("Google Translate script yüklenemedi.");
+        };
+
         document.head.appendChild(script);
     }
     function resetGoogleTranslateDebounced() {
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            resetGoogleTranslate();
-        }, 100);
+        debounceTimer = setTimeout(resetGoogleTranslate, 100);
     }
-    window.addEventListener('DOMContentLoaded', resetGoogleTranslateDebounced);
-    window.addEventListener('pageshow', resetGoogleTranslateDebounced);
-    window.addEventListener('popstate', resetGoogleTranslateDebounced);
+    ['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => window.addEventListener(event, resetGoogleTranslateDebounced));
 </script>
-
-
 
 <script src="https://giscus.app/client.js"
     data-repo="akakadir/akakadir.github.io"
