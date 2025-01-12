@@ -94,6 +94,7 @@ layout: default
     ['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => window.addEventListener(event, loadGiscusDebounced));
 </script>
 
+
 {% assign cat = page.categories[0] %}
 {% assign cat_list = site.categories[cat] %}
 {% for post in cat_list %}
