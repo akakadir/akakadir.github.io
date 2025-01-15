@@ -1,5 +1,6 @@
 // Giscus'u dinamik olarak yükleme
 let giscusLoading = false;
+
 function loadGiscus() {
     if (giscusLoading) return;
     giscusLoading = true;
@@ -9,6 +10,7 @@ function loadGiscus() {
         container.innerHTML = ''; // Mevcut içeriği temizle
     }
 
+    // Giscus script'ini oluştur
     const script = document.createElement('script');
     script.src = "https://giscus.app/client.js";
     script.setAttribute("data-repo", "akakadir/akakadir.github.io");
@@ -70,10 +72,40 @@ function applyThemeOnLoad() {
     updateGiscusTheme(theme);
 }
 
+function monitorGiscus() {
+    const iframe = document.querySelector("iframe.giscus-frame");
+    if (iframe) {
+        const theme = document.body.getAttribute("data-theme");
+        updateGiscusTheme(theme);
+        iframe.onload = function () {
+            updateGiscusTheme(theme);
+        };
+    }
+}
+
+// Giscus'un iframe'inin yüklenmesini bekle
+function waitForIframeAndUpdateTheme() {
+    const iframe = document.querySelector('iframe.giscus-frame');
+    if (iframe) {
+        const theme = document.body.getAttribute('data-theme');
+        updateGiscusTheme(theme);
+    } else {
+        // Eğer iframe henüz yüklenmediyse, belirli aralıklarla kontrol et
+        setTimeout(waitForIframeAndUpdateTheme, 500);
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("mode")?.addEventListener("click", () => changeMode());
     applyThemeOnLoad();
+    waitForIframeAndUpdateTheme(); // iframe'in yüklendiğini bekleyerek tema güncellemesi yap
 });
 
-// Sayfa gezinti ve geri dönme işlemlerini gözlemle
-window.addEventListener("pageshow", () => loadGiscus());
+window.addEventListener("pageshow", () => loadGiscus()); // Sayfada gezinme (back/forward) olduğunda Giscus'u yükle
+
+// Giscus iframe'inin yüklenip yüklenmediğini kontrol et
+setInterval(() => {
+    if (!document.querySelector('iframe.giscus-frame')) {
+        loadGiscus(); // Eğer iframe yoksa, tekrar yükle
+    }
+}, 3000);
