@@ -52,7 +52,9 @@ layout: default
     ['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => window.addEventListener(event, resetGoogleTranslateDebounced));
 </script>
 
-<div id="giscus-container"></div>
+<div id="giscus-container">
+<script src="https://akakadir.github.io/assets/js/giscus.js"></script>
+</div>
 
 {% assign cat = page.categories[0] %}
 {% assign cat_list = site.categories[cat] %}
