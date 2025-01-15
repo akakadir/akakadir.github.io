@@ -1,21 +1,18 @@
     let giscusLoading = false;
 
-    // iOS cihazları tespit et
     function isIOS() {
         return /iPhone|iPad|iPod/i.test(navigator.userAgent);
     }
 
-    // Giscus'u yükle
     function loadGiscus() {
         if (giscusLoading) return;
         giscusLoading = true;
 
         const container = document.getElementById('giscus-container');
         if (container) {
-            container.innerHTML = ''; // Mevcut içeriği temizle
+            container.innerHTML = '';
         }
 
-        // Giscus script'ini oluştur
         const script = document.createElement('script');
         script.src = "https://giscus.app/client.js";
         script.setAttribute("data-repo", "akakadir/akakadir.github.io");
@@ -45,19 +42,17 @@
         container.appendChild(script);
     }
 
-    // iOS için özel kontrol
     function iosFix() {
         if (isIOS()) {
             setTimeout(() => {
                 const iframe = document.querySelector('iframe.giscus-frame');
                 if (!iframe) {
-                    loadGiscus(); // Eğer iframe yoksa tekrar yükle
+                    loadGiscus();
                 }
             }, 500);
         }
     }
 
-    // Sayfa yüklendiğinde ve gezinme sırasında Giscus'u kontrol et
     ['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => {
         window.addEventListener(event, () => {
             loadGiscus();
@@ -65,12 +60,11 @@
         });
     });
 
-    // Periyodik kontrol (iOS için güvenlik önlemi)
     setInterval(() => {
         if (isIOS()) {
             const iframe = document.querySelector('iframe.giscus-frame');
             if (!iframe) {
-                loadGiscus(); // Eğer iframe yoksa tekrar yükle
+                loadGiscus();
             }
         }
     }, 3000);
