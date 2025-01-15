@@ -1,59 +1,50 @@
+// change theme mode and save to cookie
 function changeMode() {
+    // detect body data-theme attribute
     let theme = document.body.getAttribute("data-theme");
+    // on first load, check if user has a preference in cookie
+    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (theme === null) {
+        theme = isDark ? "dark" : "light";
+    }
+    // toggle theme
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-    updateGiscusTheme(theme);
+    // save theme preference to cookie for 1 year and set SameSite to all pages
+    document.cookie = `theme=${theme}; max-age=31536000; SameSite=Lax; path=/`;
 }
 
-function updateGiscusTheme(theme) {
-    const giscusTheme = theme === "dark" 
-        ? "https://akakadir.github.io/assets/css/giscus_dark.css" 
-        : "https://akakadir.github.io/assets/css/giscus_light.css";
-
-    const iframe = document.querySelector("iframe.giscus-frame");
-    if (iframe) {
-        iframe.contentWindow.postMessage(
-            { giscus: { setConfig: { theme: giscusTheme } } },
-            "https://giscus.app"
-        );
+// add event load to check cookie for theme preference and set the theme
+window.addEventListener("load", () => {
+    // check if user has a preference in cookie
+    const theme = getCookie("theme");
+    if (theme) {
+        document.body.setAttribute("data-theme", theme);
+    }
+});
+// auto change theme based data-theme attribute
+function autoChangeMode() {
+    // detect body data-theme attribute
+    let theme = document.body.getAttribute("data-theme");
+    // on first load, check if user has a preference in cookie
+    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (theme === null) {
+        theme = isDark ? "dark" : "light";
     }
 }
 
-function applyThemeOnLoad() {
-    const theme = localStorage.getItem("theme") || "light";
-    document.body.setAttribute("data-theme", theme);
-    updateGiscusTheme(theme);
-}
-
-function monitorGiscus() {
-    const iframe = document.querySelector("iframe.giscus-frame");
-    if (iframe) {
-        const theme = document.body.getAttribute("data-theme");
-        updateGiscusTheme(theme);
-        iframe.onload = function () {
-            updateGiscusTheme(theme);
-        };
+// get cookie by name
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return parts.pop().split(";").shift();
     }
 }
-
+// make it priority to load before other scripts
 document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("mode")?.addEventListener("click", () => changeMode());
-    applyThemeOnLoad();
-    monitorGiscus();
+    // add event listener to mode button
+    document.getElementById("mode").addEventListener("click", changeMode);
+    // add event listener to auto change mode
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", autoChangeMode);
 });
-
-window.addEventListener("message", (event) => {
-    if (event.origin === "https://giscus.app") {
-        const theme = document.body.getAttribute("data-theme");
-        updateGiscusTheme(theme);
-    }
-});
-
-setInterval(() => {
-    const iframe = document.querySelector("iframe.giscus-frame");
-    const currentTheme = document.body.getAttribute("data-theme");
-    if (iframe) {
-        updateGiscusTheme(currentTheme);
-    }
-}, 3000);
