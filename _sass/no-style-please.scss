@@ -237,3 +237,15 @@ font-family: Source Sans Pro, sans-serif;
 border: 0px;
 padding: 0px 0px;
 }
+
+#giscus-container {
+max-width: 100%; /* Sayfanın genişliğine göre otomatik ayarla */
+width: 600px;    /* İsteğe bağlı genişlik */
+margin: 0 auto;  /* Ortala */
+overflow: hidden; /* Taşmaları engelle */
+}
+
+iframe.giscus-frame {
+width: 100% !important;
+height: auto !important;
+}
