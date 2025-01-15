@@ -1,0 +1,33 @@
+---
+layout: post
+title: "brute force, ZipRipper rehberi"
+categories: [yazılım, tümü]
+---
+
+Bugün, şifrelenmiş ZIP dosyalarının güvenlik mekanizmalarını ve bu dosyaların şifrelerini çözmek için kullanılan ZipRipper adlı güçlü bir araçtan bahsedeceğim. ZipRipper, özellikle AES-256 ve ZipCrypto gibi şifreleme algoritmalarını kırma konusunda etkili bir araçtır. Bu araç, şifrelenmiş dosyalar üzerinde çalışırken, çeşitli şifre çözme yöntemlerini kullanarak şifreyi çözmeye çalışır. 
+
+Her iki şifreleme algoritması da ZIP dosyalarını korumak için yaygın olarak kullanılır, ancak her birinin güvenlik seviyesi farklıdır. AES-256, günümüzde şifreleme dünyasında en güvenli algoritmalarından biri olarak kabul edilir. Bu şifreleme türü, 256 bitlik anahtar kullanarak verileri şifreler ve oldukça güçlü bir güvenlik sağlar.
+
+Diğer yandan, ZipCrypto daha eski bir şifreleme yöntemidir ve AES-256 ile karşılaştırıldığında daha zayıf bir güvenlik seviyesi sunar. ZipCrypto şifreleme algoritması, daha basit bir yapıya sahiptir ve modern şifre çözme araçları tarafından daha kolay kırılabilir. (7zip kullandığım için özellikle bu iki algoritmaya değindim. bkz: [7zip](https://tr.wikipedia.org/wiki/7-zip))
+
+Kullanım ve kurulum konusuna gelirsek eğer başlarken aracı [buradan](https://github.com/illsk1lls/ZipRipper/blob/main/ZipRipper.cmd) indirebilirsin. Program yardımcı kaynak olarak bazı durumlarda python'a ihtiyaç duyuyor. onu da [buradan](https://www.python.org/ftp/python/3.13.1/python-3.13.1-amd64.exe) indirebilirsin.
+Giriş yaptığın anda seni karşılayan bir logo ve altında yazan ````Start```` ve ````Quit```` seçeneklerini göreceksin, Fakat hepsi bu değil ZipRipper logosunun belli bölümleri belli işlevlere sahip dilersen göstereyim. 
+
+<p align="center">
+<img width="250" height="250" src="https://files.catbox.moe/kc5vhi.png?raw=true"><br>
+<sup>ZipRipper Seçenekleri</sup>
+</p>
+
+Çevrimdışı Mod seçeneğinde ZipRipper, yerel bir kaynak dosyası ````zr-offline.txt```` kullanır/gerek duyar. ````zr-offline.txt```` dosyasının betik ile aynı klasörde bulunması gerekir ve çevrimdışı mod zorunlu hale gelir. Bu mod için internet bağlantısı gerekmez.
+
+Start tuşunu kullandıp giriş yaptığında seni [şöyle](https://files.catbox.moe/tvfplh.PNG) bir ekran karşılayacak. Buradan gelen uyarıya tamam seçeneği ile devam et ve atak yapacağın şifreli dosyanı seç. Ardından karşında [şu](https://files.catbox.moe/er6lql.png) yükleme bildirisi olmalı. Eğer bu bildiriyi görmüyorsan ````python```` kurulumu sırasında oluşan bir sorun senin ilerlemeni engelliyor. CMD üzerinden ````pip```` kontrolü yap. Eğer bir sorun yok ise ````python````'u yeniden kur.
+
+Yükleme tamamlandığında karşına bir uyarı daha gelecek.(bkz: [şu](https://files.catbox.moe/y33729.png)) Bu temel olarak bir split(bölüm) uyarısıdır. elindeki Wordlist(sözcük kaynağı) fazla büyük ise ````yes```` seçeneğini kullanabilirsin.(cihaz performansına göre davran.) ````no```` seçeneğinde varsayılan modda atak başlatılır.(ilk kullanım için ideal.)
+
+Ardından geriye sadece beklemek kalıyor. ````1337````, ````kadir```` ve ````qwe123```` gibi şifreleri anında kırabilirsin. uzun karakterli bir şifreyi kırmak istersen bu düşündüğünden daha da uzun sürecek. işlem bittiğinde [şöyle](https://files.catbox.moe/093d83.PNG) bir ekran ile birlikte masaüstünde ````ZipRipper-Passwords.txt```` adında bir dosya ile karşılaşacaksın. Ve tebrikler artık Brute Force saldırısı, Wordlist terimi ve şifreleme türleri hakkında bilgi sahibisin. 
+
+Bu yazıda, şifrelenmiş ZIP dosyalarının şifreleme türlerini, ZipRipper’ın kullanımını ve wordlist kavramını ele aldık.
+
+başka bir yazıda görüşmek üzere.
+
+iyi şanslar...
