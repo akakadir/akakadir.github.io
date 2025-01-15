@@ -1,8 +1,39 @@
+// Tema değiştirme fonksiyonu
+function changeMode() {
+    let theme = document.body.getAttribute("data-theme");
+    theme = theme === "dark" ? "light" : "dark"; // Temayı değiştir
+    document.body.setAttribute("data-theme", theme); // Tema class'ını güncelle
+    localStorage.setItem("theme", theme); // Tema ayarını kaydet
+    updateGiscusTheme(theme); // Giscus teması güncelle
+}
+
+// Giscus'un temasını güncelleme
+function updateGiscusTheme(theme) {
+    const giscusTheme = theme === "dark" 
+        ? "https://akakadir.github.io/assets/css/giscus_dark.css" 
+        : "https://akakadir.github.io/assets/css/giscus_light.css";
+    
+    // iframe yüklendiyse, Giscus temasını güncelle
+    const iframe = document.querySelector("iframe.giscus-frame");
+    if (iframe) {
+        iframe.contentWindow.postMessage(
+            { giscus: { setConfig: { theme: giscusTheme } } },
+            "https://giscus.app"
+        );
+    }
+}
+
+// Sayfa yüklendiğinde tema ayarını al ve uygula
+function applyThemeOnLoad() {
+    const theme = localStorage.getItem("theme") || "light"; // Yerel depolamadan temayı al
+    document.body.setAttribute("data-theme", theme); // Temayı uygula
+    updateGiscusTheme(theme); // Giscus temasını uygula
+}
+
 // Giscus'u dinamik olarak yükleme
 let giscusLoading = false;
-
 function loadGiscus() {
-    if (giscusLoading) return;
+    if (giscusLoading) return; // Eğer Giscus zaten yükleniyorsa, yeni bir yükleme yapma
     giscusLoading = true;
 
     const container = document.getElementById('giscus-container');
@@ -10,7 +41,6 @@ function loadGiscus() {
         container.innerHTML = ''; // Mevcut içeriği temizle
     }
 
-    // Giscus script'ini oluştur
     const script = document.createElement('script');
     script.src = "https://giscus.app/client.js";
     script.setAttribute("data-repo", "akakadir/akakadir.github.io");
@@ -30,7 +60,7 @@ function loadGiscus() {
 
     script.onload = () => {
         giscusLoading = false;
-        updateGiscusTheme(document.body.getAttribute("data-theme")); // Giscus yüklenince tema güncelle
+        updateGiscusTheme(document.body.getAttribute("data-theme")); // Tema değiştiğinde Giscus'u güncelle
     };
 
     script.onerror = () => {
@@ -41,69 +71,25 @@ function loadGiscus() {
     container.appendChild(script);
 }
 
-// Tema değiştirme fonksiyonu
-function changeMode() {
-    let theme = document.body.getAttribute("data-theme");
-    theme = theme === "dark" ? "light" : "dark";
-    document.body.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-    updateGiscusTheme(theme); // Tema değiştiğinde Giscus'un temasını güncelle
-}
+// Sayfa yüklendiğinde tema ve Giscus'u kontrol et
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("mode")?.addEventListener("click", () => changeMode()); // Tema değiştirme butonuna tıklandığında
+    applyThemeOnLoad(); // Sayfa yüklendiğinde tema ayarını uygula
+    loadGiscus(); // Giscus'u yükle
+});
 
-// Giscus'un temasını güncelleme
-function updateGiscusTheme(theme) {
-    const giscusTheme = theme === "dark" 
-        ? "https://akakadir.github.io/assets/css/giscus_dark.css" 
-        : "https://akakadir.github.io/assets/css/giscus_light.css";
-
-    const iframe = document.querySelector("iframe.giscus-frame");
-    if (iframe) {
-        iframe.contentWindow.postMessage(
-            { giscus: { setConfig: { theme: giscusTheme } } },
-            "https://giscus.app"
-        );
-    }
-}
-
-// Sayfa yüklendiğinde ve gezinme sırasında Giscus'u kontrol et
-function applyThemeOnLoad() {
-    const theme = localStorage.getItem("theme") || "light";
-    document.body.setAttribute("data-theme", theme);
-    updateGiscusTheme(theme);
-}
-
-function monitorGiscus() {
-    const iframe = document.querySelector("iframe.giscus-frame");
-    if (iframe) {
-        const theme = document.body.getAttribute("data-theme");
-        updateGiscusTheme(theme);
-        iframe.onload = function () {
-            updateGiscusTheme(theme);
-        };
-    }
-}
-
-// Giscus'un iframe'inin yüklenmesini bekle
+// Giscus iframe'inin yüklenmesini bekle ve tema güncellemesi yap
 function waitForIframeAndUpdateTheme() {
     const iframe = document.querySelector('iframe.giscus-frame');
     if (iframe) {
         const theme = document.body.getAttribute('data-theme');
         updateGiscusTheme(theme);
     } else {
-        // Eğer iframe henüz yüklenmediyse, belirli aralıklarla kontrol et
-        setTimeout(waitForIframeAndUpdateTheme, 500);
+        setTimeout(waitForIframeAndUpdateTheme, 500); // Eğer iframe henüz yüklenmemişse, 500ms sonra tekrar dene
     }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("mode")?.addEventListener("click", () => changeMode());
-    applyThemeOnLoad();
-    waitForIframeAndUpdateTheme(); // iframe'in yüklendiğini bekleyerek tema güncellemesi yap
-});
-
-window.addEventListener("pageshow", () => loadGiscus()); // Sayfada gezinme (back/forward) olduğunda Giscus'u yükle
-
-// Giscus iframe'inin yüklenip yüklenmediğini kontrol et
+// Periyodik kontrol (iOS için güvenlik önlemi)
 setInterval(() => {
     if (!document.querySelector('iframe.giscus-frame')) {
         loadGiscus(); // Eğer iframe yoksa, tekrar yükle
