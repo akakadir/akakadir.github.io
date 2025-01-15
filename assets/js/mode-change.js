@@ -1,6 +1,3 @@
-<div id="giscus-container"></div>
-
-<script>
     let giscusLoading = false;
 
     // iOS cihazları tespit et
@@ -119,4 +116,3 @@
             loadGiscus(); // Eğer iframe yoksa, tekrar yükle
         }
     }, 3000);
-</script>
