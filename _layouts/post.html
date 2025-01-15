@@ -52,6 +52,7 @@ layout: default
     ['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => window.addEventListener(event, resetGoogleTranslateDebounced));
 </script>
 
+<div id="giscus-container"></div>
 <script id="giscus-script" src="https://giscus.app/client.js"
     data-repo="akakadir/akakadir.github.io"
     data-repo-id="R_kgDOMseKEw"
@@ -68,52 +69,6 @@ layout: default
     crossorigin="anonymous"
     async>
 </script>
-
-<script>
-let giscusIsLoaded = false;
-
-function reloadGiscusForIOS() {
-    // IOS cihazlarda iframe'lerin durumunu sıfırlamak için kontrol.
-    const iframe = document.querySelector('iframe.giscus-frame');
-    if (!iframe) {
-        // Eğer iframe yoksa, Giscus script'ini tekrar yükle
-        const giscusScript = document.getElementById('giscus-script');
-        if (giscusScript) {
-            document.body.appendChild(giscusScript);
-            giscusIsLoaded = true;
-        }
-    } else {
-        // Eğer iframe varsa, görünürlüğünü garanti et
-        iframe.style.display = 'block';
-    }
-}
-
-function loadGiscusIfNeeded() {
-    if (giscusIsLoaded) return;
-
-    const giscusScript = document.getElementById('giscus-script');
-    if (giscusScript && !document.querySelector('iframe.giscus-frame')) {
-        document.body.appendChild(giscusScript);
-        giscusIsLoaded = true;
-    }
-}
-
-// Tüm olay dinleyicileri için Giscus'un durumunu yönet
-['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => {
-    window.addEventListener(event, function () {
-        loadGiscusIfNeeded();
-        reloadGiscusForIOS();
-    });
-});
-
-// iOS'ta ek kontrol için bir interval ile iframe durumunu izleyin
-setInterval(() => {
-    if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
-        reloadGiscusForIOS();
-    }
-}, 500);
-</script>
-
 
 {% assign cat = page.categories[0] %}
 {% assign cat_list = site.categories[cat] %}
