@@ -40,7 +40,7 @@ layout: default
 
         script.onerror = () => {
             isLoading = false;
-            console.error("Google Translate script yüklenemedi.");
+            console.error("Google Çeviri hatası.");
         };
 
         document.head.appendChild(script);
@@ -66,11 +66,28 @@ layout: default
     data-lang="tr"
     data-loading="lazy"
     crossorigin="anonymous"
-    defer>
+    async>
 </script>
 
 <script>
 let giscusIsLoaded = false;
+
+function reloadGiscusForIOS() {
+    // IOS cihazlarda iframe'lerin durumunu sıfırlamak için kontrol.
+    const iframe = document.querySelector('iframe.giscus-frame');
+    if (!iframe) {
+        // Eğer iframe yoksa, Giscus script'ini tekrar yükle
+        const giscusScript = document.getElementById('giscus-script');
+        if (giscusScript) {
+            document.body.appendChild(giscusScript);
+            giscusIsLoaded = true;
+        }
+    } else {
+        // Eğer iframe varsa, görünürlüğünü garanti et
+        iframe.style.display = 'block';
+    }
+}
+
 function loadGiscusIfNeeded() {
     if (giscusIsLoaded) return;
 
@@ -81,18 +98,20 @@ function loadGiscusIfNeeded() {
     }
 }
 
-function ensureGiscusLoad() {
-    const iframe = document.querySelector('iframe.giscus-frame');
-    if (iframe) {
-        iframe.style.display = 'block';
-    }
-}
+// Tüm olay dinleyicileri için Giscus'un durumunu yönet
 ['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => {
     window.addEventListener(event, function () {
         loadGiscusIfNeeded();
-        ensureGiscusLoad();
+        reloadGiscusForIOS();
     });
 });
+
+// iOS'ta ek kontrol için bir interval ile iframe durumunu izleyin
+setInterval(() => {
+    if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+        reloadGiscusForIOS();
+    }
+}, 500);
 </script>
 
 
