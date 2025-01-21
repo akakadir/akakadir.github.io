@@ -13,8 +13,8 @@ function fetchSpotifyToken(callback) {
         success: function (response) {
             callback(response.access_token);
         },
-        error: function () {
-            console.error("Spotify token alınırken bir hata oluştu.");
+        error: function (xhr) {
+            console.error("Spotify token alınırken bir hata oluştu: ", xhr.responseText);
         },
     });
 }
@@ -34,8 +34,8 @@ function fetchSpotifyTrack(artist, title, callback) {
                     callback(null);
                 }
             },
-            error: function () {
-                console.error("Spotify şarkı aranırken bir hata oluştu.");
+            error: function (xhr) {
+                console.error("Spotify şarkı aranırken bir hata oluştu: ", xhr.responseText);
             },
         });
     });
@@ -74,6 +74,8 @@ function fetchLastTrack() {
                     noTrackMessage.style.display = "inline";
                 }
             }
+        } else {
+            console.error("Last.fm'den parça bilgisi alınamadı.");
         }
     });
 }
