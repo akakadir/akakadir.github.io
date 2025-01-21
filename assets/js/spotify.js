@@ -1,9 +1,12 @@
 const SPOTIFY_CLIENT_ID = "4a0c7ffafdc14086818973e1e07b5aa8";
 const SPOTIFY_CLIENT_SECRET = "5d8d938a40bd4730be33e6ebb6be5499";
 
+// CORS Proxy URL
+const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
+
 function fetchSpotifyToken(callback) {
     $.ajax({
-        url: "https://accounts.spotify.com/api/token",
+        url: CORS_PROXY + "https://accounts.spotify.com/api/token",
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -22,7 +25,7 @@ function fetchSpotifyToken(callback) {
 function fetchSpotifyTrack(artist, title, callback) {
     fetchSpotifyToken(function (token) {
         $.ajax({
-            url: `https://api.spotify.com/v1/search?q=${encodeURIComponent(artist)}%20${encodeURIComponent(title)}&type=track&limit=1`,
+            url: CORS_PROXY + `https://api.spotify.com/v1/search?q=${encodeURIComponent(artist)}%20${encodeURIComponent(title)}&type=track&limit=1`,
             method: "GET",
             headers: {
                 Authorization: "Bearer " + token,
@@ -42,16 +45,16 @@ function fetchSpotifyTrack(artist, title, callback) {
 }
 
 function fetchLastTrack() {
-    $.getJSON('https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=akakadir&api_key=99fb051e59a2e902e5a6f0981a4c6203&format=json', function (data) {
-        var container = document.getElementById('lastfm');
-        var trackLink = document.getElementById('trackLink');
-        var noTrackMessage = document.getElementById('noTrackMessage');
+    $.getJSON("https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=akakadir&api_key=99fb051e59a2e902e5a6f0981a4c6203&format=json", function (data) {
+        var container = document.getElementById("lastfm");
+        var trackLink = document.getElementById("trackLink");
+        var noTrackMessage = document.getElementById("noTrackMessage");
 
         if (data.recenttracks && data.recenttracks.track && data.recenttracks.track.length > 0) {
             var track = data.recenttracks.track[0];
             var artist = track.artist["#text"];
             var title = track.name;
-            var nowPlaying = track['@attr'] && track['@attr'].nowplaying;
+            var nowPlaying = track["@attr"] && track["@attr"].nowplaying;
 
             if (container) {
                 if (nowPlaying) {
