@@ -18,9 +18,9 @@ function fetchLastTrack() {
                     a.target = '_blank';
                     container.appendChild(a);
                 } else {
-                    var span = document.createElement('span');
-                    span.textContent = "Şu anda şarkı dinlenmiyor.";
-                    container.appendChild(span);
+                    var p = document.createElement('p');
+                    span.textContent = "kafamı";
+                    container.appendChild(p);
                 }
             }
         } else {
