@@ -151,13 +151,14 @@ img {
     background-image: url("https://akakadir.github.io/external.svg");
 }
 
-a[href^="https://www.open.spotify.com"]::after {
+a[href^="https://open.spotify.com"]::after {
     content: "";
     display: inline-block;
     margin-left: 0.25em;
     background-size: 100%;
-    background-image: url("https://open.spotifycdn.com/cdn/images/favicon.0f31d2ea.ico");
+    background-image: url("https://upload.wikimedia.org/wikipedia/commons/7/75/Spotify_icon.png");
 }
+
 
   nav {
     text-align: center;
