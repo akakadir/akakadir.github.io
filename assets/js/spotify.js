@@ -8,10 +8,9 @@ function fetchLastTrack() {
             var title = track.name;
             var url = track.url;
             var nowPlaying = track['@attr'] && track['@attr'].nowplaying;
-          
+
             if (container) {
                 container.innerHTML = '';
-             
                 if (nowPlaying) {
                     var a = document.createElement('a');
                     a.textContent = `${artist} - ${title}`;
@@ -19,7 +18,9 @@ function fetchLastTrack() {
                     a.target = '_blank';
                     container.appendChild(a);
                 } else {
-                    container.innerHTML = "kafamı";
+                    var span = document.createElement('span');
+                    span.textContent = "Şu anda şarkı dinlenmiyor.";
+                    container.appendChild(span);
                 }
             }
         } else {
