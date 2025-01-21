@@ -18,9 +18,9 @@ function fetchLastTrack() {
                     a.target = '_blank';
                     container.appendChild(a);
                 } else {
-                    var p = document.createElement('p');
-                    p.textContent = "kafamı";
-                    container.appendChild(p);
+                    var span = document.createElement('span');
+                    span.textContent = "kafamı";
+                    container.appendChild(span);
                 }
             }
         } else {
