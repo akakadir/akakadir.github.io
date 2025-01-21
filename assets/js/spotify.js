@@ -19,12 +19,11 @@ function fetchLastTrack() {
                     container.appendChild(a);
                 } else {
                     var p = document.createElement('p');
-                    span.textContent = "kafamı";
+                    p.textContent = "kafamı";
                     container.appendChild(p);
                 }
             }
         } else {
-            console.error("Son dinlenen parça bilgisi alınamadı.");
         }
     });
 }
