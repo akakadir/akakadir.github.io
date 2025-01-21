@@ -1,48 +1,5 @@
-const SPOTIFY_CLIENT_ID = "4a0c7ffafdc14086818973e1e07b5aa8";
-const SPOTIFY_CLIENT_SECRET = "5d8d938a40bd4730be33e6ebb6be5499";
-
-function fetchSpotifyToken(callback) {
-    $.ajax({
-        url: "https://cors-anywhere.herokuapp.com/https://accounts.spotify.com/api/token", // CORS proxy
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: "Basic " + btoa(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET),
-        },
-        data: { grant_type: "client_credentials" },
-        success: function (response) {
-            callback(response.access_token);
-        },
-        error: function (xhr) {
-            console.error("Spotify token alınırken bir hata oluştu: ", xhr.responseText);
-        },
-    });
-}
-
-function fetchSpotifyTrack(artist, title, callback) {
-    fetchSpotifyToken(function (token) {
-        $.ajax({
-            url: `https://cors-anywhere.herokuapp.com/https://api.spotify.com/v1/search?q=${encodeURIComponent(artist)}%20${encodeURIComponent(title)}&type=track&limit=1`, // CORS proxy
-            method: "GET",
-            headers: {
-                Authorization: "Bearer " + token,
-            },
-            success: function (response) {
-                if (response.tracks.items.length > 0) {
-                    callback(response.tracks.items[0].external_urls.spotify);
-                } else {
-                    callback(null);
-                }
-            },
-            error: function () {
-                console.error("Spotify şarkı aranırken bir hata oluştu.");
-            },
-        });
-    });
-}
-
 function fetchLastTrack() {
-    $.getJSON('https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=akakadir&api_key=99fb051e59a2e902e5a6f0981a4c6203&format=json', function (data) {
+    $.getJSON('https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=akakadir&api_key=99fb051e59a2e902e5a6f0981a4c6203&format=json', function(data) {
         var container = document.getElementById('lastfm');
         var trackLink = document.getElementById('trackLink');
         var noTrackMessage = document.getElementById('noTrackMessage');
@@ -55,23 +12,15 @@ function fetchLastTrack() {
 
             if (container) {
                 if (nowPlaying) {
-                    fetchSpotifyTrack(artist, title, function (spotifyUrl) {
-                        if (spotifyUrl) {
-                            trackLink.textContent = `${artist} - ${title}`;
-                            trackLink.href = spotifyUrl;
-                            trackLink.target = "_blank";
-                            trackLink.style.display = "inline";
-                            noTrackMessage.style.display = "none";
-                        } else {
-                            trackLink.textContent = `${artist} - ${title}`;
-                            trackLink.href = "#";
-                            trackLink.style.display = "inline";
-                            noTrackMessage.style.display = "none";
-                        }
-                    });
+                    var spotifySearchUrl = `https://open.spotify.com/search/${encodeURIComponent(artist)}%20${encodeURIComponent(title)}`;
+                    trackLink.textContent = `${artist} - ${title}`;
+                    trackLink.href = spotifySearchUrl;
+                    trackLink.target = '_blank';
+                    trackLink.style.display = 'inline';
+                    noTrackMessage.style.display = 'none';
                 } else {
-                    trackLink.style.display = "none";
-                    noTrackMessage.style.display = "inline";
+                    trackLink.style.display = 'none';
+                    noTrackMessage.style.display = 'inline';
                 }
             }
         }
