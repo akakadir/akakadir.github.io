@@ -154,8 +154,6 @@ img {
 a[href^="https://www.last.fm"]::after {
     content: "";
     display: inline-block;
-    width: 0.8em;
-    height: 0.8em;
     margin-left: 0.25em;
     background-size: 100%;
     background-image: url("https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png");
