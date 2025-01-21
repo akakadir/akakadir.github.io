@@ -151,7 +151,7 @@ img {
     background-image: url("https://akakadir.github.io/external.svg");
 }
 
-a[href^="https://www.spotify.com"]::after {
+a[href^="https://open.spotify.com"]::after {
     content: "";
     display: inline-block;
     margin-left: 0.25em;
