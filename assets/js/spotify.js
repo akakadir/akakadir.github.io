@@ -16,11 +16,11 @@ function fetchLastTrack() {
                     trackLink.textContent = `${artist} - ${title}`;
                     trackLink.href = url;
                     trackLink.target = '_blank';
-                    trackLink.style.display = 'inline-block';
+                    trackLink.style.display = 'inline';
                     noTrackMessage.style.display = 'none';
                 } else {
                     trackLink.style.display = 'none';
-                    noTrackMessage.style.display = 'inline-block';
+                    noTrackMessage.style.display = 'inline';
                 }
             }
         }
