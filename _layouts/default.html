@@ -1,24 +1,290 @@
 <!DOCTYPE html>
-<html lang="{{ page.lang | default: "tr" }}">
-  {%- include head.html -%}
-  <body a="{{ site.theme_config.appearance | default: "auto" }}">
-    <main class="page-content" aria-label="Content">
-      <div class="w">
-	<button id="mode"><span id="mode-text">&#9680;</span></button>
-        {{ content }}
-      </div>
-    </main>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>//tuçem'e</title>
+  <style>
+    body, html {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
 
-    {%-if site.goat_counter and jekyll.environment == "production"-%}
-      {%-include goat_counter.html-%}
-    {%-endif-%}
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      color: #d4d4d4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #2e2e2e;
+      overflow-y: hidden;
+    }
 
-    {% if page.custom_js %}
-      {% for js_file in page.custom_js %}
-      {% endfor %}
-    {% endif %}
-   <script type="text/javascript" src="/assets/js/zepto.min.js"></script>
-  <script type="text/javascript" src="/assets/js/lightbox.js"></script>
+    .notepad-container {
+      position: relative;
+      width: 75%;
+      max-width: 600px;
+      height: 75vh;
+      overflow: hidden;
+      border-radius: 5px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+      z-index: 1;
+    }
+
+    .notepad {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #2d2d2d;
+      border: 1px solid #444;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      overflow-y: auto;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    .guide-lines {
+      position: absolute;
+      left: 70px;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(to bottom, #2d2d2d, #2d2d2d 24px, #3a3a3a 25px);
+      pointer-events: none;
+    }
+
+    .red-line {
+      position: absolute;
+      left: 60px;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background-color: #e74c3c;
+      pointer-events: none;
+    }
+
+    .content {
+      position: relative;
+      z-index: 2;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin-left: 70px;
+      padding-right: 10px;
+    }
+
+    .content a {
+      color: #00aaff;
+      text-decoration: none;
+    }
+
+    .content a:hover {
+      text-decoration: underline;
+    }
+
+
+    @media screen and (max-width: 768px) {
+      .notepad-container {
+        width: 75%;
+        height: 75vh;
+      }
+
+      .notepad {
+        padding: 15px;
+      }
+
+      .guide-lines {
+        left: 50px;
+      }
+
+      .red-line {
+        left: 40px;
+      }
+
+      .content {
+        margin-left: 50px;
+        padding-right: 15px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      .notepad-container {
+        width: 75%;
+        height: 75vh;
+      }
+
+      .notepad {
+        padding: 10px;
+      }
+
+      .guide-lines {
+        left: 30px;
+      }
+
+      .red-line {
+        left: 20px;
+      }
+
+      .content {
+        margin-left: 30px;
+        padding-right: 20px;
+      }
+    }
+        #playPauseBtn {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    #playPauseBtn img {
+      width: 5vh;
+      height: 5vh;
+    }
+      .heart {
+  position: fixed;
+  font-size: 1.5rem;
+  top: -1vh;
+  transform: translateY(0);
+  animation: fall 3s linear forwards;
+}
+
+@keyframes fall {
+  from {
+     transform: translateY(0vh) translateX(-10vw); 
+  }
+  to {
+     transform: translateY(105vh) translateX(10vw); 
+  }
+} 
+  </style>
+</head>
+<body>
+  <div class="notepad-container">
+    <div class="notepad">
+      <div class="guide-lines"></div>
+      <div class="red-line"></div>
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+
+ <button id="playPauseBtn">
+    <img id="playIcon" src="https://files.catbox.moe/jdvjxm.svg" alt="Play Icon">
+   </button>
+
+  <audio id="audio" src="https://files.catbox.moe/h6ipzv.mp3" hidden></audio>
+  <script>
+    const audio = document.getElementById('audio');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+
+    playPauseBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        playIcon.src = 'https://files.catbox.moe/yqkn13.svg';
+      } else {
+        audio.pause();
+        playIcon.src = 'https://files.catbox.moe/jdvjxm.svg';
+      }
+    });
+
+    audio.addEventListener('ended', () => {
+      playIcon.src = 'https://files.catbox.moe/vekk2x.svg';
+    });
+
+    async function fetchMarkdownFile() {
+      try {
+        const response = await fetch('https://files.catbox.moe/mt8kjq.md');
+        if (!response.ok) throw new Error('Dosya bulunamadı.');
+
+        const markdown = await response.text();
+        return convertMarkdownToHTML(markdown);
+      } catch (error) {
+        console.error(error);
+        return 'Dosya yüklenirken bir hata oluştu.';
+      }
+    }
+
+    function convertMarkdownToHTML(markdown) {
+      const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+      return markdown.replace(linkRegex, '<a href="$2" target="_blank">$1</a>');
+    }
+
+    async function typeEffect(content, elementId, delay = 15) {
+      const element = document.getElementById(elementId);
+      let insideTag = false;
+      let typedText = '';
+
+      for (let i = 0; i < content.length; i++) {
+        if (content[i] === '<') {
+          insideTag = true;
+        }
+
+        typedText += content[i];
+
+        if (content[i] === '>') {
+          insideTag = false;
+        }
+
+        element.innerHTML = typedText;
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+    async function adjustNotepadHeight() {
+      const viewportHeight = window.innerHeight;
+      const notepadContainerHeight = document.querySelector('.notepad-container').offsetHeight;
+      const notepad = document.querySelector('.notepad');
+
+      if (notepad.scrollHeight > viewportHeight) {
+        notepad.style.height = `${viewportHeight}px`;
+      } else {
+        notepad.style.height = `${notepadContainerHeight}px`;
+      }
+    }
+
+    (async () => {
+      const markdownHTML = await fetchMarkdownFile();
+      await typeEffect(markdownHTML, 'content', 15);
+    })();
+
+    const notepad = document.querySelector('.notepad');
+    const guideLines = document.querySelector('.guide-lines');
+    const redLine = document.querySelector('.red-line');
+
+    notepad.addEventListener('scroll', () => {
+      const scrollTop = notepad.scrollTop;
+      guideLines.style.transform = `translateY(${scrollTop}px)`;
+      redLine.style.transform = `translateY(${scrollTop}px)`;
+    });
+
+    window.addEventListener('resize', adjustNotepadHeight);
+    adjustNotepadHeight();
+
+  function createHeart() {
+  const heart = document.createElement('div');
+  heart.classList.add('heart');
+  
+  heart.style.left = Math.random() * 100 + "vw";
+  heart.style.animationDuration = Math.random() * 2 + 3 + "s";
+  
+  heart.innerText = '💗';
+  
+  document.body.appendChild(heart);
+  
+  setTimeout(() => {
+              heart.remove();
+              }, 5000);
+}
+
+setInterval(createHeart, 300);
+  </script>
+ <script type="text/javascript" src="/assets/js/lightbox.js"></script>
  <link rel="stylesheet" href="/assets/css/lightbox.css">
-  </body>
+</body>
 </html>
