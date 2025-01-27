@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+  <link rel="icon" href="https://www.favicon.cc/logo3d/398116.png" type="image/png">
+  <link rel="apple-touch-icon" href="https://www.favicon.cc/logo3d/398116.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="UTF-8">
   <title>//tuçem'e</title>
@@ -74,7 +76,6 @@
       padding-right: 10px;
     }
 
-    /* Responsive Design */
     @media screen and (max-width: 768px) {
       .notepad-container {
         width: 75%;
@@ -162,8 +163,7 @@
       const viewportHeight = window.innerHeight;
       const notepadContainerHeight = document.querySelector('.notepad-container').offsetHeight;
       const notepad = document.querySelector('.notepad');
-      
-      // Eğer içerik yüksekliği, görünüm yüksekliğinden fazla ise kaydırma alanını kısıtla
+
       if (notepad.scrollHeight > viewportHeight) {
         notepad.style.height = `${viewportHeight}px`;
       } else {
@@ -186,10 +186,8 @@
       redLine.style.transform = `translateY(${scrollTop}px)`;
     });
 
-    // Pencere boyutu değiştiğinde ve sayfa yüklendiğinde yükseklik ayarı yap
     window.addEventListener('resize', adjustNotepadHeight);
-    adjustNotepadHeight(); // Sayfa yüklenirken de yükseklik ayarı yap
-
+    adjustNotepadHeight();
   </script>
 </body>
 </html>
