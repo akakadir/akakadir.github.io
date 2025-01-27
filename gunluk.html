@@ -47,14 +47,14 @@
     .notepad {
       position: relative;
       width: 100%;
+      height: 100%;
       background: #2d2d2d;
       border: 1px solid #444;
       padding: 20px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-      overflow-y: auto;
+      overflow-y: scroll;
       overflow-x: hidden;
       line-height: 1.6;
-      max-height: 100%; /* Allows scrolling */
     }
 
     .guide-lines {
@@ -198,16 +198,12 @@
           element.textContent += text.charAt(i);
           i++;
           setTimeout(typing, delay);
+        } else {
+          // Scroll only when text typing is done
+          element.parentElement.scrollTop = element.parentElement.scrollHeight;
         }
       }
       typing();
-      adjustNotepadHeight(element);  // Ensure max height is maintained
-    }
-
-    function adjustNotepadHeight(contentElement) {
-      const notepad = document.querySelector('.notepad');
-      const contentHeight = contentElement.scrollHeight;
-      notepad.style.height = `${Math.min(contentHeight, 800)}px`;  // Adjust to max height
     }
 
     (async () => {
