@@ -10,14 +10,15 @@
       background-color: #1e1e1e;
       font-family: 'Courier New', Courier, monospace;
       color: #d4d4d4;
-      overflow: hidden;
+      overflow: auto; /* Sayfa tamamının kaymasına izin veriyoruz */
       height: 100%;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start; /* Sayfanın üst kısmında hizalama */
       position: relative;
     }
-    
+
+    /* Sabit Kılavuz Çizgileri */
     .guide-lines {
       position: fixed;
       left: 70px;
@@ -28,7 +29,8 @@
       pointer-events: none;
       z-index: 1;
     }
-    
+
+    /* Kırmızı çizgi */
     .red-line {
       position: fixed;
       left: 60px;
@@ -44,25 +46,29 @@
       position: relative;
       width: 90%;
       max-width: 600px;
-      height: 80vh;
-      background: #2d2d2d;
+      min-height: 80vh;
+      background: #f4f4f4; /* Defter arka planı */
       border: 1px solid #444;
       padding: 20px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
       overflow-y: auto;
-      line-height: 1.6;
-      overflow-x: hidden;
+      line-height: 2; /* Satır aralığını biraz artırdım */
       z-index: 3;
+      display: block;
     }
 
+    /* Yazı Alanı */
     .content {
       white-space: pre-wrap;
       word-wrap: break-word;
       font-size: 16px;
       text-shadow: 0 0 2px #000;
       padding-right: 10px;
+      margin-left: 10px;
+      padding-top: 10px;
     }
 
+    /* Scrollbar Tasarımı */
     .notepad::-webkit-scrollbar {
       width: 8px;
     }
@@ -77,9 +83,10 @@
     }
 
     .notepad::-webkit-scrollbar-track {
-      background: #2d2d2d;
+      background: #f4f4f4;
     }
 
+    /* Mobil uyumlu */
     @media (max-width: 768px) {
       .notepad {
         height: 90vh;
