@@ -15,6 +15,7 @@
       font-family: 'Courier New', Courier, monospace;
       color: #d4d4d4;
       overflow: hidden;
+      -webkit-user-select: none;
     }
 
     .notepad-container {
@@ -35,10 +36,12 @@
       border: 1px solid #444;
       padding: 20px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-      overflow-y: scroll;
+      overflow-y: auto;
       overflow-x: hidden;
       line-height: 1.6;
       z-index: 1;
+      -webkit-overflow-scrolling: touch;
+      touch-action: none;
     }
 
     .guide-lines {
@@ -90,6 +93,9 @@
     }
 
     @media (max-width: 768px) {
+      body {
+        font-size: 14px;
+      }
       .notepad-container {
         height: 90vh;
       }
@@ -100,6 +106,12 @@
 
       .notepad::-webkit-scrollbar {
         width: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .content {
+        font-size: 12px;
       }
     }
   </style>
