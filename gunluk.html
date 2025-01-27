@@ -1,124 +1,127 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="UTF-8">
   <title>//tuçem'e</title>
   <style>
-body {
-  margin: 0;
-  height: 100vh;
-  overflow: hidden;
-  font-family: 'Courier New', Courier, monospace;
-  color: #d4d4d4;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #2e2e2e;
-}
+    body, html {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
 
-.notepad-container {
-  position: relative;
-  width: 75%;
-  max-width: 600px;
-  height: 75vh;
-  overflow: hidden;
-  border-radius: 5px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
-  z-index: 1;
-}
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      color: #d4d4d4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #2e2e2e;
+      overflow-y: hidden;
+    }
 
-.notepad {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  background: #2d2d2d;
-  border: 1px solid #444;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-  overflow-y: scroll;
-  overflow-x: hidden;
-  line-height: 1.6;
-}
+    .notepad-container {
+      position: relative;
+      width: 75%;
+      max-width: 600px;
+      height: 75vh;
+      overflow: hidden;
+      border-radius: 5px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+      z-index: 1;
+    }
 
-.guide-lines {
-  position: absolute;
-  left: 70px;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: repeating-linear-gradient(to bottom, #2d2d2d, #2d2d2d 24px, #3a3a3a 25px);
-  pointer-events: none;
-}
+    .notepad {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #2d2d2d;
+      border: 1px solid #444;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      overflow-y: auto;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
 
-.red-line {
-  position: absolute;
-  left: 60px;
-  top: 0;
-  width: 2px;
-  height: 100%;
-  background-color: #e74c3c;
-  pointer-events: none;
-}
+    .guide-lines {
+      position: absolute;
+      left: 70px;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(to bottom, #2d2d2d, #2d2d2d 24px, #3a3a3a 25px);
+      pointer-events: none;
+    }
 
-.content {
-  position: relative;
-  z-index: 2;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  margin-left: 70px;
-  padding-right: 10px;
-}
+    .red-line {
+      position: absolute;
+      left: 60px;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background-color: #e74c3c;
+      pointer-events: none;
+    }
 
-/* Responsive Design */
-@media screen and (max-width: 768px) {
-  .notepad-container {
-    width: 75%;
-    height: 75vh;
-  }
+    .content {
+      position: relative;
+      z-index: 2;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin-left: 70px;
+      padding-right: 10px;
+    }
 
-  .notepad {
-    padding: 15px;
-  }
+    /* Responsive Design */
+    @media screen and (max-width: 768px) {
+      .notepad-container {
+        width: 75%;
+        height: 75vh;
+      }
 
-  .guide-lines {
-    left: 50px;
-  }
+      .notepad {
+        padding: 15px;
+      }
 
-  .red-line {
-    left: 40px;
-  }
+      .guide-lines {
+        left: 50px;
+      }
 
-  .content {
-    margin-left: 50px;
-    padding-right: 15px;
-  }
-}
+      .red-line {
+        left: 40px;
+      }
 
-@media screen and (max-width: 480px) {
-  .notepad-container {
-    width: 75%;
-    height: 75vh;
-  }
+      .content {
+        margin-left: 50px;
+        padding-right: 15px;
+      }
+    }
 
-  .notepad {
-    padding: 10px;
-  }
+    @media screen and (max-width: 480px) {
+      .notepad-container {
+        width: 75%;
+        height: 75vh;
+      }
 
-  .guide-lines {
-    left: 30px;
-  }
+      .notepad {
+        padding: 10px;
+      }
 
-  .red-line {
-    left: 20px;
-  }
+      .guide-lines {
+        left: 30px;
+      }
 
-  .content {
-    margin-left: 30px;
-    padding-right: 20px;
-  }
-}
+      .red-line {
+        left: 20px;
+      }
 
+      .content {
+        margin-left: 30px;
+        padding-right: 20px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -129,7 +132,8 @@ body {
       <div class="content" id="content"></div>
     </div>
   </div>
- <script>
+
+  <script>
     async function fetchTextFile() {
       try {
         const response = await fetch('https://litter.catbox.moe/jnh0i1.txt');
@@ -154,6 +158,19 @@ body {
       typing();
     }
 
+    async function adjustNotepadHeight() {
+      const viewportHeight = window.innerHeight;
+      const notepadContainerHeight = document.querySelector('.notepad-container').offsetHeight;
+      const notepad = document.querySelector('.notepad');
+      
+      // Eğer içerik yüksekliği, görünüm yüksekliğinden fazla ise kaydırma alanını kısıtla
+      if (notepad.scrollHeight > viewportHeight) {
+        notepad.style.height = `${viewportHeight}px`;
+      } else {
+        notepad.style.height = `${notepadContainerHeight}px`;
+      }
+    }
+
     (async () => {
       const text = await fetchTextFile();
       typeEffect(text, 'content', 15);
@@ -168,6 +185,11 @@ body {
       guideLines.style.transform = `translateY(${scrollTop}px)`;
       redLine.style.transform = `translateY(${scrollTop}px)`;
     });
+
+    // Pencere boyutu değiştiğinde ve sayfa yüklendiğinde yükseklik ayarı yap
+    window.addEventListener('resize', adjustNotepadHeight);
+    adjustNotepadHeight(); // Sayfa yüklenirken de yükseklik ayarı yap
+
   </script>
 </body>
 </html>
