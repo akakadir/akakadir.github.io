@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sevgiliye Not</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Courier New', Courier, monospace;
+      color: #d4d4d4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #2e2e2e;
+    }
+
+    .background-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .heart {
+      position: absolute;
+      background-image: url('https://tr.rbxcdn.com/180DAY-80608ae96f2fe4a8fb1151676a73b7f5/420/420/Hat/Webp/noFilter');
+      background-size: contain;
+      background-repeat: no-repeat;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .notepad-container {
+      position: relative;
+      width: 90%;
+      max-width: 600px;
+      height: 80vh;
+      overflow: hidden;
+      border-radius: 5px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+      z-index: 1;
+    }
+
+    .notepad {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #2d2d2d;
+      border: 1px solid #444;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      overflow-y: scroll;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    .guide-lines {
+      position: absolute;
+      left: 70px;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(to bottom, #2d2d2d, #2d2d2d 24px, #3a3a3a 25px);
+      pointer-events: none;
+    }
+
+    .red-line {
+      position: absolute;
+      left: 60px;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background-color: #e74c3c;
+      pointer-events: none;
+    }
+
+    .content {
+      position: relative;
+      z-index: 2;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin-left: 70px;
+      padding-right: 10px;
+    }
+
+    .notepad::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    .notepad::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 6px;
+    }
+
+    .notepad::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    .notepad::-webkit-scrollbar-track {
+      background: #2d2d2d;
+    }
+
+    @media (max-width: 768px) {
+      .notepad-container {
+        height: 90vh;
+      }
+
+      .content {
+        font-size: 14px;
+      }
+
+      .notepad::-webkit-scrollbar {
+        width: 10px;
+      }
+    }
+
+    #playPauseBtn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    #playPauseBtn img {
+      width: 50px;
+      height: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div class="background-container" id="background"></div>
+  <div class="notepad-container">
+    <div class="notepad">
+      <div class="guide-lines"></div>
+      <div class="red-line"></div>
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+
+  <button id="playPauseBtn">
+    <img id="playIcon" src="https://files.catbox.moe/jdvjxm.svg" alt="Play Icon">
+  </button>
+
+  <audio id="audio" src="https://files.catbox.moe/rarg3u.mp3" hidden></audio>
+
+  <script>
+    const audio = document.getElementById('audio');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+
+    playPauseBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        playIcon.src = 'https://files.catbox.moe/yqkn13.svg';
+      } else {
+        audio.pause();
+        playIcon.src = 'https://files.catbox.moe/jdvjxm.svg';
+      }
+    });
+
+    audio.addEventListener('ended', () => {
+      playIcon.src = 'https://files.catbox.moe/vekk2x.svg';
+    });
+
+    function createRandomHearts(numHearts) {
+      const container = document.getElementById('background');
+      container.innerHTML = '';
+      for (let i = 0; i < numHearts; i++) {
+        const heart = document.createElement('div');
+        heart.classList.add('heart');
+        const xPos = Math.random() * window.innerWidth;
+        const yPos = Math.random() * window.innerHeight;
+        const size = Math.random() * (100 - 40) + 40;
+        heart.style.left = `${xPos}px`;
+        heart.style.top = `${yPos}px`;
+        heart.style.width = `${size}px`;
+        heart.style.height = `${size}px`;
+        container.appendChild(heart);
+      }
+    }
+
+    window.onload = () => {
+      createRandomHearts(35);
+    };
+
+    window.onresize = () => {
+      createRandomHearts(30);
+    };
+
+    async function fetchTextFile() {
+      try {
+        const response = await fetch('https://litter.catbox.moe/jnh0i1.txt');
+        if (!response.ok) throw new Error('Dosya yüklenemedi');
+        return await response.text();
+      } catch (error) {
+        console.error(error);
+        return 'Dosya bulunamadı veya bir hata oluştu.';
+      }
+    }
+
+    async function typeEffect(text, elementId, delay = 100) {
+      const element = document.getElementById(elementId);
+      let i = 0;
+      function typing() {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          i++;
+          setTimeout(typing, delay);
+        }
+      }
+      typing();
+    }
+
+    (async () => {
+      const text = await fetchTextFile();
+      typeEffect(text, 'content', 5);
+    })();
+
+    const notepad = document.querySelector('.notepad');
+    const guideLines = document.querySelector('.guide-lines');
+    const redLine = document.querySelector('.red-line');
+
+    notepad.addEventListener('scroll', () => {
+      const scrollTop = notepad.scrollTop;
+      guideLines.style.transform = `translateY(${scrollTop}px)`;
+      redLine.style.transform = `translateY(${scrollTop}px)`;
+    });
+  </script>
+</body>
+</html>
