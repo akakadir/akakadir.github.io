@@ -137,6 +137,22 @@
       width: 5vh;
       height: 5vh;
     }
+      .heart {
+  position: fixed;
+  font-size: 1.5rem;
+  top: -1vh;
+  transform: translateY(0);
+  animation: fall 3s linear forwards;
+}
+
+@keyframes fall {
+  from {
+     transform: translateY(0vh) translateX(-10vw); 
+  }
+  to {
+     transform: translateY(105vh) translateX(10vw); 
+  }
+} 
   </style>
 </head>
 <body>
@@ -226,6 +242,23 @@
 
     window.addEventListener('resize', adjustNotepadHeight);
     adjustNotepadHeight();
+        function createHeart() {
+  const heart = document.createElement('div');
+  heart.classList.add('heart');
+  
+  heart.style.left = Math.random() * 100 + "vw";
+  heart.style.animationDuration = Math.random() * 2 + 3 + "s";
+  
+  heart.innerText = '💗';
+  
+  document.body.appendChild(heart);
+  
+  setTimeout(() => {
+              heart.remove();
+              }, 5000);
+}
+
+setInterval(createHeart, 300);
   </script>
 </body>
 </html>
