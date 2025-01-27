@@ -1,1 +1,24 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: "tr" }}">
+  {%- include head.html -%}
+  <body a="{{ site.theme_config.appearance | default: "auto" }}">
+    <main class="page-content" aria-label="Content">
+      <div class="w">
+	<button id="mode"><span id="mode-text">&#9680;</span></button>
+        {{ content }}
+      </div>
+    </main>
 
+    {%-if site.goat_counter and jekyll.environment == "production"-%}
+      {%-include goat_counter.html-%}
+    {%-endif-%}
+
+    {% if page.custom_js %}
+      {% for js_file in page.custom_js %}
+      {% endfor %}
+    {% endif %}
+   <script type="text/javascript" src="/assets/js/zepto.min.js"></script>
+  <script type="text/javascript" src="/assets/js/lightbox.js"></script>
+ <link rel="stylesheet" href="/assets/css/lightbox.css">
+  </body>
+</html>
