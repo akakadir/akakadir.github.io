@@ -37,7 +37,8 @@
       position: relative;
       width: 90%;
       max-width: 600px;
-      height: 80vh;
+      height: auto;
+      max-height: 80vh;
       overflow: hidden;
       border-radius: 5px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
@@ -47,7 +48,6 @@
     .notepad {
       position: relative;
       width: 100%;
-      height: 100%;
       background: #2d2d2d;
       border: 1px solid #444;
       padding: 20px;
@@ -198,9 +198,17 @@
           element.textContent += text.charAt(i);
           i++;
           setTimeout(typing, delay);
+        } else {
+          adjustNotepadHeight(element);  // Adjust height after typing is done
         }
       }
       typing();
+    }
+
+    function adjustNotepadHeight(contentElement) {
+      const notepad = document.querySelector('.notepad');
+      const contentHeight = contentElement.scrollHeight;
+      notepad.style.height = `${contentHeight + 40}px`;  // Adding padding
     }
 
     (async () => {
