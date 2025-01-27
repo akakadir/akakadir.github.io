@@ -199,7 +199,7 @@
           i++;
           setTimeout(typing, delay);
         } else {
-          // Scroll only when text typing is done
+          element.parentElement.style.height = `${element.scrollHeight}px`;
           element.parentElement.scrollTop = element.parentElement.scrollHeight;
         }
       }
