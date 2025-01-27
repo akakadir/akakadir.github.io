@@ -123,6 +123,20 @@
         padding-right: 20px;
       }
     }
+        #playPauseBtn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    #playPauseBtn img {
+      width: 7vh;
+      height: 7vh;
+    }
   </style>
 </head>
 <body>
@@ -134,7 +148,31 @@
     </div>
   </div>
 
+     <button id="playPauseBtn">
+    <img id="playIcon" src="https://files.catbox.moe/1c11hi.svg" alt="Play Icon">
+   </button>
+
+  <audio id="audio" src="https://files.catbox.moe/h6ipzv.mp3" hidden></audio>
+  
   <script>
+          const audio = document.getElementById('audio');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+
+    playPauseBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        playIcon.src = 'https://files.catbox.moe/yqkn13.svg';
+      } else {
+        audio.pause();
+        playIcon.src = 'https://files.catbox.moe/jdvjxm.svg';
+      }
+    });
+
+    audio.addEventListener('ended', () => {
+      playIcon.src = 'https://files.catbox.moe/vekk2x.svg';
+    });
+    
     async function fetchTextFile() {
       try {
         const response = await fetch('https://litter.catbox.moe/jnh0i1.txt');
