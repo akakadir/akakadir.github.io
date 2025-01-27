@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <link rel="icon" href="https://www.favicon.cc/logo3d/398116.png" type="image/png">
-  <link rel="apple-touch-icon" href="https://www.favicon.cc/logo3d/398116.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>//tuçem'e</title>
   <style>
     body, html {
@@ -75,6 +73,16 @@
       margin-left: 70px;
       padding-right: 10px;
     }
+
+    .content a {
+      color: #00aaff;
+      text-decoration: none;
+    }
+
+    .content a:hover {
+      text-decoration: underline;
+    }
+
 
     @media screen and (max-width: 768px) {
       .notepad-container {
@@ -164,14 +172,13 @@
     </div>
   </div>
 
-     <button id="playPauseBtn">
+ <button id="playPauseBtn">
     <img id="playIcon" src="https://files.catbox.moe/jdvjxm.svg" alt="Play Icon">
    </button>
 
   <audio id="audio" src="https://files.catbox.moe/h6ipzv.mp3" hidden></audio>
-  
   <script>
-          const audio = document.getElementById('audio');
+    const audio = document.getElementById('audio');
     const playPauseBtn = document.getElementById('playPauseBtn');
     const playIcon = document.getElementById('playIcon');
 
@@ -188,29 +195,45 @@
     audio.addEventListener('ended', () => {
       playIcon.src = 'https://files.catbox.moe/vekk2x.svg';
     });
-    
-    async function fetchTextFile() {
+
+    async function fetchMarkdownFile() {
       try {
-        const response = await fetch('https://litter.catbox.moe/jnh0i1.txt');
-        if (!response.ok) throw new Error('/...404 dosya hatası.../');
-        return await response.text();
+        const response = await fetch('https://files.catbox.moe/mt8kjq.md');
+        if (!response.ok) throw new Error('Dosya bulunamadı.');
+
+        const markdown = await response.text();
+        return convertMarkdownToHTML(markdown);
       } catch (error) {
         console.error(error);
-        return '/...404 dosya hatası.../';
+        return 'Dosya yüklenirken bir hata oluştu.';
       }
     }
 
-    async function typeEffect(text, elementId, delay = 100) {
+    function convertMarkdownToHTML(markdown) {
+      const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+      return markdown.replace(linkRegex, '<a href="$2" target="_blank">$1</a>');
+    }
+
+    async function typeEffect(content, elementId, delay = 15) {
       const element = document.getElementById(elementId);
-      let i = 0;
-      function typing() {
-        if (i < text.length) {
-          element.textContent += text.charAt(i);
-          i++;
-          setTimeout(typing, delay);
+      let insideTag = false;
+      let typedText = '';
+
+      for (let i = 0; i < content.length; i++) {
+        if (content[i] === '<') {
+          insideTag = true;
         }
+
+        typedText += content[i];
+
+        if (content[i] === '>') {
+          insideTag = false;
+        }
+
+        element.innerHTML = typedText;
+
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-      typing();
     }
 
     async function adjustNotepadHeight() {
@@ -226,8 +249,8 @@
     }
 
     (async () => {
-      const text = await fetchTextFile();
-      typeEffect(text, 'content', 15);
+      const markdownHTML = await fetchMarkdownFile();
+      await typeEffect(markdownHTML, 'content', 15);
     })();
 
     const notepad = document.querySelector('.notepad');
@@ -242,7 +265,8 @@
 
     window.addEventListener('resize', adjustNotepadHeight);
     adjustNotepadHeight();
-        function createHeart() {
+
+  function createHeart() {
   const heart = document.createElement('div');
   heart.classList.add('heart');
   
@@ -260,5 +284,7 @@
 
 setInterval(createHeart, 300);
   </script>
+ <script type="text/javascript" src="/assets/js/lightbox.js"></script>
+ <link rel="stylesheet" href="/assets/css/lightbox.css">
 </body>
 </html>
