@@ -6,43 +6,25 @@
   <title>Sevgiliye Not</title>
   <style>
     body {
-      margin: 0;
-      height: 100vh;
-      overflow: hidden;
-      font-family: 'Courier New', Courier, monospace;
-      color: #d4d4d4;
       display: flex;
       justify-content: center;
       align-items: center;
+      height: 100vh;
+      margin: 0;
       background-color: #2e2e2e;
-    }
-
-    .background-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .heart {
-      position: absolute;
-      background-image: url('https://tr.rbxcdn.com/180DAY-80608ae96f2fe4a8fb1151676a73b7f5/420/420/Hat/Webp/noFilter');
-      background-size: contain;
-      background-repeat: no-repeat;
-      pointer-events: none;
-      z-index: 0;
+      font-family: 'Courier New', Courier, monospace;
+      color: #d4d4d4;
+      overflow: hidden;
     }
 
     .notepad-container {
       position: relative;
-      width: 85%;  /* Daha küçük genişlik */
-      max-width: 500px;  /* En geniş 500px */
-      height: 60vh;  /* Daha küçük yükseklik */
+      width: 90%;
+      max-width: 600px;
+      height: 80vh;
       overflow: hidden;
-      border-radius: 5px;
+      border-radius:5px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
-      z-index: 1;
     }
 
     .notepad {
@@ -53,9 +35,10 @@
       border: 1px solid #444;
       padding: 20px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-      overflow-y: scroll;  /* Enable scrolling */
+      overflow-y: scroll;
       overflow-x: hidden;
       line-height: 1.6;
+      z-index: 1;
     }
 
     .guide-lines {
@@ -66,6 +49,7 @@
       height: 100%;
       background: repeating-linear-gradient(to bottom, #2d2d2d, #2d2d2d 24px, #3a3a3a 25px);
       pointer-events: none;
+      z-index: 0;
     }
 
     .red-line {
@@ -76,6 +60,7 @@
       height: 100%;
       background-color: #e74c3c;
       pointer-events: none;
+      z-index: 0;
     }
 
     .content {
@@ -106,8 +91,7 @@
 
     @media (max-width: 768px) {
       .notepad-container {
-        height: 55vh;  /* Daha küçük yükseklik mobilde */
-        width: 90%;
+        height: 90vh;
       }
 
       .content {
@@ -118,25 +102,9 @@
         width: 10px;
       }
     }
-
-    #playPauseBtn {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      z-index: 1000;
-    }
-
-    #playPauseBtn img {
-      width: 50px;
-      height: 50px;
-    }
   </style>
 </head>
 <body>
-  <div class="background-container" id="background"></div>
   <div class="notepad-container">
     <div class="notepad">
       <div class="guide-lines"></div>
@@ -145,56 +113,7 @@
     </div>
   </div>
 
-  <button id="playPauseBtn">
-    <img id="playIcon" src="https://files.catbox.moe/jdvjxm.svg" alt="Play Icon">
-  </button>
-
-  <audio id="audio" src="https://files.catbox.moe/rarg3u.mp3" hidden></audio>
-
   <script>
-    const audio = document.getElementById('audio');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const playIcon = document.getElementById('playIcon');
-
-    playPauseBtn.addEventListener('click', () => {
-      if (audio.paused) {
-        audio.play();
-        playIcon.src = 'https://files.catbox.moe/yqkn13.svg';
-      } else {
-        audio.pause();
-        playIcon.src = 'https://files.catbox.moe/jdvjxm.svg';
-      }
-    });
-
-    audio.addEventListener('ended', () => {
-      playIcon.src = 'https://files.catbox.moe/vekk2x.svg';
-    });
-
-    function createRandomHearts(numHearts) {
-      const container = document.getElementById('background');
-      container.innerHTML = '';
-      for (let i = 0; i < numHearts; i++) {
-        const heart = document.createElement('div');
-        heart.classList.add('heart');
-        const xPos = Math.random() * window.innerWidth;
-        const yPos = Math.random() * window.innerHeight;
-        const size = Math.random() * (100 - 40) + 40;
-        heart.style.left = `${xPos}px`;
-        heart.style.top = `${yPos}px`;
-        heart.style.width = `${size}px`;
-        heart.style.height = `${size}px`;
-        container.appendChild(heart);
-      }
-    }
-
-    window.onload = () => {
-      createRandomHearts(35);
-    };
-
-    window.onresize = () => {
-      createRandomHearts(30);
-    };
-
     async function fetchTextFile() {
       try {
         const response = await fetch('https://litter.catbox.moe/jnh0i1.txt');
