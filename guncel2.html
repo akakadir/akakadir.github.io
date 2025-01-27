@@ -36,9 +36,9 @@
 
     .notepad-container {
       position: relative;
-      width: 90%;
-      max-width: 600px;
-      height: 80vh;  /* Optimize height for mobile */
+      width: 85%;  /* Daha küçük genişlik */
+      max-width: 500px;  /* En geniş 500px */
+      height: 60vh;  /* Daha küçük yükseklik */
       overflow: hidden;
       border-radius: 5px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
@@ -106,7 +106,8 @@
 
     @media (max-width: 768px) {
       .notepad-container {
-        height: 80vh;  /* Make it fixed on mobile */
+        height: 55vh;  /* Daha küçük yükseklik mobilde */
+        width: 90%;
       }
 
       .content {
