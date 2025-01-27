@@ -1,8 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>//tuçem'e</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sevgiliye Not</title>
   <style>
     body {
       margin: 0;
@@ -103,6 +105,20 @@
       background: #2d2d2d;
     }
 
+    @media (max-width: 768px) {
+      .notepad-container {
+        height: 90vh;
+      }
+
+      .content {
+        font-size: 14px;
+      }
+
+      .notepad::-webkit-scrollbar {
+        width: 10px;
+      }
+    }
+
     #playPauseBtn {
       position: absolute;
       top: 20px;
@@ -130,7 +146,7 @@
   </div>
 
   <button id="playPauseBtn">
-    <img id="playIcon" src="https://files.catbox.moe/jdvjxm.svg" alt="Play Icon">
+    <img id="playIcon" src="https://files.catbox.moe/jdvjxm.svg" alt="Oynatıcı Kontrolcüsü">
   </button>
 
   <audio id="audio" src="https://files.catbox.moe/rarg3u.mp3" hidden></audio>
@@ -198,9 +214,6 @@
           element.textContent += text.charAt(i);
           i++;
           setTimeout(typing, delay);
-        } else {
-          element.parentElement.style.height = `${element.scrollHeight}px`;
-          element.parentElement.scrollTop = element.parentElement.scrollHeight;
         }
       }
       typing();
