@@ -164,17 +164,7 @@
       }
     }
 
-    footer {
-      position: absolute;
-      bottom: 0px;
-      font-size:13px;
-      width: 100%;
-      text-align: center;
-      color: #d4d4d4;
-      display: inline-block;
-    }
-
-    footer span {
+    #kad, #tuce {
       color: #53a245;
     }
 
@@ -183,22 +173,20 @@
 <body>
   <div class="notepad-container">
     <div class="notepad">
+    
       <div class="guide-lines"></div>
       <div class="red-line"></div>
       <div class="content" id="content"></div>
     </div>
+    
   </div>
 
+  <center><p>Ben <span id="kad"></span> dinliyorum, O <span id="tuce"></span> dinliyor.</p></center>
   <button id="playPauseBtn">
     <img id="playIcon" src="https://files.catbox.moe/qxi0yr.svg" alt="Parçayı Başlat">
   </button>
 
   <audio id="audio" src="https://files.catbox.moe/h6ipzv.mp3" hidden></audio>
-
-  <!-- Footer section -->
-  <footer>
-    <p>Ben <span id="kad"></span> dinliyorum, O <span id="tuce"></span> dinliyor.</p>
-  </footer>
 
   <script>
     const audio = document.getElementById('audio');
