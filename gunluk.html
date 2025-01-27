@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="UTF-8">
   <title>//tuçem'e</title>
   <style>
@@ -119,7 +119,6 @@ body {
   }
 }
 
-
   </style>
 </head>
 <body>
@@ -166,8 +165,8 @@ body {
 
     notepad.addEventListener('scroll', () => {
       const scrollTop = notepad.scrollTop;
-      guideLines.style.transform = translateY(${scrollTop}px);
-      redLine.style.transform = translateY(${scrollTop}px);
+      guideLines.style.transform = `translateY(${scrollTop}px)`;
+      redLine.style.transform = `translateY(${scrollTop}px)`;
     });
   </script>
 </body>
