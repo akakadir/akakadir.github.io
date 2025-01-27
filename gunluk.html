@@ -19,6 +19,7 @@
       align-items: center;
       background-color: #2e2e2e;
       overflow-y: hidden;
+      flex-direction: column;
     }
 
     .notepad-container {
@@ -83,7 +84,6 @@
       text-decoration: underline;
     }
 
-
     @media screen and (max-width: 768px) {
       .notepad-container {
         width: 75%;
@@ -131,7 +131,8 @@
         padding-right: 20px;
       }
     }
-        #playPauseBtn {
+
+    #playPauseBtn {
       position: absolute;
       top: 5px;
       left: 5px;
@@ -145,22 +146,38 @@
       width: 5vh;
       height: 5vh;
     }
-      .heart {
-  position: fixed;
-  font-size: 1.5rem;
-  top: -1vh;
-  transform: translateY(0);
-  animation: fall 3s linear forwards;
-}
 
-@keyframes fall {
-  from {
-     transform: translateY(0vh) translateX(-10vw); 
-  }
-  to {
-     transform: translateY(105vh) translateX(10vw); 
-  }
-} 
+    .heart {
+      position: fixed;
+      font-size: 1.5rem;
+      top: -1vh;
+      transform: translateY(0);
+      animation: fall 3s linear forwards;
+    }
+
+    @keyframes fall {
+      from {
+        transform: translateY(0vh) translateX(-10vw);
+      }
+      to {
+        transform: translateY(105vh) translateX(10vw);
+      }
+    }
+
+    footer {
+      position: absolute;
+      bottom: 0px;
+      font-size:13px;
+      width: 100%;
+      text-align: center;
+      color: #d4d4d4;
+      display: inline-block;
+    }
+
+    footer span {
+      color: #53a245;
+    }
+
   </style>
 </head>
 <body>
@@ -172,11 +189,17 @@
     </div>
   </div>
 
- <button id="playPauseBtn">
+  <button id="playPauseBtn">
     <img id="playIcon" src="https://files.catbox.moe/qxi0yr.svg" alt="Parçayı Başlat">
-   </button>
+  </button>
 
   <audio id="audio" src="https://files.catbox.moe/h6ipzv.mp3" hidden></audio>
+
+  <!-- Footer section -->
+  <footer>
+    <p>Ben <span id="kad"></span> dinliyorum, O <span id="tuce"></span> dinliyor.</p>
+  </footer>
+
   <script>
     const audio = document.getElementById('audio');
     const playPauseBtn = document.getElementById('playPauseBtn');
@@ -266,23 +289,35 @@
     window.addEventListener('resize', adjustNotepadHeight);
     adjustNotepadHeight();
 
-  function createHeart() {
-  const heart = document.createElement('div');
-  heart.classList.add('heart');
-  
-  heart.style.left = Math.random() * 100 + "vw";
-  heart.style.animationDuration = Math.random() * 2 + 3 + "s";
-  
-  heart.innerText = '💗';
-  
-  document.body.appendChild(heart);
-  
-  setTimeout(() => {
-              heart.remove();
-              }, 5000);
-}
+    function createHeart() {
+      const heart = document.createElement('div');
+      heart.classList.add('heart');
 
-setInterval(createHeart, 300);
+      heart.style.left = Math.random() * 100 + "vw";
+      heart.style.animationDuration = Math.random() * 2 + 3 + "s";
+
+      heart.innerText = '💗';
+
+      document.body.appendChild(heart);
+
+      setTimeout(() => {
+        heart.remove();
+      }, 5000);
+    }
+
+    setInterval(createHeart, 300);
+
+    fetch('https://spotify.aidenwallis.co.uk/u/63a218d8d1def76279e0eec8')
+    .then(res => res.text())
+    .then((textResponse) => {
+      document.querySelector('#kad').textContent = textResponse.replace('User is currently not playing any music on Spotify.', 'onu').replace('Error: Request failed with status code 429', 'onu');
+    });
+
+    fetch('https://spotify.aidenwallis.co.uk/u/679739427910026493b55960')
+    .then(res => res.text())
+    .then((textResponse) => {
+      document.querySelector('#tuce').textContent = textResponse.replace('User is currently not playing any music on Spotify.', 'beni').replace('Error: Request failed with status code 429', 'beni');
+    });
   </script>
 </body>
 </html>
