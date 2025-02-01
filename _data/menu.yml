@@ -37,7 +37,11 @@ entries:
       show_more_text: ...devamını okuyayım
       show_more_url: manipulasyon-archive.html
 
-  - title: günlük
-    url: gunluk.html
-  - title: rss beslemesi
-    url: feed.xml
+entries:
+  - title: bakılası
+    url: false
+    entries:
+      - title: günlük
+      url: gunluk.html
+      - title: rss beslemesi
+      url: feed.xml
