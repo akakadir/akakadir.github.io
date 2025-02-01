@@ -41,6 +41,6 @@ entries:
     url: false
     entries:
       - title: günlük
-      url: gunluk.html
+        url: gunluk.html
       - title: rss beslemesi
-      url: feed.xml
+        url: feed.xml
