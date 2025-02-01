@@ -37,7 +37,6 @@ entries:
       show_more_text: ...devamını okuyayım
       show_more_url: manipulasyon-archive.html
 
-entries:
   - title: bakılası
     url: false
     entries:
