@@ -37,8 +37,6 @@ entries:
       show_more_text: ...devamını okuyayım
       show_more_url: manipulasyon-archive.html
 
-  - title: okunası
-    url: okunasi.html
   - title: günlük
     url: gunluk.html
   - title: temiz kurulum paketim
