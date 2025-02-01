@@ -246,3 +246,8 @@ font-family: Source Sans Pro, sans-serif;
 border: 0px;
 padding: 0px 0px;
 }
+
+header::before {
+  content: ".";
+  color: #53a245;
+}
