@@ -39,7 +39,5 @@ entries:
 
   - title: günlük
     url: gunluk.html
-  - title: temiz kurulum paketim
-    url: https://pixeldrain.com/u/h3ZUQJai
   - title: rss beslemesi
     url: feed.xml
