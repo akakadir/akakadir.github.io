@@ -289,20 +289,24 @@
     // End
 
     // begin Spotify current listening fetch...
-    (async () => {
+(async () => {
       const kadResponse = await fetch('https://spotify.aidenwallis.co.uk/u/63a218d8d1def76279e0eec8');
       const tuceResponse = await fetch('https://spotify.aidenwallis.co.uk/u/679739427910026493b55960');
       
       const kadText = await kadResponse.text();
       const tuceText = await tuceResponse.text();
-
       let markdownHTML = await fetchMarkdownFile();
+      
+      const coloredKadText = `<span style="color: #53a245;">${kadText.replace('User is currently not playing any music on Spotify.', 'onu').replace('Error: Request failed with status code 429', 'onu')}</span>`;
+      const coloredTuceText = `<span style="color: #53a245;">${tuceText.replace('User is currently not playing any music on Spotify.', 'beni').replace('Error: Request failed with status code 429', 'beni')}</span>`;
+
       markdownHTML = markdownHTML
-        .replace('{def1}', kadText.replace('User is currently not playing any music on Spotify.', 'onu').replace('Error: Request failed with status code 429', 'onu'))
-        .replace('{def2}', tuceText.replace('User is currently not playing any music on Spotify.', 'beni').replace('Error: Request failed with status code 429', 'beni'));
+        .replace('{def1}', coloredKadText)
+        .replace('{def2}', coloredTuceText);
 
       await typeEffect(convertMarkdownToHTML(markdownHTML), 'content', 15);
-    })();
+})();
+
     // End
 
     // begin more stuffs for scroll
