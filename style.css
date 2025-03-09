@@ -84,7 +84,7 @@
     @media screen and (max-width: 768px) {
       .notepad-container {
         width: 75%;
-        height: 65%;
+        height: 70%;
       }
 
       .notepad {
@@ -108,7 +108,7 @@
     @media screen and (max-width: 480px) {
       .notepad-container {
         width: 75%;
-        height: 65%;
+        height: 70%;
       }
 
       .notepad {
