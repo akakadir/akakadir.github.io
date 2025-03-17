@@ -37,7 +37,7 @@ entries:
       show_more_text: ...devamını okuyayım
       show_more_url: archive/manipulasyon.html
 
-  - title: sitemap
+  - title: site haritası
     url: false
     entries:
       - title: rss beslemesi
