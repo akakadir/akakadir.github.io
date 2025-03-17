@@ -37,17 +37,17 @@ entries:
       show_more_text: ...devamını okuyayım
       show_more_url: archive/manipulasyon.html
 
-- title: site haritası
-  url: false
-  entries:
-    - title: rss beslemesi
-      url: feed.xml
-      content: |
-        <ul>
-          <li>
-            <a href="//www.dmca.com/Protection/Status.aspx?ID=49503da6-ad95-4659-85f7-5ab5fb359a65" title="DMCA.com Protection Status" class="dmca-badge">
-              <img src="https://images.dmca.com/Badges/dmca_protected_sml_120c.png?ID=49503da6-ad95-4659-85f7-5ab5fb359a65" alt="DMCA.com Protection Status" />
-            </a>
-            <script src="https://images.dmca.com/Badges/DMCABadgeHelper.min.js"></script>
-          </li>
-        </ul>
+  - title: site haritası
+    url: false
+    entries:
+      - title: rss beslemesi
+        url: feed.xml
+        content: |
+          <ul>
+            <li>
+              <a href="//www.dmca.com/Protection/Status.aspx?ID=49503da6-ad95-4659-85f7-5ab5fb359a65" title="DMCA.com Protection Status" class="dmca-badge">
+                <img src="https://images.dmca.com/Badges/dmca_protected_sml_120c.png?ID=49503da6-ad95-4659-85f7-5ab5fb359a65" alt="DMCA.com Protection Status" />
+              </a>
+              <script src="https://images.dmca.com/Badges/DMCABadgeHelper.min.js"></script>
+            </li>
+          </ul>
