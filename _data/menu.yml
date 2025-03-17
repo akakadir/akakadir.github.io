@@ -11,7 +11,7 @@ entries:
       - title: twitter adresim
         url: https://twitter.com/kadirdotjar
       - title: özgeçmiş.pdf
-        url: https://akakadir.github.io/cv.pdf
+        url: https://akakadir.github.io/assets/pdf/cv.pdf
 
   - title: tüm yazılarım
     post_list:
@@ -19,7 +19,7 @@ entries:
       limit: 7
       show_more: true
       show_more_text: ...devamını okuyayım
-      show_more_url: archive.html
+      show_more_url: archive/archive.html
 
   - title: yazılım
     post_list:
@@ -27,7 +27,7 @@ entries:
       limit: 7
       show_more: true
       show_more_text: ...devamını okuyayım
-      show_more_url: yazilim-archive.html
+      show_more_url: archive/yazilim.html
 
   - title: manipülasyon
     post_list:
@@ -35,12 +35,10 @@ entries:
       limit: 7
       show_more: true
       show_more_text: ...devamını okuyayım
-      show_more_url: manipulasyon-archive.html
+      show_more_url: archive/manipulasyon.html
 
-  - title: bakılası
+  - title: sitemap
     url: false
     entries:
-      - title: günlük
-        url: gunluk.html
       - title: rss beslemesi
         url: feed.xml

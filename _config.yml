@@ -4,12 +4,12 @@ email: kaddir@tuta.io
 url: https://akakadir.github.io
 baseurl: ""
 permalink: /:slug.html
-favicon: "logo.png"
+favicon: "assets/img/png/logo.png"
 goat_counter: akakadir
 
 theme_config:
   appearance: "auto"
-  back_home_text: "⇱ana sayfa"
+  back_home_text: "dizine dön"
   date_format: "%d.%m.%Y"
   show_description: false
 

@@ -3,12 +3,12 @@
 Gem::Specification.new do |spec|
   spec.name          = "retouched no-style-please"
   spec.version       = "1.0"
-  spec.authors       = ["Kadir Semih Akgöz"]
+  spec.authors       = ["akakadir"]
   spec.email         = ["k4dir.semih@gmail.com"]
 
-  spec.summary       = "Kadir Semih Akgöz"
+  spec.summary       = "akakadir"
   spec.homepage      = "https://github.com/akakadir/akakadir.github.io"
-  spec.license       = "MIT"
+  spec.license       = "Apache-2.0"
 
   spec.files         = `git ls-files -z`.split("\x0").select { |f| f.match(%r!^(assets|_layouts|_includes|_sass|LICENSE|README|_config\.yml)!i) }
 

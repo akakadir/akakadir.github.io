@@ -148,15 +148,7 @@ img {
     height: 0.8em;
     margin-left: 0.25em;
     background-size: 100%;
-    background-image: url("https://akakadir.github.io/external.svg");
-}
-
-a[href^="https://open.spotify.com"]::after {
-    content: "";
-    display: inline-block;
-    margin-left: 0.25em;
-    background-size: 100%;
-    background-image: url("https://community.spotify.com/t5/image/serverpage/image-id/23501i81BB3A6F661F5D33");
+    background-image: url("https://akakadir.github.io/assets/img/svg/external.svg");
 }
 
   nav {
