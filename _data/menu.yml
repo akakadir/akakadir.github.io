@@ -41,5 +41,7 @@ entries:
     url: false
   - title: rss beslemesi
     url: feed.xml
-    title: <img src="https://images.dmca.com/Badges/dmca_protected_sml_120c.png?ID=49503da6-ad95-4659-85f7-5ab5fb359a65"/>
-    url: https://www.dmca.com/Protection/Status.aspx?ID=49503da6-ad95-4659-85f7-5ab5fb359a65
+  - title: "DMCA"
+    image: "https://images.dmca.com/Badges/dmca_protected_sml_120c.png?ID=49503da6-ad95-4659-85f7-5ab5fb359a65"
+    url: "https://www.dmca.com/Protection/Status.aspx?ID=49503da6-ad95-4659-85f7-5ab5fb359a65"
+
