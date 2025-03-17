@@ -2,16 +2,14 @@ entries:
   - title: hakkımda
     url: false
     entries:
-      - title: ben Kadir, şimdilik bu kadar.
-        url: false
+      - title: özgeçmiş.pdf
+        url: https://akakadir.github.io/assets/pdf/cv.pdf
       - title: e-mail adresim
         url: mailto:k4dir.semih@gmail.com
       - title: github adresim
         url: https://github.com/akakadir
       - title: twitter adresim
         url: https://twitter.com/kadirdotjar
-      - title: özgeçmiş.pdf
-        url: https://akakadir.github.io/assets/pdf/cv.pdf
 
   - title: tüm yazılarım
     post_list:
@@ -39,5 +37,8 @@ entries:
 
   - title: site haritası
     url: false
-  - title: rss beslemesi
-    url: feed.xml
+    entries:
+      - title: rss beslemesi
+        url: feed.xml
+      - title: DMCA
+        url: //www.dmca.com/Protection/Status.aspx?ID=49503da6-ad95-4659-85f7-5ab5fb359a65
