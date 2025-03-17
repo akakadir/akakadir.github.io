@@ -37,11 +37,11 @@ entries:
       show_more_text: ...devamını okuyayım
       show_more_url: archive/manipulasyon.html
 
-  - title: site haritası
+- title: site haritası
   url: false
   entries:
     - title: rss beslemesi
-    url: feed.xml
+      url: feed.xml
       content: |
         <ul>
           <li>
@@ -51,4 +51,3 @@ entries:
             <script src="https://images.dmca.com/Badges/DMCABadgeHelper.min.js"></script>
           </li>
         </ul>
-
