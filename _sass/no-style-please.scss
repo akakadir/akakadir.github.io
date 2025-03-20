@@ -253,7 +253,7 @@ padding: 0px 0px;
   font-style: italic;
 }
 
-.cookie-banner {
+    .cookie-banner {
       position: fixed;
       bottom: 10px;
       right: 10px;
@@ -262,10 +262,9 @@ padding: 0px 0px;
       max-width: 450px;
       background: #000;
       color: #ccc;
+      border: 1px solid;
       font: 12px Menlo, Consolas, Monaco, monospace;
       padding: 15px;
-      border-radius: 5px;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
       display: none;
     }
     .cookie-body {
@@ -283,7 +282,6 @@ padding: 0px 0px;
       padding: 8px 12px;
       cursor: pointer;
       transition: all 0.3s;
-      border-radius: 3px;
     }
     .cookie-btn:hover {
       color: #fff;
