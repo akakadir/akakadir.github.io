@@ -166,7 +166,7 @@ img {
     touch-action: manipulation;
     text-decoration: underline;
 }
-a[href^="http"]:not([href^="https://creativecommons.org"])::after {
+a[href^="http"]::after {
     content: "";
     display: inline-block;
     width: 0.8em;
