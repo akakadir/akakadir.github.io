@@ -8,6 +8,26 @@
     color: #ccc;
   }
 
+  .cookie-banner {
+      background: #111;
+      color: #ccc;
+      font: 12px monospace;
+      padding: 15px;
+      display: none;
+      border:1px solid #333;
+    }
+
+      .cookie-btn {
+      background: #111;
+      border: 1px solid #333;
+      color: #ccc;
+    }
+
+    .cookie-close {
+      border: 1px solid #333;
+      color: #ccc;
+    }
+  
 .language-plaintext {
     border-radius: 0px;
     background-color: #1f1f1f;
@@ -260,12 +280,12 @@ padding: 0px 0px;
       z-index: 9999;
       width: 90%;
       max-width: 450px;
-      background: #111;
-      color: #ccc;
+      background: #eee;
+      color: #333;
       font: 12px monospace;
       padding: 15px;
       display: none;
-      border:1px solid #333;
+      border:1px solid #ccc;
     }
     .cookie-body {
       text-align: left;
@@ -276,9 +296,9 @@ padding: 0px 0px;
       margin-top: 10px;
     }
     .cookie-btn {
-      background: #111;
-      border: 1px solid #333;
-      color: inherit;
+      background: #eee;
+      border: 1px solid #ccc;
+      color: #333;
       font-family: monospace;
       padding: 8px 12px;
       cursor: pointer;
@@ -291,9 +311,9 @@ padding: 0px 0px;
       position: absolute;
       top: 5px;
       right: 10px;
-      background: none;
-      border: 1px solid #333;
-      color: #ccc;
+      background: #eee;
+      border: 1px solid #ccc;
+      color: #333;
       font-size: 16px;
       cursor: pointer;
     }
