@@ -21,6 +21,10 @@
       background: #111;
       border: 1px solid #333;
       color: #ccc;
+      transition: all 0.3s;
+    }
+    .cookie-btn:hover {
+      color: #53a245;
     }
 
     .cookie-close {
