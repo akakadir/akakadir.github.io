@@ -1,0 +1,32 @@
+<div class="cookie-banner" id="cookie-banner">
+  <button class="cookie-close" id="cookie-close">&times;</button>
+  <div class="cookie-body">
+    <p class="cookie-text">
+      bilgi toplum hizmetleri için gerekli olduğundan çerezler yoluyla kişisel verilerini işliyorum. 
+      diğer çerezlerin kullanımı bu projenin daha işlevsel hale getirilmesi amaçlarıyla sınırlı olarak açık rızana bağlıdır.
+    </p>
+    <div class="cookie-buttons">
+      <button class="cookie-btn accept" id="accept-cookies">tümünü kabul et</button>
+      <button class="cookie-btn reject" id="reject-cookies">tümünü reddet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  });
+  document.getElementById('accept-cookies').addEventListener('click', () => {
+    localStorage.setItem('cookieConsent', 'accepted');
+    document.getElementById('cookie-banner').style.display = 'none';
+  });
+  document.getElementById('reject-cookies').addEventListener('click', () => {
+    localStorage.setItem('cookieConsent', 'rejected');
+    document.getElementById('cookie-banner').style.display = 'none';
+  });
+  document.getElementById('cookie-close').addEventListener('click', () => {
+    document.getElementById('cookie-banner').style.display = 'none';
+  });
+</script>
