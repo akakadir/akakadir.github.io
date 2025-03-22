@@ -34,3 +34,11 @@ entries:
       show_more: true
       show_more_text: ...devamını okuyayım
       show_more_url: archive/manipulasyon.html
+
+  - title: dökümanlar
+    url: false
+    entries:
+      - title: proje lisansı
+        url: https://raw.githubusercontent.com/akakadir/akakadir.github.io/master/LICENSE
+      - title: rss beslemesi
+        url: feed.xml
