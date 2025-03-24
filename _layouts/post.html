@@ -13,28 +13,6 @@ layout: default
 
   {{ content }}
 </article>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    function addNotranslate() {
-        document.querySelectorAll("code:not(.notranslate)").forEach(el => {
-            el.classList.add("notranslate");
-        });
-    }
-    addNotranslate();
-    const observer = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-            mutation.addedNodes.forEach(node => {
-                if (node.nodeType === 1) {
-                    node.querySelectorAll?.("code:not(.notranslate)").forEach(el => {
-                        el.classList.add("notranslate");
-                    });
-                }
-            });
-        });
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-});
-</script>
 <div class="select-wrapper" id="translate">
 <script type="text/javascript" src="/assets/js/translate.js"></script>
 </div>
