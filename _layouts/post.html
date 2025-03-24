@@ -21,7 +21,17 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     addNotranslate();
-    const observer = new MutationObserver(addNotranslate);
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === 1) {
+                    node.querySelectorAll?.("code:not(.notranslate)").forEach(el => {
+                        el.classList.add("notranslate");
+                    });
+                }
+            });
+        });
+    });
     observer.observe(document.body, { childList: true, subtree: true });
 });
 </script>
