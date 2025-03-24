@@ -15,9 +15,14 @@ layout: default
 </article>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("code").forEach(el => {
-        el.classList.add("notranslate");
-    });
+    function addNotranslate() {
+        document.querySelectorAll("code:not(.notranslate)").forEach(el => {
+            el.classList.add("notranslate");
+        });
+    }
+    addNotranslate();
+    const observer = new MutationObserver(addNotranslate);
+    observer.observe(document.body, { childList: true, subtree: true });
 });
 </script>
 <div class="select-wrapper" id="translate">
