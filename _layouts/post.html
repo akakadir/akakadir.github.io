@@ -13,6 +13,13 @@ layout: default
 
   {{ content }}
 </article>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".language-plaintext").forEach(el => {
+        el.classList.add("notranslate");
+    });
+});
+</script>
 <div class="select-wrapper" id="translate">
 <script type="text/javascript" src="/assets/js/translate.js"></script>
 </div>
