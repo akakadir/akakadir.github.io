@@ -1,8 +1,20 @@
-let isLoading = false, debounceTimer;
+function separateWordsInCode() {
+    const codeElements = document.querySelectorAll('code');
+
+    codeElements.forEach(codeElement => {
+        let textContent = codeElement.textContent;
+        let separatedText = textContent.split(' ').map(word => {
+            return `<span>${word}</span>`;
+        }).join(' ');
+
+        codeElement.innerHTML = separatedText;
+    });
+}
 
 function googleTranslateElementInit() {
     new google.translate.TranslateElement({ includedLanguages: 'tr,en,de,fr,es' }, 'translate');
     isLoading = false;
+    separateWordsInCode();
 }
 
 function resetGoogleTranslate() {
@@ -32,9 +44,6 @@ function resetGoogleTranslate() {
     document.head.appendChild(script);
 }
 
-function resetGoogleTranslateDebounced() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(resetGoogleTranslate, 200);
-}
-
-['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => window.addEventListener(event, resetGoogleTranslateDebounced));
+document.addEventListener('DOMContentLoaded', () => {
+    separateWordsInCode();
+});
