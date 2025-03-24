@@ -23,9 +23,6 @@
             const trackLinkHTML = `<a href="${data.trackLink}" target="_blank">${data.name}</a>`;
             document.getElementById('now-playing').innerHTML = `🎧 Şu an dinliyorum: `+`${data.artists} - ${trackLinkHTML} | ${formatTime(currentProgressSeconds)}/${data.duration}`;
           }
-        })
-        .catch(error => {
-          console.error('spotify sdk mesajı:', error);
         });
     }
     fetchTrackData();
