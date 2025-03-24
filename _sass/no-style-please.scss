@@ -213,6 +213,12 @@ padding: 0px 0px;
     perspective: 700px;
 }
 
+.lang_fixed {
+     position: fixed;
+     left: 20px;
+     top: 20px;
+ }
+
 .lang__link {
     cursor: pointer;
     transition: .3s all;
