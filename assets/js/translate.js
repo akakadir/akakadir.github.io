@@ -39,7 +39,7 @@ function resetGoogleTranslateDebounced() {
 
 function fixCodeTags() {
     const codeElements = document.querySelectorAll('code');
-    
+
     codeElements.forEach(element => {
         let prevSibling = element.previousSibling;
         let nextSibling = element.nextSibling;
@@ -52,13 +52,21 @@ function fixCodeTags() {
             nextSibling.textContent = ' ' + nextSibling.textContent.trim();
         }
 
-        if (nextSibling && nextSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(nextSibling.textContent.trim()) && !/^\s/.test(nextSibling.textContent)) {
-            nextSibling.textContent = ' ' + nextSibling.textContent.trim();
+        if (prevSibling && prevSibling.nodeType === 3) {
+            let prevText = prevSibling.textContent.trim();
+            if (prevText.length > 0 && !/\s$/.test(prevText)) {
+                prevSibling.textContent = prevText + ' ';
+            }
+        }
+
+        if (nextSibling && nextSibling.nodeType === 3) {
+            let nextText = nextSibling.textContent.trim();
+            if (nextText.length > 0 && !/^\s/.test(nextText)) {
+                nextSibling.textContent = ' ' + nextText;
+            }
         }
     });
 }
-
-
 
 function handleTranslation() {
     fixCodeTags();
