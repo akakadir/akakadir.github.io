@@ -39,15 +39,28 @@ function resetGoogleTranslateDebounced() {
 
 function fixCodeTags() {
     const codeElements = document.querySelectorAll('code');
+    
     codeElements.forEach(element => {
-        const textContent = element.innerHTML.trim();
-        if (/[a-zA-Z]/.test(textContent) && !/[^\w\s]/.test(textContent.slice(-1))) {
-            const span = document.createElement('span');
-            span.innerHTML = ' ';
-            element.parentNode.insertBefore(span, element.nextSibling);
+        let prevSibling = element.previousSibling;
+        let nextSibling = element.nextSibling;
+
+        if (prevSibling && prevSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(prevSibling.textContent.trim())) {
+            prevSibling.textContent = prevSibling.textContent.trim() + ' ';
+        }
+
+        if (nextSibling && nextSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(nextSibling.textContent.trim())) {
+            nextSibling.textContent = ' ' + nextSibling.textContent.trim();
+        }
+
+        if (prevSibling && prevSibling.nodeType === 3 && /[^\s]/.test(prevSibling.textContent.trim()) && !/[\s]$/.test(prevSibling.textContent)) {
+            prevSibling.textContent = prevSibling.textContent.trim() + ' ';
+        }
+        if (nextSibling && nextSibling.nodeType === 3 && /[^\s]/.test(nextSibling.textContent.trim()) && !/^[\s]/.test(nextSibling.textContent)) {
+            nextSibling.textContent = ' ' + nextSibling.textContent.trim();
         }
     });
 }
+
 
 function handleTranslation() {
     fixCodeTags();
