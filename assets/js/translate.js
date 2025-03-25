@@ -40,7 +40,10 @@ function resetGoogleTranslateDebounced() {
 function fixCodeTags() {
     const codeElements = document.querySelectorAll('code');
     codeElements.forEach(element => {
-        element.innerHTML = element.innerHTML.trim() + ' ';
+        const textContent = element.innerHTML.trim();
+        if (/[a-zA-Z]/.test(textContent) && !/[^\w\s]/.test(textContent.slice(-1))) {
+            element.innerHTML = textContent + ' ';
+        }
     });
 }
 
