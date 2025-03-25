@@ -43,28 +43,11 @@ function fixCodeTags() {
     codeElements.forEach(element => {
         let prevSibling = element.previousSibling;
         let nextSibling = element.nextSibling;
-
-        if (prevSibling && prevSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(prevSibling.textContent.trim()) && !/\s$/.test(prevSibling.textContent)) {
-            prevSibling.textContent = prevSibling.textContent.trim() + ' ';
-        }
-
-        if (nextSibling && nextSibling.nodeType === 3 && /[a-zAZ0-9]/.test(nextSibling.textContent.trim()) && !/^\s/.test(nextSibling.textContent)) {
-            nextSibling.textContent = ' ' + nextSibling.textContent.trim();
-        }
-
-        if (prevSibling && prevSibling.nodeType === 3) {
-            let prevText = prevSibling.textContent.trim();
-            if (prevText.length > 0 && !/\s$/.test(prevText)) {
-                prevSibling.textContent = prevText + ' ';
+        [prevSibling, nextSibling].forEach(sibling => {
+            if (sibling && sibling.nodeType === 3 && /[a-zA-Z0-9]/.test(sibling.textContent.trim())) {
+                sibling.textContent = sibling.textContent.trim().split('').join(' ') + ' ';
             }
-        }
-
-        if (nextSibling && nextSibling.nodeType === 3) {
-            let nextText = nextSibling.textContent.trim();
-            if (nextText.length > 0 && !/^\s/.test(nextText)) {
-                nextSibling.textContent = ' ' + nextText;
-            }
-        }
+        });
     });
 }
 
