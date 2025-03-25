@@ -59,8 +59,13 @@ function fixCodeTags() {
         if (nextSibling && nextSibling.nodeType === 3 && /[^\s]/.test(nextSibling.textContent.trim()) && !/^[ \s]/.test(nextSibling.textContent)) {
             nextSibling.textContent = ' ' + nextSibling.textContent.trim();
         }
+
+        if (nextSibling && nextSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(nextSibling.textContent.trim()) && !/\s^/.test(nextSibling.textContent)) {
+            nextSibling.textContent = ' ' + nextSibling.textContent.trim();
+        }
     });
 }
+
 
 function handleTranslation() {
     fixCodeTags();
