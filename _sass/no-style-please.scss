@@ -269,21 +269,21 @@ padding: 0px 0px;
     opacity: 0;
     visibility: hidden;
     transition: .3s all;
-    transform: rotateX(-180deg);
+    transform: rotateY(-90deg);
     position: absolute;
-    left: 0;
-    top: 100%;
+    top: 0;
+    right: 100%;
     z-index: 10;
     line-height: 13px;
     padding: 4px;
-    transform-origin: center top;
+    transform-origin: center left;
     box-sizing: border-box;
 }
 
 .lang:hover .lang__list {
     opacity: 1;
     visibility: visible;
-    transform: rotateX(0);
+    transform: rotateY(0);
 }
 
 .lang__link_select {
