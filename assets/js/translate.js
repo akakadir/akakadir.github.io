@@ -44,23 +44,23 @@ function fixCodeTags() {
         let prevSibling = element.previousSibling;
         let nextSibling = element.nextSibling;
 
-        if (prevSibling && prevSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(prevSibling.textContent.trim())) {
+        if (prevSibling && prevSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(prevSibling.textContent.trim()) && !/\s$/.test(prevSibling.textContent)) {
             prevSibling.textContent = prevSibling.textContent.trim() + ' ';
         }
 
-        if (nextSibling && nextSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(nextSibling.textContent.trim())) {
+        if (nextSibling && nextSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(nextSibling.textContent.trim()) && !/^\s/.test(nextSibling.textContent)) {
             nextSibling.textContent = ' ' + nextSibling.textContent.trim();
         }
 
-        if (prevSibling && prevSibling.nodeType === 3 && /[^\s]/.test(prevSibling.textContent.trim()) && !/[\s]$/.test(prevSibling.textContent)) {
+        if (prevSibling && prevSibling.nodeType === 3 && /[^\s]/.test(prevSibling.textContent.trim()) && !/[ \s]$/.test(prevSibling.textContent)) {
             prevSibling.textContent = prevSibling.textContent.trim() + ' ';
         }
-        if (nextSibling && nextSibling.nodeType === 3 && /[^\s]/.test(nextSibling.textContent.trim()) && !/^[\s]/.test(nextSibling.textContent)) {
+
+        if (nextSibling && nextSibling.nodeType === 3 && /[^\s]/.test(nextSibling.textContent.trim()) && !/^[ \s]/.test(nextSibling.textContent)) {
             nextSibling.textContent = ' ' + nextSibling.textContent.trim();
         }
     });
 }
-
 
 function handleTranslation() {
     fixCodeTags();
