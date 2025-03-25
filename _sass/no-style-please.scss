@@ -70,10 +70,6 @@ body {
   top: 0px !important;
 }
 
-body > .skiptranslate {
-    display: none;
-}
-
 .post-meta { text-align: right; }
 
 h2, h3, h4, h5, h6 { margin-top: 3rem; }
@@ -208,11 +204,11 @@ padding: 0px 0px;
 .lang {
     position: relative;
     z-index: 10;
-    width: 38px; /* Maintain original width */
-    height: 26px; /* Maintain original height */
+    width: 38px;
+    height: 24px;
     text-align: center;
     background: rgba(157, 157, 157, 0.3);
-    perspective: 700px;
+    perspective: 700px
 }
 
 .lang__link {
@@ -221,7 +217,7 @@ padding: 0px 0px;
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: row;
+    flex-direction: column;
     flex-shrink: 0;
     box-sizing: border-box;
     text-decoration: none;
@@ -230,39 +226,45 @@ padding: 0px 0px;
     width: 100%;
     height: 100%;
 }
+
 .lang__img {
-    width: 30px;
-    height: 18px;
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
     flex-shrink: 0;
-    font-size: 10px;
     display: block;
-    transition: .3s all;
 }
+
+.lang__link_sub {
+    width: auto;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    margin: 0 2px;
+}
+
 .lang__link_sub:hover {
     filter: drop-shadow(0 0 3px rgb(136, 136, 136)) brightness(130%);
 }
+
 .lang__name {
     color: #737b84;
-    font-size: 12px;
+    font-size: 10px;
     line-height: 12px;
-    flex-shrink: 0;
     text-transform: uppercase;
+    margin-top: 2px;
 }
-.lang__link_sub {
-    width: 100%;
-    height: auto;
-    position: relative;
-    padding: 0;
-    margin-bottom: 2px;
-}
+
 .lang__list {
     background: rgba(157, 157, 157, 0.3);
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: row;
-    width: auto; /* Let content determine width */
-    min-width: 100px; /* Ensure minimum width */
+    width: auto;
     opacity: 0;
     visibility: hidden;
     transition: .3s all;
@@ -271,16 +273,18 @@ padding: 0px 0px;
     left: 100%;
     top: 0;
     z-index: 10;
-    line-height: 13px;
-    padding: 4px;
+    padding: 2px;
     transform-origin: left center;
     box-sizing: border-box;
+    gap: 2px;
 }
+
 .lang:hover .lang__list {
     opacity: 1;
     visibility: visible;
     transform: rotateY(0);
 }
+
 .lang__link_select {
     align-items: flex-start;
     text-align: center;
