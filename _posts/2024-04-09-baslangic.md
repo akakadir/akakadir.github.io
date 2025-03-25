@@ -20,6 +20,7 @@ jekyll teması: [no-style-please](https://github.com/riggraz/no-style-please/)
 
 -edit-
 
-çeviri eklentisi: [google-translate](https://translate.google.com/)
+<del>çeviri eklentisi: google-translate</del>
+çeviri eklentisi: [yandex](https://translate.yandex.com/)
 
 yorum modülü: [giscus](https://giscus.app/)
