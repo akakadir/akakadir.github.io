@@ -268,7 +268,7 @@ padding: 0px 0px;
     transition: .3s all;
     transform: rotateY(-90deg);
     position: absolute;
-    left: calc(100% + 5px); /* Move slightly away from the original element */
+    left: 100%;
     top: 0;
     z-index: 10;
     line-height: 13px;
