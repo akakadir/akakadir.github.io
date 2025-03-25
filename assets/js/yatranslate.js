@@ -4,11 +4,16 @@ const yatranslate = {
 
 document.addEventListener('DOMContentLoaded', function () {
     yaTranslateInit();
-    document.getElementById('translate').addEventListener('change', function () {
-        yaTranslateSetLang(this.value);
-        window.location.reload();
-    });
+    const select = document.getElementById('translate');
+    if (select) {
+        select.value = yaTranslateGetCode();
+        select.addEventListener('change', function () {
+            yaTranslateSetLang(this.value);
+            window.location.reload();
+        });
+    }
 });
+
 
 function yaTranslateInit() {
     if (yatranslate.langFirstVisit && !localStorage.getItem('yt-widget')) {
