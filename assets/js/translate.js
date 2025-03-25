@@ -37,4 +37,20 @@ function resetGoogleTranslateDebounced() {
     debounceTimer = setTimeout(resetGoogleTranslate, 200);
 }
 
-['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => window.addEventListener(event, resetGoogleTranslateDebounced));
+function fixCodeTags() {
+    const codeElements = document.querySelectorAll('code');
+    codeElements.forEach(element => {
+        element.innerHTML = element.innerHTML.trim() + ' ';
+    });
+}
+
+function handleTranslation() {
+    fixCodeTags();
+}
+
+['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => {
+    window.addEventListener(event, () => {
+        resetGoogleTranslateDebounced();
+        handleTranslation();
+    });
+});
