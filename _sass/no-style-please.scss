@@ -211,8 +211,12 @@ padding: 0px 0px;
     text-align: center;
     background: rgba(157, 157, 157, 0.3);
     perspective: 700px;
-    width: 38px;
-    height: 26px;
+}
+
+.lang_fixed {
+    position: fixed;
+    right: 20px;
+    top: 20px;
 }
 
 .lang__link {
@@ -261,28 +265,27 @@ padding: 0px 0px;
 .lang__list {
     background: rgba(157, 157, 157, 0.3);
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    flex-direction: column;
-    width: 100%;
+    flex-direction: row;
+    width: auto;
     opacity: 0;
     visibility: hidden;
     transition: .3s all;
-    transform: rotateY(-90deg);
+    transform: translateX(-100%);
     position: absolute;
+    top: 100%;
     right: 0;
-    top: 0;
     z-index: 10;
     line-height: 13px;
     padding: 4px;
-    transform-origin: top right;
     box-sizing: border-box;
 }
 
 .lang:hover .lang__list {
     opacity: 1;
     visibility: visible;
-    transform: rotateY(0);
+    transform: translateX(0);
 }
 
 .lang__link_select {
