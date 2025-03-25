@@ -39,10 +39,17 @@ function resetGoogleTranslateDebounced() {
 
 function fixCodeTags() {
     const codeElements = document.querySelectorAll('code');
+    
     codeElements.forEach(element => {
-        const textContent = element.innerHTML.trim();
-        if (/[a-zA-Z]/.test(textContent) && !/[^\w\s]/.test(textContent.slice(-1))) {
-            element.innerHTML = textContent + ' ';
+        let prevSibling = element.previousSibling;
+        let nextSibling = element.nextSibling;
+
+        if (prevSibling && prevSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(prevSibling.textContent.trim())) {
+            prevSibling.textContent = prevSibling.textContent.trim() + ' ';
+        }
+
+        if (nextSibling && nextSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(nextSibling.textContent.trim())) {
+            nextSibling.textContent = ' ' + nextSibling.textContent.trim();
         }
     });
 }
