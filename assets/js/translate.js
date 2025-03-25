@@ -43,11 +43,16 @@ function fixCodeTags() {
     codeElements.forEach(element => {
         let prevSibling = element.previousSibling;
         let nextSibling = element.nextSibling;
-        [prevSibling, nextSibling].forEach(sibling => {
-            if (sibling && sibling.nodeType === 3 && /[a-zA-Z0-9]/.test(sibling.textContent.trim())) {
-                sibling.textContent = sibling.textContent.trim().split('').join(' ') + ' ';
-            }
-        });
+
+        // Önceki metin düğümüne boşluk ekleme
+        if (prevSibling && prevSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(prevSibling.textContent.trim())) {
+            prevSibling.insertAdjacentText('afterend', ' ');
+        }
+
+        // Sonraki metin düğümüne boşluk ekleme
+        if (nextSibling && nextSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(nextSibling.textContent.trim())) {
+            nextSibling.insertAdjacentText('beforebegin', ' ');
+        }
     });
 }
 
