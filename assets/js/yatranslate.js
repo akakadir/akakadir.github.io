@@ -9,11 +9,10 @@ document.addEventListener('DOMContentLoaded', function () {
         select.value = yaTranslateGetCode();
         select.addEventListener('change', function () {
             yaTranslateSetLang(this.value);
-            window.location.reload();
+            yaTranslateHtmlHandler(this.value);
         });
     }
 });
-
 
 function yaTranslateInit() {
     if (yatranslate.langFirstVisit && !localStorage.getItem('yt-widget')) {
@@ -29,7 +28,7 @@ function yaTranslateInit() {
 
     yaTranslateEventHandler('click', '[data-ya-lang]', function (el) {
         yaTranslateSetLang(el.getAttribute('data-ya-lang'));
-        window.location.reload();
+        yaTranslateHtmlHandler(el.getAttribute('data-ya-lang'));
     });
 }
 
@@ -41,15 +40,17 @@ function yaTranslateSetLang(lang) {
 }
 
 function yaTranslateGetCode() {
-    return (localStorage["yt-widget"] != undefined && JSON.parse(localStorage["yt-widget"]).lang != undefined) 
-        ? JSON.parse(localStorage["yt-widget"]).lang 
+    return (localStorage["yt-widget"] != undefined && JSON.parse(localStorage["yt-widget"]).lang != undefined)
+        ? JSON.parse(localStorage["yt-widget"]).lang
         : yatranslate.lang;
 }
 
 function yaTranslateHtmlHandler(code) {
+    const activeLangElement = document.querySelector(`[data-ya-lang="${code}"]`);
+    if (activeLangElement) {
+        activeLangElement.remove();
+    }
     document.querySelector('[data-lang-active]').textContent = code;
-    let activeLangElement = document.querySelector(`[data-ya-lang="${code}"]`);
-    if (activeLangElement) activeLangElement.remove();
 }
 
 function yaTranslateEventHandler(event, selector, handler) {
