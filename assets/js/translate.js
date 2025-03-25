@@ -48,23 +48,16 @@ function fixCodeTags() {
             prevSibling.textContent = prevSibling.textContent.trim() + ' ';
         }
 
+        if (nextSibling && nextSibling.nodeType === 3 && /[a-zAZ0-9]/.test(nextSibling.textContent.trim()) && !/^\s/.test(nextSibling.textContent)) {
+            nextSibling.textContent = ' ' + nextSibling.textContent.trim();
+        }
+
         if (nextSibling && nextSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(nextSibling.textContent.trim()) && !/^\s/.test(nextSibling.textContent)) {
-            nextSibling.textContent = ' ' + nextSibling.textContent.trim();
-        }
-
-        if (prevSibling && prevSibling.nodeType === 3 && /[^\s]/.test(prevSibling.textContent.trim()) && !/[ \s]$/.test(prevSibling.textContent)) {
-            prevSibling.textContent = prevSibling.textContent.trim() + ' ';
-        }
-
-        if (nextSibling && nextSibling.nodeType === 3 && /[^\s]/.test(nextSibling.textContent.trim()) && !/^[ \s]/.test(nextSibling.textContent)) {
-            nextSibling.textContent = ' ' + nextSibling.textContent.trim();
-        }
-
-        if (nextSibling && nextSibling.nodeType === 3 && /[a-zA-Z0-9]/.test(nextSibling.textContent.trim()) && !/\s^/.test(nextSibling.textContent)) {
             nextSibling.textContent = ' ' + nextSibling.textContent.trim();
         }
     });
 }
+
 
 
 function handleTranslation() {
