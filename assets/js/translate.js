@@ -37,22 +37,18 @@ function resetGoogleTranslateDebounced() {
     debounceTimer = setTimeout(resetGoogleTranslate, 200);
 }
 
-function fixCodeTags() {
-    const codeElements = document.querySelectorAll('code');
-    
-    codeElements.forEach(element => {
+function fixTranslatedText() {
+    const translatedElements = document.querySelectorAll('.goog-te-translate-element');
+
+    translatedElements.forEach(element => {
         let prevSibling = element.previousSibling;
         let nextSibling = element.nextSibling;
-
-        // Önceki metin düğümüne boşluk ekleme
         if (prevSibling && prevSibling.nodeType === 3) {
             let prevText = prevSibling.textContent.trim();
             if (prevText.length > 0 && !/\s$/.test(prevText)) {
                 prevSibling.textContent = prevText + ' ';
             }
         }
-
-        // Sonraki metin düğümüne boşluk ekleme
         if (nextSibling && nextSibling.nodeType === 3) {
             let nextText = nextSibling.textContent.trim();
             if (nextText.length > 0 && !/^\s/.test(nextText)) {
@@ -62,8 +58,18 @@ function fixCodeTags() {
     });
 }
 
+function observeTranslation() {
+    const observer = new MutationObserver(() => {
+        fixTranslatedText();
+    });
+
+    const body = document.body;
+    observer.observe(body, { childList: true, subtree: true });
+}
+
 function handleTranslation() {
-    fixCodeTags();
+    fixTranslatedText();
+    observeTranslation();
 }
 
 ['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => {
