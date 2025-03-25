@@ -14,9 +14,76 @@ layout: default
   {{ content }}
 </article>
 
-<div id="translate" class="select-wrapper">
-<script type="text/javascript" src="/assets/js/translate.js"></script>
+---
+layout: default
+---
+
+{%-include back_link.html-%}
+
+<article>
+  <p class="post-meta">
+    <time datetime="{{ page.date }}">{{ page.date | date: site.theme_config.date_format }}</time>
+  </p>
+  
+  <h1>{{ page.title }}</h1>
+
+  {{ content }}
+</article>
+
+<div class="lang lang_fixed">
+<div id="ytWidget" style="display: none;"></div>
+<div class="lang__link lang__link_select" data-lang-active="">
+  <img class="lang__img lang__img_select" src="/assets/img/flags/tr.png" alt="Tr">
 </div>
+<div class="lang__list" data-lang-list="">
+ <a class="lang__link lang__link_sub" data-ya-lang="tr">
+  <img class="lang__img" src="/assets/img/flags/tr.png" alt="tr">
+ </a>
+ <a class="lang__link lang__link_sub" data-ya-lang="en">
+  <img class="lang__img" src="/assets/img/flags/en.png" alt="en">
+ </a>
+ <a class="lang__link lang__link_sub" data-ya-lang="ru">
+  <img class="lang__img" src="/assets/img/flags/ru.png" alt="ru">
+ </a>
+ <a class="lang__link lang__link_sub" data-ya-lang="es">
+  <img class="lang__img" src="/assets/img/flags/es.png" alt="es">
+ </a>
+ <a class="lang__link lang__link_sub" data-ya-lang="ja">
+  <img class="lang__img" src="/assets/img/flags/ja.png" alt="ja">
+ </a>
+</div>
+</div>
+<script type="text/javascript" src="/assets/js/translate.js"></script>
+  
+<div id="giscus-container">
+<script type="text/javascript" src="/assets/js/giscus.js"></script>
+</div>
+
+{% assign cat = page.categories[0] %}
+{% assign cat_list = site.categories[cat] %}
+{% for post in cat_list %}
+  {% if post.url == page.url %}
+  	{% assign nOffset = forloop.index0 | minus: 1 %}
+  	{% assign pOffset = forloop.index0 | plus: 1 %}
+  	{% if forloop.first == false %}
+      {% assign next_post = cat_list[nOffset] %}
+  	{% endif %}
+  	{% if forloop.last == false %}
+  	  {% assign prev_post = cat_list[pOffset] %}
+  	{% endif %}
+  	{% break %}
+  {% endif %}
+{% endfor %}
+
+<nav>
+  {% if prev_post %}
+  <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">« önceki</a></span>
+  {% endif %}
+  |
+  {% if next_post %}
+  <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki »</a></span>
+  {% endif %}
+</nav>
   
 <div id="giscus-container">
 <script type="text/javascript" src="/assets/js/giscus.js"></script>
