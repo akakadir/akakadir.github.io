@@ -1,80 +1,50 @@
-let isLoading = false, debounceTimer;
+const yatranslate = {
+    lang: "tr",
+};
 
-function googleTranslateElementInit() {
-    new google.translate.TranslateElement({ includedLanguages: 'tr,en,de,fr,es' }, 'translate');
-    isLoading = false;
-}
+document.addEventListener('DOMContentLoaded', function () {
+    yaTranslateInit();
+})
 
-function resetGoogleTranslate() {
-    if (isLoading) return;
-    isLoading = true;
+function yaTranslateInit() {
 
-    const translateElement = document.getElementById('translate');
-    translateElement.innerHTML = "";
-
-    const existingScript = document.getElementById('google-translate-script');
-    if (existingScript) {
-        existingScript.remove();
+    if (yatranslate.langFirstVisit && !localStorage.getItem('yt-widget')) {
+        yaTranslateSetLang(yatranslate.langFirstVisit);
     }
-    const script = document.createElement('script');
-    script.id = 'google-translate-script';
-    script.src = `https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit&ts=${Date.now()}`;
-    script.onload = () => {
-        script.defer = true;
-        isLoading = false;
-    };
 
-    script.onerror = () => {
-        isLoading = false;
-        console.error("Google Çeviri hatası.");
-    };
+    let script = document.createElement('script');
+    script.src = `https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=${yatranslate.lang}&widgetTheme=light&autoMode=false`;
+    document.getElementsByTagName('head')[0].appendChild(script);
 
-    document.head.appendChild(script);
+    let code = yaTranslateGetCode();
+
+    yaTranslateHtmlHandler(code);
+
+    yaTranslateEventHandler('click', '[data-ya-lang]', function (el) {
+        yaTranslateSetLang(el.getAttribute('data-ya-lang'));
+        window.location.reload();
+    })
 }
 
-function resetGoogleTranslateDebounced() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(resetGoogleTranslate, 200);
+function yaTranslateSetLang(lang) {
+    localStorage.setItem('yt-widget', JSON.stringify({
+        "lang": lang,
+        "active": true
+    }));
 }
 
-function fixTranslatedText() {
-    const translatedElements = document.querySelectorAll('.goog-te-translate-element');
+function yaTranslateGetCode() {
+    return (localStorage["yt-widget"] != undefined && JSON.parse(localStorage["yt-widget"]).lang != undefined) ? JSON.parse(localStorage["yt-widget"]).lang : yatranslate.lang;
+}
 
-    translatedElements.forEach(element => {
-        let prevSibling = element.previousSibling;
-        let nextSibling = element.nextSibling;
-        if (prevSibling && prevSibling.nodeType === 3) {
-            let prevText = prevSibling.textContent.trim();
-            if (prevText.length > 0 && !/\s$/.test(prevText)) {
-                prevSibling.textContent = prevText + ' ';
-            }
-        }
-        if (nextSibling && nextSibling.nodeType === 3) {
-            let nextText = nextSibling.textContent.trim();
-            if (nextText.length > 0 && !/^\s/.test(nextText)) {
-                nextSibling.textContent = ' ' + nextText;
-            }
-        }
+function yaTranslateHtmlHandler(code) {
+    document.querySelector('[data-lang-active]').innerHTML = `<img class="lang__img lang__img_select" src="/assets/img/flags/${code}.png" alt="${code}">`;
+    document.querySelector(`[data-ya-lang="${code}"]`).remove();
+}
+
+function yaTranslateEventHandler(event, selector, handler) {
+    document.addEventListener(event, function (e) {
+        let el = e.target.closest(selector);
+        if (el) handler(el);
     });
 }
-
-function observeTranslation() {
-    const observer = new MutationObserver(() => {
-        fixTranslatedText();
-    });
-
-    const body = document.body;
-    observer.observe(body, { childList: true, subtree: true });
-}
-
-function handleTranslation() {
-    fixTranslatedText();
-    observeTranslation();
-}
-
-['DOMContentLoaded', 'pageshow', 'popstate'].forEach(event => {
-    window.addEventListener(event, () => {
-        resetGoogleTranslateDebounced();
-        handleTranslation();
-    });
-});
