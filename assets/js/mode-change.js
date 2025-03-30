@@ -4,6 +4,11 @@ function changeMode() {
     document.body.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
     updateGiscusTheme(theme);
+
+    const modeButton = document.getElementById("mode");
+    if (modeButton) {
+        modeButton.textContent = theme === "dark" ? "🌑" : "🌕";
+    }
 }
 
 function updateGiscusTheme(theme) {
@@ -24,6 +29,11 @@ function applyThemeOnLoad() {
     const theme = localStorage.getItem("theme") || "light";
     document.body.setAttribute("data-theme", theme);
     updateGiscusTheme(theme);
+
+    const modeButton = document.getElementById("mode");
+    if (modeButton) {
+        modeButton.textContent = theme === "dark" ? "🌑" : "🌕";
+    }
 }
 
 function monitorGiscus() {
