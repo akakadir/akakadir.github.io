@@ -1,9 +1,7 @@
 ---
 layout: post
-title: "başlanıç, ben kimim?"
+title: "çerez politikası"
 ---
-
-# çerez politikası
 
 giriş
 ------
