@@ -16,7 +16,7 @@ bu çerezler hayatımızı kolaylaştırmak için var. mesela site üzerinde gez
 bunlar olmadan site çalışmaz, siteyi doğru düzgün görüntüleyebilmeniz için lazım. bu konuda seçme şansınız yok, kusura bakmayın.
 
 2. **analitik çerezler**:
-kim gelmiş, kim gitmiş, hangi sayfa popüler, kaç kişi okuyup hiç yorum yapmadan kaçmış falan bunları öğrenmek için goat counter kullanıyorum. büyük ihtimalle herkes kullanıyor, ben de kullanıyorum. 
+kim gelmiş, kim gitmiş, hangi sayfa popüler, kaç kişi okuyup hiç yorum yapmadan kaçmış falan bunları öğrenmek için. büyük ihtimalle herkes kullanıyor, ben de kullanıyorum. 
 
 3. **fonksiyonel çerezler**: 
 mesela daha önce yaptığınız tercihleri hatırlamamızı sağlayan şeyler. her geldiğinizde "koyu tema mı, açık tema mı?" diye sormak yerine bir kere seçin, hep öyle kalsın diye.
