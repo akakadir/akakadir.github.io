@@ -7,7 +7,7 @@ function changeMode() {
 
     const modeButton = document.getElementById("mode");
     if (modeButton) {
-        modeButton.textContent = theme === "dark" ? "◑" : "◐";
+        modeButton.textContent = theme === "dark" ? "🌑" : "🌕";
     }
 }
 
@@ -32,7 +32,7 @@ function applyThemeOnLoad() {
 
     const modeButton = document.getElementById("mode");
     if (modeButton) {
-        modeButton.textContent = theme === "dark" ? "◑" : "◐";
+        modeButton.textContent = theme === "dark" ? "🌑" : "🌕";
     }
 }
 
