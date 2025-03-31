@@ -31,6 +31,6 @@ en doğal hakkınız. tarayıcınızın ayarlarına girip çerezleri reddedebili
 
 kısacası
 ------
-siteme hoş geldiniz, sigara-kahve ikram ediyoruz. ücretsiz ve zararsız. verilerinizi satmıyorum, kimseyle paylaşmıyorum, zaten o kadar değerli şeyler de toplamıyorum. sadece blog işletmek için lazım olan standart şeyler. hepsi bu.
+siteme hoş geldiniz, çay-kahve-çerez ikram ediyoruz. ücretsiz ve zararsız. verilerinizi satmıyorum, kimseyle paylaşmıyorum, zaten o kadar değerli şeyler de toplamıyorum. sadece blog işletmek için lazım olan standart şeyler. hepsi bu.
 
 son güncelleme: 14 mart 2025.
