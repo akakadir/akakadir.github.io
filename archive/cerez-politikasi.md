@@ -16,7 +16,7 @@ bu çerezler hayatımızı kolaylaştırmak için var. mesela site üzerinde gez
 bunlar olmadan site çalışmaz, siteyi doğru düzgün görüntüleyebilmeniz için lazım. bu konuda seçme şansınız yok, kusura bakmayın.
 
 2. **analitik çerezler**:
-kim gelmiş, kim gitmiş, hangi sayfa popüler, kaç kişi okuyup hiç yorum yapmadan kaçmış falan bunları öğrenmek için. google analytics kullanıyorum büyük ihtimalle. herkes kullanıyor, ben de kullanıyorum. 
+kim gelmiş, kim gitmiş, hangi sayfa popüler, kaç kişi okuyup hiç yorum yapmadan kaçmış falan bunları öğrenmek için goat counter kullanıyorum. büyük ihtimalle herkes kullanıyor, ben de kullanıyorum. 
 
 3. **fonksiyonel çerezler**: 
 mesela daha önce yaptığınız tercihleri hatırlamamızı sağlayan şeyler. her geldiğinizde "koyu tema mı, açık tema mı?" diye sormak yerine bir kere seçin, hep öyle kalsın diye.
@@ -31,6 +31,6 @@ en doğal hakkınız. tarayıcınızın ayarlarına girip çerezleri reddedebili
 
 kısacası
 ------
-siteme hoş geldiniz, çay-kahve-çerez ikram ediyoruz. ücretsiz ve zararsız. verilerinizi satmıyorum, kimseyle paylaşmıyorum, zaten o kadar değerli şeyler de toplamıyorum. sadece blog işletmek için lazım olan standart şeyler. hepsi bu.
+siteme hoş geldiniz, sigara-kahve ikram ediyoruz. ücretsiz ve zararsız. verilerinizi satmıyorum, kimseyle paylaşmıyorum, zaten o kadar değerli şeyler de toplamıyorum. sadece blog işletmek için lazım olan standart şeyler. hepsi bu.
 
-son güncelleme: mart 2025.
+son güncelleme: 14 mart 2025.
