@@ -3,7 +3,7 @@ entries:
     url: false
     entries:
       - title: özgeçmiş.pdf
-        url: https://akakadir.github.io/assets/pdf/cv.pdf
+        url: assets/pdf/cv.pdf
       - title: e-mail adresim
         url: mailto:k4dir.semih@gmail.com
       - title: github adresim
@@ -17,7 +17,7 @@ entries:
       limit: 7
       show_more: true
       show_more_text: ...devamını okuyayım
-      show_more_url: archive/arsiv.html
+      show_more_url: diger/arsiv.html
 
   - title: yazılım
     post_list:
@@ -25,7 +25,7 @@ entries:
       limit: 7
       show_more: true
       show_more_text: ...devamını okuyayım
-      show_more_url: archive/yazilim.html
+      show_more_url: diger/yazilim.html
 
   - title: manipülasyon
     post_list:
@@ -33,12 +33,12 @@ entries:
       limit: 7
       show_more: true
       show_more_text: ...devamını okuyayım
-      show_more_url: archive/manipulasyon.html
+      show_more_url: diger/manipulasyon.html
 
   - title: dökümanlar
     url: false
     entries:
       - title: çerez politikası
-        url: archive/cerez-politikasi.html
+        url: diger/cerez-politikasi.html
       - title: proje lisansı
         url: https://creativecommons.org/licenses/by/4.0/deed.tr
