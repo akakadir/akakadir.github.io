@@ -1,7 +1,8 @@
 ---
 layout: default
-title: "çerez politikası"
 ---
+
+# çerez politikası
 
 giriş
 ------
@@ -33,5 +34,3 @@ kısacası
 siteme hoş geldiniz, çay-kahve-çerez ikram ediyoruz. ücretsiz ve zararsız. verilerinizi satmıyorum, kimseyle paylaşmıyorum, zaten o kadar değerli şeyler de toplamıyorum. sadece blog işletmek için lazım olan standart şeyler. hepsi bu.
 
 son güncelleme: mart 2025.
-
-*bu bir yasal doküman değildir, ciddi politika için avukata danışınız.
