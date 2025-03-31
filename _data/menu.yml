@@ -40,5 +40,3 @@ entries:
     entries:
       - title: proje lisansı
         url: https://raw.githubusercontent.com/akakadir/akakadir.github.io/master/LICENSE
-      - title: rss beslemesi
-        url: feed.xml
