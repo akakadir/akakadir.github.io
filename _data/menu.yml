@@ -17,7 +17,7 @@ entries:
       limit: 7
       show_more: true
       show_more_text: ...devamını okuyayım
-      show_more_url: archive/archive.html
+      show_more_url: archive/arsiv.html
 
   - title: yazılım
     post_list:
@@ -38,5 +38,7 @@ entries:
   - title: dökümanlar
     url: false
     entries:
+      - title: çerez politikası
+        url: archive/cerez-politikasi.html
       - title: proje lisansı
         url: https://raw.githubusercontent.com/akakadir/akakadir.github.io/master/LICENSE
