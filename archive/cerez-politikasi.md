@@ -21,7 +21,7 @@ kim gelmiş, kim gitmiş, hangi sayfa popüler, kaç kişi okuyup hiç yorum yap
 3. **fonksiyonel çerezler**: 
 mesela daha önce yaptığınız tercihleri hatırlamamızı sağlayan şeyler. her geldiğinizde "koyu tema mı, açık tema mı?" diye sormak yerine bir kere seçin, hep öyle kalsın diye.
 
-github pages ile alâkalı durum
+github pages ile alakalı durum
 ------
 site github pages üzerinde barındırıldığı için, github'un kendi çerezleri de devreye giriyor. yani sadece ben değil, github da arkanızda dolanıp duruyor. ama onların da niyeti kötü değil, sadece servislerini düzgün sunmak istiyorlar.
 
