@@ -35,10 +35,10 @@ entries:
       show_more_text: ...devamını okuyayım
       show_more_url: diger/manipulasyon.html
 
-  - title: dökümanlar
+  - title: okumadan kabul ettiğiniz şeyler
     url: false
     entries:
+      - title: gizlilik politikası
+        url: diger/gizlilik-politikasi.html
       - title: çerez politikası
         url: diger/cerez-politikasi.html
-      - title: proje lisansı
-        url: https://creativecommons.org/licenses/by/4.0/deed.tr
