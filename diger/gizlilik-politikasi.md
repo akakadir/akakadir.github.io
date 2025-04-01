@@ -2,7 +2,7 @@
 layout: default
 ---
 
-# gizlilik politikamız
+# gizlilik politikası
 
 merhaba sayın okur,
 
