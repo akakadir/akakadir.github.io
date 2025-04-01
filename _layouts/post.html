@@ -18,17 +18,17 @@ layout: default
   {%- endif -%}
 {%- endfor -%}
 
-  {%- if prev_post -%}
+  {% if prev_post %}
   <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">önceki</a></span> |
-  {%- else -%}
+  {% else %}
   <del style="text-decoration-color:#53a245;"><span><a href="javascript:void(0);" title="zaten en baştasın">önceki</a></span></del> |
-  {%- endif -%}
-  {%- include back_link.html -%}
-  {%- if next_post -%}
+  {% endif %}
+  {%-include back_link.html-%}
+  {% if next_post %}
   | <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki</a></span>
-  {%- else -%}
+  {% else %}
   | <del style="text-decoration-color:#53a245;"><span><a href="javascript:void(0);" title="zaten en sondasın">sonraki</a></span></del>
-  {%- endif -%}
+  {% endif %}
 
   <p class="post-meta">
   <time datetime="{{ page.date }}">{{ page.date | date: site.theme_config.date_format }}</time>
