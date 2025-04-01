@@ -31,7 +31,7 @@ layout: default
   {% endif %}
 
   <p class="post-meta">
-  <time datetime="{{ page.date }}">{{ page.date | date: site.theme_config.date_format }}</time>
+  ⏳ <span id="readcounter"></span> | <time datetime="{{ page.date }}">{{ page.date | date: site.theme_config.date_format }}</time>
   </p>
 
 <article>
@@ -68,3 +68,11 @@ layout: default
 <div id="giscus-container">
 <script type="text/javascript" src="/assets/js/giscus.js"></script>
 </div>
+
+<script>
+const articleText = document.querySelector('article').innerText;
+const wordsPerMinute = 200;
+const wordCount = articleText.split(/\s+/).length;
+const readingTime = Math.ceil(wordCount / wordsPerMinute);
+document.getElementById('readcounter').innerText = readingTime + " " + "dk.";
+</script>
