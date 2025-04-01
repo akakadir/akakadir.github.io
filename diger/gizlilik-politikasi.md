@@ -19,20 +19,21 @@ bu yazı bloguma geldiğinde seninle aramızda olan bi anlaşma gibidir. ekşi'd
 
 ## bu verilerle ne yapıyorum?
 
-* "acaba bu blog'a biri giriyor mu" diye merak ettiğimde bakıyorum
+* napıyorsunuz diye merak ettiğimde bakıyorum
 * en çok hangi içeriğe ilgi var diye ölçüyorum
-* bir şeyler bozulduğunda "nerde sıçtım" diye anlıyorum
+* bir şeyler bozulduğunda "nerede sıçtım" diye anlıyorum
 * verilerini satmıyorum, rahat ol (para etmez zaten)
 
 ## kullandığım araçlar
 
 * github pages'in kendi kayıtları (mecbur)
+* giscus yorum modülü (olmasa yorum yazamıyorsunuz)
+* yandex çeviri (yabancı girerse ayıksın diye)
 * goat counter (giren çıkan falan olursa)
-* belki ileride başka analiz araçları (sıkılırsam)
 
 ## çerez politikası
 
-minik çerezler var, buyur listeliyim:
+minik çerezler var, buyur listeledim:
 * oturum çerezleri (tarayıcıyı kapatınca gider)
 * tercih çerezleri (dark mode'u seviyorsan hatırlarım)
 * analitik çerezleri (bkz: paranoyaklık sebebi)
@@ -41,11 +42,11 @@ minik çerezler var, buyur listeliyim:
 
 * çerezleri reddetme hakkı (tarayıcı ayarlarından halledersin)
 * veri silme talebi ("silsene verilerimi" diye mesaj atabilirsin)
-* "hakkımda ne biliyorsun lan" diye sorma hakkı
+* "hakkımda ne biliyorsun" diye sorma hakkı
 
 ## başka sitelerle olan muhabbetim
 
-sosyal medya butonları, yorum sistemi gibi şeyler koyabilirim (bkz: koydum). bunlar kendi çerezlerini bırakabilir. onlardan ben sorumlu değilim. kaldı ki ben kendi çerezlerimden bile zor sorumluyum.
+sosyal medya butonları, yorum sistemi gibi şeyler koyabilirim (koydum). bunlar kendi çerezlerini bırakabilir. onlardan ben sorumlu değilim. kaldı ki ben kendi çerezlerimden bile zor sorumluyum.
 
 ## güvenlik hakkında
 
