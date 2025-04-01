@@ -21,13 +21,13 @@ layout: default
   {% if prev_post %}
   <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">önceki</a></span> |
   {% else %}
-  <del><span><a href="javascript:void(0);" title="daha öncesi yok">önceki</a></span></del> |
+  <del style="text-decoration-color:#53a245;"><span><a href="javascript:void(0);" title="daha öncesi yok">önceki</a></span></del> |
   {% endif %}
   {%-include back_link.html-%}
   {% if next_post %}
   | <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki</a></span>
   {% else %}
-  | <del><span><a href="javascript:void(0);" title="daha sonrası yok">sonraki</a></span></del>
+  | <del style="text-decoration-color:#53a245;"><span><a href="javascript:void(0);" title="daha sonrası yok">sonraki</a></span></del>
   {% endif %}
 
   <p class="post-meta">
