@@ -31,7 +31,7 @@ bu yazı bloguma geldiğinde seninle aramızda olan bi anlaşma gibidir. ekşi'd
 
 ## çerez politikası
 
-minik çerezler var, senin için listeledim:
+minik çerezler var, buyur listeliyim:
 * oturum çerezleri (tarayıcıyı kapatınca gider)
 * tercih çerezleri (dark mode'u seviyorsan hatırlarım)
 * analitik çerezleri (bkz: paranoyaklık sebebi)
