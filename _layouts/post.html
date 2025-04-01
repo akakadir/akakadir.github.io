@@ -26,10 +26,11 @@ layout: default
   | <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki</a></span>
   {% endif %}
 
-<article>
   <p class="post-meta">
-    <time datetime="{{ page.date }}">{{ page.date | date: site.theme_config.date_format }}</time>
+  <time datetime="{{ page.date }}">{{ page.date | date: site.theme_config.date_format }}</time>
   </p>
+
+<article>
   
   <h1>{{ page.title }}</h1>
 
