@@ -4,6 +4,7 @@ layout: default
 
 # gizlilik politikası
 
+## giriş
 merhaba sayın okur,
 
 bu yazı bloguma geldiğinde seninle aramızda olan bi anlaşma gibidir. ekşi'de entry girer gibi yazıyorum ama harbiden önemli.
