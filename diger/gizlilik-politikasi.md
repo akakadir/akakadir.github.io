@@ -21,7 +21,7 @@ bu yazı bloguma geldiğinde seninle aramızda olan bi anlaşma gibidir. ekşi'd
 
 * "acaba bu blog'a biri giriyor mu" diye merak ettiğimde bakıyorum
 * en çok hangi içeriğe ilgi var diye ölçüyorum
-* bir şeyler bozulduğunda "nerede sıçtım" diye anlıyorum
+* bir şeyler bozulduğunda "nerde sıçtım" diye anlıyorum
 * verilerini satmıyorum, rahat ol (para etmez zaten)
 
 ## kullandığım araçlar
