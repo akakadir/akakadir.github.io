@@ -7,15 +7,17 @@ $(document).ready(function() {
     var size = fontSizeSlider.val();
     fontSizeValue.text(size + "px");
     fontSizeDisplay.css("font-size", size + "px");
-    $("body").css("font-size", size + "px");
+    $("body").not("#ayarlar")
   });
   
-  var textColorPicker = $("#linkColor");
+  var linkColorPicker = $("#linkColor");
+  var linkColorDisplay = $(".link-color");
   var selectedColorText = $("#selectedColor");
 
-  textColorPicker.on("input", function() {
-    var selectedColor = textColorPicker.val();
+  linkColorPicker.on("input", function() {
+    var selectedColor = linkColorPicker.val();
+    linkColorDisplay.css("color", selectedColor);
     selectedColorText.text(selectedColor);
-    $("p").css("color", selectedColor);
+    $("a").not(".btn").css("color", selectedColor);
   });
 });
