@@ -21,4 +21,22 @@ $(document).ready(function() {
     selectedColorText.text(selectedColor);
     $("a").not(".btn").css("color", selectedColor);
   });
+
+  var isDarkMode = false;
+
+  function toggleTheme() {
+    const button = $("#mode");
+    
+    if (isDarkMode) {
+      button.addClass("btn-inverse");
+      isDarkMode = false;
+    } else {
+      button.removeClass("btn-inverse");
+      isDarkMode = true;
+    }
+  }
+
+  $("#mode").on("click", function() {
+    toggleTheme();
+  });
 });
