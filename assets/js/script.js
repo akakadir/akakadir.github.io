@@ -1,5 +1,5 @@
 $(document).ready(function() {
-  var fontSizeSlider = $("#fontSize");
+  var fontSizeSlider = $("#fontSizeSlider");
   var fontSizeValue = $("#fontSizeValue");
   var fontSizeDisplay = $("#fontSizeDisplay");
 
