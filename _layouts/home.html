@@ -11,26 +11,25 @@ layout: default
 {%-include menu_item.html collection=site.data.menu.entries-%}
 
 {{ content }}
-<a href="#ayarlar" role="button" class="btn" data-toggle="modal">Ayarlar</a>
+<a href="#ayarlar" role="button" class="btn" data-toggle="modal">ayarlar</a>
 <div id="ayarlar" class="modal hide fade">
 <div class="modal-body"> 
-<label>Tema Seçimi:</label>
-<a id="mode" class="btn" role="button" href="javascript:void(0);">Açık</a>
+<span>seçili tema: </span><a id="mode" class="btn" role="button" href="javascript:void(0);"></a>
 <hr>
-<label for="linkColor">Bağlantı Paleti:</label>
+<label for="linkColor">bağlantı paleti:</label>
 <input type="color" id="linkColor" value="#53a245">
 <span id="selectedColor">#53a245</span>
 <p class="link-color-display">
-<a style="color:#53a245" href="#" class="link-color">Bu bir örnek bağlantıdır</a>
+<a style="color:#53a245" href="#" class="link-color">bu bir örnek bağlantıdır.</a>
 </p>
 <hr>
-<label for="fontSize">Font Ölçeği: <span id="fontSizeValue">14px</span></label>
+<label for="fontSize">font ölçeği: <span id="fontSizeValue">14px</span></label>
 <input type="range" id="fontSize" min="11" max="16" value="14">
-<p class="font-size-display" id="fontSizeDisplay">Değişiklikler böyle gözükecek.</p>
+<p class="font-size-display" id="fontSizeDisplay">değişiklikler böyle gözükecek.</p>
 </div>  
 <div style="text-align:center" class="modal-footer">
-<a href="javascript:void(0);" class="btn btn-danger" data-dismiss="modal">Vazgeç</a>
-<a href="javascript:void(0);" class="btn btn-primary" data-dismiss="modal">Kaydet</a>
+<a href="javascript:void(0);" class="btn btn-danger" data-dismiss="modal">vazgeç</a>
+<a href="javascript:void(0);" class="btn btn-primary" data-dismiss="modal">kaydet</a>
 </div>
 </div>
 {% include cookies.html %}
