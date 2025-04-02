@@ -11,7 +11,7 @@ layout: default
 {%-include menu_item.html collection=site.data.menu.entries-%}
 
 {{ content }}
-<a href="#ayarlar" role="button" class="btn" data-toggle="modal">ayarlar</a>
+<a id="ayarmenu" href="#ayarlar" role="button" class="btn" data-toggle="modal">ayarlar</a>
 <div id="ayarlar" class="modal hide fade">
 <div class="modal-body"> 
 <span>seçili tema: </span><a id="mode" class="btn" role="button" href="javascript:void(0);"></a>
