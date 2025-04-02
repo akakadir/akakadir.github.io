@@ -4,10 +4,18 @@ function changeMode() {
     document.body.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
     updateGiscusTheme(theme);
+    updateModeButton(theme);
+}
 
+function updateModeButton(theme) {
     const modeButton = document.getElementById("mode");
     if (modeButton) {
         modeButton.textContent = theme === "dark" ? "koyu" : "açık";
+        if (theme === "dark") {
+            modeButton.classList.add("btn-inverse");
+        } else {
+            modeButton.classList.remove("btn-inverse");
+        }
     }
 }
 
@@ -29,11 +37,7 @@ function applyThemeOnLoad() {
     const theme = localStorage.getItem("theme") || "light";
     document.body.setAttribute("data-theme", theme);
     updateGiscusTheme(theme);
-
-    const modeButton = document.getElementById("mode");
-    if (modeButton) {
-        modeButton.textContent = theme === "dark" ? "koyu" : "açık";
-    }
+    updateModeButton(theme);
 }
 
 function monitorGiscus() {
