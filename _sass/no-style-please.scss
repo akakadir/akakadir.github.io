@@ -510,3 +510,10 @@ padding: 0px 0px;
         gap: 5px;
       }
     }
+
+  #ayarmenu {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+}
