@@ -1,20 +1,32 @@
 <style>
-  .bootstrap-container {
+  #bootstrap-isolated-container {
     all: initial;
+    display: block;
   }
-  .bootstrap-container .modal {
+
+  #bootstrap-isolated-container .modal {
     max-width: 250px;
   }
-  .bootstrap-container * {
+  
+  #bootstrap-isolated-container .btn,
+  #bootstrap-isolated-container .modal,
+  #bootstrap-isolated-container label,
+  #bootstrap-isolated-container input,
+  #bootstrap-isolated-container hr,
+  #bootstrap-isolated-container p,
+  #bootstrap-isolated-container a,
+  #bootstrap-isolated-container div {
     font-family: inherit;
     box-sizing: border-box;
   }
 </style>
-<div class="bootstrap-container">
-  <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" />
-  <br>
-  <a href="#ayarlar" role="button" class="btn" data-toggle="modal">Ayarlar</a>
-  <div id="ayarlar" class="modal hide fade">
+<div id="bootstrap-isolated-container">
+  <style scoped>
+    @import url("https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css");
+  </style>
+  
+  <a href="#settings-modal" role="button" class="btn" data-toggle="modal">Ayarlar</a>
+  <div id="settings-modal" class="modal hide fade">
     <div class="modal-body"> 
       <label>Tema Seçimi: </label>
       <a href="#acik" role="button" class="btn">Açık</a>
@@ -37,28 +49,37 @@
     </div>
   </div>
 </div>
-
 <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
 <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
 <script>
-  $(document).ready(function() {
-    var fontSizeSlider = $("#fontSize");
-    var fontSizeValue = $("#fontSizeValue");
-    var fontSizeDisplay = $("#fontSizeDisplay");
+  (function() {
+    var fontSizeSlider = document.querySelector("#fontSize");
+    var fontSizeValue = document.querySelector("#fontSizeValue");
+    var fontSizeDisplay = document.querySelector("#fontSizeDisplay");
+    var linkColorPicker = document.querySelector("#linkColor");
+    var linkColorDisplay = document.querySelector(".link-color");
+    var selectedColorText = document.querySelector("#selectedColor");
     
-    fontSizeSlider.on("input", function() {
-      var size = fontSizeSlider.val();
-      fontSizeValue.text(size + "px");
-      fontSizeDisplay.css("font-size", size + "px");
-    });
+    if (fontSizeSlider) {
+      fontSizeSlider.addEventListener("input", function() {
+        var size = fontSizeSlider.value;
+        if (fontSizeValue) fontSizeValue.textContent = size + "px";
+        if (fontSizeDisplay) fontSizeDisplay.style.fontSize = size + "px";
+      });
+    }
     
-    var linkColorPicker = $("#linkColor");
-    var linkColorDisplay = $(".link-color");
-    var selectedColorText = $("#selectedColor");
-    linkColorPicker.on("input", function() {
-      var selectedColor = linkColorPicker.val();
-      linkColorDisplay.css("color", selectedColor);
-      selectedColorText.text(selectedColor);
+    if (linkColorPicker) {
+      linkColorPicker.addEventListener("input", function() {
+        var selectedColor = linkColorPicker.value;
+        if (linkColorDisplay) linkColorDisplay.style.color = selectedColor;
+        if (selectedColorText) selectedColorText.textContent = selectedColor;
+      });
+    }
+    jQuery(document).ready(function($) {
+      $("#bootstrap-isolated-container .btn[data-toggle='modal']").on("click", function() {
+        var targetModal = $($(this).attr("href"));
+        targetModal.modal('show');
+      });
     });
-  });
+  })();
 </script>
