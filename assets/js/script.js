@@ -27,7 +27,7 @@ $(document).ready(function() {
     
     linkColorDisplay.css("color", linkColor);
     selectedColorText.text(linkColor);
-    $("a").not(".btn").css("color", linkColor);
+    $("a").not(".btn").not(".noncolor").css("color", linkColor);
     
     fontSizeSlider.val(fontSize);
     linkColorPicker.val(linkColor);
