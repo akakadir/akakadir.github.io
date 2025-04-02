@@ -109,7 +109,7 @@ margin-bottom: 1rem;
 
 main .btn-primary {
   background: linear-gradient(#2ea44f, #235525);
-  transition: background-color 0.2s;
+  transition: background 0.2s;
   border-color: #041;
   color: #e2e2e2;
 }
