@@ -50,31 +50,31 @@
   }
 }
 
-  @media (max-width: 529px) {
+  @media (max-width: 530px) {
   .modal {
   left:80%;
   }
 }
 
-  @media (max-width: 429px) {
+  @media (max-width: 450px) {
   .modal {
   left:85%;
   }
 }
 
-  @media (max-width: 379px) {
+  @media (max-width: 380px) {
   .modal {
-  left:89%;
+  left:90%;
   }
 }
 
-  @media (max-width: 349px) {
+  @media (max-width: 350px) {
   .modal {
-  left:94%;
+  left:95%;
   }
 }
   
-  @media (max-width: 305px) {
+  @media (max-width: 310px) {
   .modal {
   left:97%;
   }
@@ -251,11 +251,6 @@ a[href^="http"]::after {
     height: 0.8em;
     margin-left: 0.25em;
     background-size: 100%;
-}
-
-  font {
-    background-color: transparent !important;
-    box-shadow: none !important;
 }
 
 .modal {
