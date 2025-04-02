@@ -54,8 +54,8 @@ main {
   --color-btn-primary-selected-bg: #508055;
   --color-btn-primary-selected-shadow: 0 0 transparent;
   --color-btn-primary-disabled-text: rgb(238 238 238 / 50%);
-  --color-btn-primary-disabled-bg: #2ea44f;
-  --color-btn-primary-disabled-border: #041;
+  --color-btn-primary-disabled-bg: #407045;
+  --color-btn-primary-disabled-border: #083;
   --color-action-list-item-default-hover-bg: rgb(58 58 58 / 12%);
   --color-segmented-control-bg: rgb(63 63 63 / 10%);
   --color-segmented-control-button-bg: #eeeeee;
@@ -108,16 +108,16 @@ margin-bottom: 1rem;
 }
 
 main .btn-primary {
-  background: linear-gradient(#407045, #305530);
-  border-color: #083;
+  background: linear-gradient(#2ea44f, #235525);
+  border-color: #041;
   color: #e2e2e2;
 }
 
 main .btn-primary:hover {
-  background: linear-gradient(#508055, #407045);
+  background: linear-gradient(#2ea44f, #2ea44f);
 }
 
 main .btn-primary:disabled {
-  background: linear-gradient(#2ea44f, #235525);
-  border-color: #041;
+  background: linear-gradient(#407045, #305530);
+  border-color: #083;
 }
