@@ -1,14 +1,7 @@
-function changeMode() {
-    let theme = document.body.getAttribute("data-theme");
-    theme = theme === "dark" ? "light" : "dark";
+function changeMode(theme) {
     document.body.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
     updateGiscusTheme(theme);
-
-    const modeButton = document.getElementById("mode");
-    if (modeButton) {
-        modeButton.textContent = theme === "dark" ? "Açık" : "Kapalı";
-    }
 }
 
 function updateGiscusTheme(theme) {
@@ -29,11 +22,6 @@ function applyThemeOnLoad() {
     const theme = localStorage.getItem("theme") || "light";
     document.body.setAttribute("data-theme", theme);
     updateGiscusTheme(theme);
-
-    const modeButton = document.getElementById("mode");
-    if (modeButton) {
-        modeButton.textContent = theme === "dark" ? "Açık" : "Kapalı";
-    }
 }
 
 function monitorGiscus() {
@@ -48,7 +36,8 @@ function monitorGiscus() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("mode")?.addEventListener("click", () => changeMode());
+    document.getElementById("mode")?.addEventListener("click", () => changeMode("light"));
+    document.getElementById("mode2")?.addEventListener("click", () => changeMode("dark"));
     applyThemeOnLoad();
     monitorGiscus();
 });
