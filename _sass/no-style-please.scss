@@ -245,7 +245,7 @@ img {
     text-decoration: underline;
 }
 a[href^="http"]::after {
-    content: "↗";
+    content: "⭷";
     display: inline-block;
     width: 0.8em;
     height: 0.8em;
