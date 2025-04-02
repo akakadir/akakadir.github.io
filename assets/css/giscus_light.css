@@ -54,7 +54,7 @@ main {
   --color-btn-primary-selected-bg: #508055;
   --color-btn-primary-selected-shadow: 0 0 transparent;
   --color-btn-primary-disabled-text: rgb(238 238 238 / 50%);
-  --color-btn-primary-disabled-bg: #235525;
+  --color-btn-primary-disabled-bg: #2ea44f;
   --color-btn-primary-disabled-border: #041;
   --color-action-list-item-default-hover-bg: rgb(58 58 58 / 12%);
   --color-segmented-control-bg: rgb(63 63 63 / 10%);
@@ -118,6 +118,6 @@ main .btn-primary:hover {
 }
 
 main .btn-primary:disabled {
-  background: linear-gradient(#235525, #203522);
+  background: linear-gradient(#2ea44f, #235525);
   border-color: #041;
 }
