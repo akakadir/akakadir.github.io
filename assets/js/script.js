@@ -28,6 +28,7 @@ $(document).ready(function() {
     linkColorDisplay.css("color", linkColor);
     selectedColorText.text(linkColor);
     $("a").not(".btn").not(".noncolor").css("color", linkColor);
+    $(".noncolor").css("color", "initial");
     
     fontSizeSlider.val(fontSize);
     linkColorPicker.val(linkColor);
@@ -57,7 +58,8 @@ $(document).ready(function() {
     var selectedColor = linkColorPicker.val();
     linkColorDisplay.css("color", selectedColor);
     selectedColorText.text(selectedColor);
-    $("a").not(".btn").css("color", selectedColor);
+    $("a").not(".btn").not(".noncolor").css("color", linkColor);
+    $(".noncolor").css("color", "initial");
   });
   
   $("#ayarlar").on("show", function() {
