@@ -186,7 +186,7 @@
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: 999999;
+  z-index: 1040;
   background-color: #000000;
 }
 
@@ -204,7 +204,7 @@
   position: fixed;
   top: 10%;
   left: 50%;
-  z-index: 1050;
+  z-index: 1040;
   width: 560px;
   margin-left: -280px;
   background-color: #ffffff;
