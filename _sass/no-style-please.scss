@@ -249,6 +249,7 @@ a[href^="http"]::after {
     display: inline-block;
     background-size: 100%;
     transform: rotate(-45deg);
+    margin-left: 0.10em;
 }
 
 .modal {
