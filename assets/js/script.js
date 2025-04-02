@@ -7,7 +7,7 @@ $(document).ready(function() {
     var size = fontSizeSlider.val();
     fontSizeValue.text(size + "px");
     fontSizeDisplay.css("font-size", size + "px");
-    $("body").not("#ayarlar")
+    $("body").not("#ayarlar").css("font-size", size + "px");
   });
   
   var linkColorPicker = $("#linkColor");
