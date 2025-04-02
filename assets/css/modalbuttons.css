@@ -223,6 +223,42 @@
           background-clip: padding-box;
 }
 
+ @media (max-width: 900px) {
+  .modal {
+  left:70%;
+  }
+}
+
+  @media (max-width: 529px) {
+  .modal {
+  left:80%;
+  }
+}
+
+  @media (max-width: 429px) {
+  .modal {
+  left:85%;
+  }
+}
+
+  @media (max-width: 379px) {
+  .modal {
+  left:90%;
+  }
+}
+
+  @media (max-width: 349px) {
+  .modal {
+  left:95%;
+  }
+}
+  
+  @media (max-width: 305px) {
+  .modal {
+  left:98%;
+  }
+}  
+
 .modal.fade {
   top: -25%;
   -webkit-transition: opacity 0.3s linear, top 0.3s ease-out;
