@@ -1,12 +1,19 @@
+<style>
+.modal {
+max-width:275px;
+max-height:375px;
+}
+</style>
 <a href="#ayarlar" role="button" class="btn" data-toggle="modal">Ayarlar</a>
 <div id="ayarlar" class="modal hide fade">
 <div class="modal-body"> 
-<label>Tema Seçimi</label>
+<label>Tema Seçimi:</label>
 <a href="#acik" role="button" class="btn">Açık</a>
 <a href="#koyu" role="button" class="btn btn-inverse">Koyu</a>
 <hr>
-<label for="linkColor">Bağlantı Paleti: <span id="selectedColor">#53a245</span></label>
+<label for="linkColor">Bağlantı Paleti:</label>
 <input type="color" id="linkColor" value="#53a245">
+<span id="selectedColor">#53a245</span>
 <p class="link-color-display">
 <a style="color:#53a245" href="#" class="link-color">Bu bir örnek bağlantıdır</a>
 </p>
