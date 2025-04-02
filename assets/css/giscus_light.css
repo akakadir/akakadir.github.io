@@ -115,7 +115,7 @@ main .btn-primary {
 }
 
 main .btn-primary:hover {
-  background: linear-gradient(#235525, #2ea44f);
+  background: linear-gradient(#2ea44f, #2ea44f);
 }
 
 main .btn-primary:disabled {
