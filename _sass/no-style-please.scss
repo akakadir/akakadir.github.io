@@ -2,6 +2,12 @@
 
 @mixin dark-appearance {
 
+  input[type="color"] {
+  color: #555555;
+  background:#333;
+  border:1px solid #444;
+}
+
   hr {
   margin: 20px 0;
   border: 0;
