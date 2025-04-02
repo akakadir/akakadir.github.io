@@ -66,8 +66,8 @@ main {
   --color-fg-subtle: #3f3f3f;
   --color-canvas-default: #111111;
   --color-canvas-overlay: #101010;
-  --color-canvas-inset: #111111;
-  --color-canvas-subtle: #111111;
+  --color-canvas-inset: #171717;
+  --color-canvas-subtle: #171717;
   --color-border-default: #333333;
   --color-border-muted: #1e1e1e;
   --color-neutral-muted: rgb(31 31 31 / 40%);
