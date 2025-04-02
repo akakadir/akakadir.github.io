@@ -4,6 +4,7 @@ function changeMode() {
     document.body.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
     updateGiscusTheme(theme);
+    updateAyarMenu(theme);
     updateModeButton(theme);
 }
 
@@ -15,6 +16,17 @@ function updateModeButton(theme) {
             modeButton.classList.add("btn-inverse");
         } else {
             modeButton.classList.remove("btn-inverse");
+        }
+    }
+}
+
+function updateAyarMenu(theme) {
+    const MenuButton = document.getElementById("ayarmenu");
+    if (MenuButton) {
+        if (theme === "dark") {
+            MenuButton.classList.add("btn-inverse");
+        } else {
+            MenuButton.classList.remove("btn-inverse");
         }
     }
 }
@@ -37,6 +49,7 @@ function applyThemeOnLoad() {
     const theme = localStorage.getItem("theme") || "light";
     document.body.setAttribute("data-theme", theme);
     updateGiscusTheme(theme);
+    updateAyarMenu(theme);
     updateModeButton(theme);
 }
 
