@@ -21,4 +21,11 @@ $(document).ready(function() {
     selectedColorText.text(selectedColor);
     $("a").not(".btn").css("color", selectedColor);
   });
+
+var button = document.getElementById('mode');
+if (button.innerText === 'koyu') {
+  button.classList.add('btn-inverse');
+} else {
+  button.classList.add('');
+}
 });
