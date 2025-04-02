@@ -1,14 +1,19 @@
-function changeMode(theme) {
-    document.body.setAttribute("data-theme", theme);  // Sayfanın temasını değiştir
-    localStorage.setItem("theme", theme);  // Yeni temayı localStorage'a kaydet
-    updateGiscusTheme(theme);  // Giscus tema ayarını güncelle
+function setLightMode() {
+    document.body.setAttribute("data-theme", "light");
+    localStorage.setItem("theme", "light");
+    updateGiscusTheme("light");
+}
+
+function setDarkMode() {
+    document.body.setAttribute("data-theme", "dark");
+    localStorage.setItem("theme", "dark");
+    updateGiscusTheme("dark");
 }
 
 function updateGiscusTheme(theme) {
     const giscusTheme = theme === "dark" 
         ? "https://akakadir.github.io/assets/css/giscus_dark.css" 
         : "https://akakadir.github.io/assets/css/giscus_light.css";
-
     const iframe = document.querySelector("iframe.giscus-frame");
     if (iframe) {
         iframe.contentWindow.postMessage(
@@ -19,10 +24,9 @@ function updateGiscusTheme(theme) {
 }
 
 function applyThemeOnLoad() {
-    // Sayfa yüklenirken localStorage'dan temayı al, varsayılan olarak 'light' teması kullan
-    const theme = localStorage.getItem("theme") || "light";  // Varsayılan olarak 'light' teması
-    document.body.setAttribute("data-theme", theme);  // Temayı uygula
-    updateGiscusTheme(theme);  // Giscus tema ayarını uygula
+    const theme = localStorage.getItem("theme") || "light";
+    document.body.setAttribute("data-theme", theme);
+    updateGiscusTheme(theme);
 }
 
 function monitorGiscus() {
@@ -37,11 +41,8 @@ function monitorGiscus() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Tema geçiş butonlarını ayarla
-    document.getElementById("mode")?.addEventListener("click", () => changeMode("light"));  // Açık tema butonu
-    document.getElementById("mode2")?.addEventListener("click", () => changeMode("dark"));  // Koyu tema butonu
-    
-    // Sayfa yüklendiğinde mevcut temayı uygula
+    document.getElementById("mode")?.addEventListener("click", () => setLightMode());
+    document.getElementById("mode2")?.addEventListener("click", () => setDarkMode());
     applyThemeOnLoad();
     monitorGiscus();
 });
