@@ -43,7 +43,7 @@ main {
   --color-btn-hover-border: #f1f1f1;
   --color-btn-active-bg: hsl(0deg 0% 95% / 100%);
   --color-btn-active-border: #f3f3f3;
-  --color-btn-selected-bg: #eeeeee;
+  --color-btn-selected-bg: #e8e8e8;
   --color-btn-primary-text: #2e2e2e;
   --color-btn-primary-bg: #407045;
   --color-btn-primary-border: #083;
@@ -65,8 +65,8 @@ main {
   --color-fg-subtle: #f3f3f3;
   --color-canvas-default: #eeeeee;
   --color-canvas-overlay: #ededed;
-  --color-canvas-inset: #eeeeee;
-  --color-canvas-subtle: #eeeeee;
+  --color-canvas-inset: #e8e8e8;
+  --color-canvas-subtle: #e8e8e8;
   --color-border-default: #cccccc;
   --color-border-muted: #e1e1e1;
   --color-neutral-muted: rgb(224 224 224 / 40%);
