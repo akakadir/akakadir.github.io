@@ -1,73 +1,24 @@
-function changeMode() {
-    let theme = document.body.getAttribute("data-theme");
-    theme = theme === "dark" ? "light" : "dark";
-    document.body.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-    updateGiscusTheme(theme);
-    updateModeButton(theme);
-}
+$(document).ready(function() {
+  var fontSizeSlider = $("#fontSize");
+  var fontSizeValue = $("#fontSizeValue");
+  var fontSizeDisplay = $("#fontSizeDisplay");
 
-function updateModeButton(theme) {
-    const modeButton = document.getElementById("mode");
-    if (modeButton) {
-        modeButton.textContent = theme === "dark" ? "koyu" : "açık";
-        if (theme === "dark") {
-            modeButton.classList.add("btn-inverse");
-        } else {
-            modeButton.classList.remove("btn-inverse");
-        }
-    }
-}
+  fontSizeSlider.on("input", function() {
+    var size = fontSizeSlider.val();
+    fontSizeValue.text(size + "px");
+    fontSizeDisplay.css("font-size", size + "px");
+    $("body").not("#ayarlar").css("font-size", size + "px");
+    $("#ayarlar").css("font-size", "initial");
+  });
 
-function updateGiscusTheme(theme) {
-    const giscusTheme = theme === "dark" 
-        ? "https://akakadir.github.io/assets/css/giscus_dark.css" 
-        : "https://akakadir.github.io/assets/css/giscus_light.css";
+  var linkColorPicker = $("#linkColor");
+  var linkColorDisplay = $(".link-color");
+  var selectedColorText = $("#selectedColor");
 
-    const iframe = document.querySelector("iframe.giscus-frame");
-    if (iframe) {
-        iframe.contentWindow.postMessage(
-            { giscus: { setConfig: { theme: giscusTheme } } },
-            "https://giscus.app"
-        );
-    }
-}
-
-function applyThemeOnLoad() {
-    const theme = localStorage.getItem("theme") || "light";
-    document.body.setAttribute("data-theme", theme);
-    updateGiscusTheme(theme);
-    updateModeButton(theme);
-}
-
-function monitorGiscus() {
-    const iframe = document.querySelector("iframe.giscus-frame");
-    if (iframe) {
-        const theme = document.body.getAttribute("data-theme");
-        updateGiscusTheme(theme);
-        iframe.onload = function () {
-            updateGiscusTheme(theme);
-        };
-    }
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("mode")?.addEventListener("click", () => changeMode());
-    applyThemeOnLoad();
-    monitorGiscus();
+  linkColorPicker.on("input", function() {
+    var selectedColor = linkColorPicker.val();
+    linkColorDisplay.css("color", selectedColor);
+    selectedColorText.text(selectedColor);
+    $("a").not(".btn").css("color", selectedColor);
+  });
 });
-
-window.addEventListener("message", (event) => {
-    if (event.origin === "https://giscus.app") {
-        const theme = document.body.getAttribute("data-theme");
-        updateGiscusTheme(theme);
-    }
-});
-
-setInterval(() => {
-    const iframe = document.querySelector("iframe.giscus-frame");
-    const currentTheme = document.body.getAttribute("data-theme");
-    if (iframe) {
-        updateGiscusTheme(currentTheme);
-    }
-}, 3000);
