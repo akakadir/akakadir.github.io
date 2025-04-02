@@ -1,33 +1,44 @@
 <style>
-.modal {
-max-width:250px;
-}
+  .bootstrap-container {
+    all: initial;
+  }
+  .bootstrap-container .modal {
+    max-width: 250px;
+  }
+  .bootstrap-container * {
+    font-family: inherit;
+    box-sizing: border-box;
+  }
 </style>
-<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" />
-<br>
-<a href="#ayarlar" role="button" class="btn" data-toggle="modal">Ayarlar</a>
-<div id="ayarlar" class="modal hide fade">
+<div class="bootstrap-container">
+  <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" />
+  <br>
+  <a href="#ayarlar" role="button" class="btn" data-toggle="modal">Ayarlar</a>
+  <div id="ayarlar" class="modal hide fade">
     <div class="modal-body"> 
-    <label>Tema Seçimi: </label>
-    <a href="#acik" role="button" class="btn">Açık</a>
-	<a href="#koyu" role="button" class="btn btn-inverse">Koyu</a>
-    <hr>
-    <label for="linkColor">Bağlantı Paleti: <span id="selectedColor">#53a245</span></label>
-    <input type="color" id="linkColor" value="#53a245">
-    <p class="link-color-display">
-    <a style="color:#53a245" href="#" class="link-color">Bu bir örnek bağlantıdır</a>
-    </p>
-    <hr>
-    <label for="fontSize">Font Ölçeği: <span id="fontSizeValue">14px</span></label>
-    <input type="range" id="fontSize" min="11" max="16" value="14">
-    <p class="font-size-display" id="fontSizeDisplay">Değişiklikler böyle gözükecek.</p>
+      <label>Tema Seçimi: </label>
+      <a href="#acik" role="button" class="btn">Açık</a>
+      <a href="#koyu" role="button" class="btn btn-inverse">Koyu</a>
+      <hr>
+      <label for="linkColor">Bağlantı Paleti: <span id="selectedColor">#53a245</span></label>
+      <input type="color" id="linkColor" value="#53a245">
+      <p class="link-color-display">
+        <a style="color:#53a245" href="#" class="link-color">Bu bir örnek bağlantıdır</a>
+      </p>
+      <hr>
+      <label for="fontSize">Font Ölçeği: <span id="fontSizeValue">14px</span></label>
+      <input type="range" id="fontSize" min="11" max="16" value="14">
+      <p class="font-size-display" id="fontSizeDisplay">Değişiklikler böyle gözükecek.</p>
     </div>
     
     <div style="text-align:center" class="modal-footer">
-        <a href="#" class="btn btn-danger" data-dismiss="modal">Vazgeç</a>
-        <a href="#" class="btn btn-primary" data-dismiss="modal">Kaydet</a>
+      <a href="#" class="btn btn-danger" data-dismiss="modal">Vazgeç</a>
+      <a href="#" class="btn btn-primary" data-dismiss="modal">Kaydet</a>
     </div>
+  </div>
 </div>
+
+<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
 <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
 <script>
   $(document).ready(function() {
@@ -41,14 +52,13 @@ max-width:250px;
       fontSizeDisplay.css("font-size", size + "px");
     });
     
-  var linkColorPicker = $("#linkColor");
-  var linkColorDisplay = $(".link-color");
-  var selectedColorText = $("#selectedColor");
-
-  linkColorPicker.on("input", function() {
-    var selectedColor = linkColorPicker.val();
-    linkColorDisplay.css("color", selectedColor);
-    selectedColorText.text(selectedColor);
-  });
+    var linkColorPicker = $("#linkColor");
+    var linkColorDisplay = $(".link-color");
+    var selectedColorText = $("#selectedColor");
+    linkColorPicker.on("input", function() {
+      var selectedColor = linkColorPicker.val();
+      linkColorDisplay.css("color", selectedColor);
+      selectedColorText.text(selectedColor);
+    });
   });
 </script>
