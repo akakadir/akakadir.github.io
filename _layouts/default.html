@@ -16,27 +16,7 @@
       {% for js_file in page.custom_js %}
       {% endfor %}
     {% endif %}
-<a id="ayarmenu" href="#ayarlar" role="button" class="btn" data-toggle="modal">ayarlar</a>
-<div id="ayarlar" class="modal hide fade">
-<div class="modal-body"> 
-<span>seçili tema: </span><a id="mode" class="btn" role="button" href="javascript:void(0);"></a>
-<hr>
-<label for="linkColor">bağlantı paleti:</label>
-<input type="color" id="linkColor">
-<span id="selectedColor"></span>
-<p class="link-color-display">
-<a href="javascript:void(0);" class="link-color">bu bir örnek bağlantıdır.</a>
-</p>
-<hr>
-<label for="fontSize">font ölçeği: <span id="fontSizeValue"></span></label>
-<input type="range" id="fontSize" min="13" max="16">
-<p class="font-size-display" id="fontSizeDisplay">değişiklikler böyle gözükecek.</p>
-</div>  
-<div style="text-align:center" class="modal-footer">
-<a href="javascript:void(0);" class="btn btn-danger" data-dismiss="modal">vazgeç</a>
-<a href="javascript:void(0);" class="btn btn-primary" data-dismiss="modal">kaydet</a>
-</div>
-</div>
+  {%-include settings.html-%}
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
   <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
   <script src="/assets/js/settings.js"></script>
