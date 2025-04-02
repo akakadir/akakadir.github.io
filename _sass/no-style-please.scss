@@ -244,6 +244,12 @@ img {
     touch-action: manipulation;
     text-decoration: underline;
 }
+a[href^="http"]::after {
+    content: "➲";
+    display: inline-block;
+    background-size: 100%;
+    transform: rotate(-45deg);
+}
 
 .modal {
   position: fixed;
