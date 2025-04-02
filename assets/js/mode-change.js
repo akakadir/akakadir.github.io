@@ -1,7 +1,7 @@
 function changeMode(theme) {
-    document.body.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-    updateGiscusTheme(theme);
+    document.body.setAttribute("data-theme", theme);  // Sayfanın temasını değiştir
+    localStorage.setItem("theme", theme);  // Yeni temayı localStorage'a kaydet
+    updateGiscusTheme(theme);  // Giscus tema ayarını güncelle
 }
 
 function updateGiscusTheme(theme) {
@@ -19,9 +19,10 @@ function updateGiscusTheme(theme) {
 }
 
 function applyThemeOnLoad() {
-    const theme = localStorage.getItem("theme") || "light";
-    document.body.setAttribute("data-theme", theme);
-    updateGiscusTheme(theme);
+    // Sayfa yüklenirken localStorage'dan temayı al, varsayılan olarak 'light' teması kullan
+    const theme = localStorage.getItem("theme") || "light";  // Varsayılan olarak 'light' teması
+    document.body.setAttribute("data-theme", theme);  // Temayı uygula
+    updateGiscusTheme(theme);  // Giscus tema ayarını uygula
 }
 
 function monitorGiscus() {
@@ -36,8 +37,11 @@ function monitorGiscus() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("mode")?.addEventListener("click", () => changeMode("light"));
-    document.getElementById("mode2")?.addEventListener("click", () => changeMode("dark"));
+    // Tema geçiş butonlarını ayarla
+    document.getElementById("mode")?.addEventListener("click", () => changeMode("light"));  // Açık tema butonu
+    document.getElementById("mode2")?.addEventListener("click", () => changeMode("dark"));  // Koyu tema butonu
+    
+    // Sayfa yüklendiğinde mevcut temayı uygula
     applyThemeOnLoad();
     monitorGiscus();
 });
