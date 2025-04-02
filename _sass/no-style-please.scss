@@ -44,6 +44,12 @@
   }
 }
 
+  @media (max-width: 600px) {
+  .modal {
+  left:75%;
+  }
+}
+
   @media (max-width: 529px) {
   .modal {
   left:80%;
@@ -70,7 +76,7 @@
   
   @media (max-width: 305px) {
   .modal {
-  left:98%;
+  left:97%;
   }
 }  
 
@@ -282,6 +288,12 @@ a[href^="http"]::after {
   }
 }
 
+  @media (max-width: 600px) {
+  .modal {
+  left:75%;
+  }
+}
+
   @media (max-width: 529px) {
   .modal {
   left:80%;
@@ -308,7 +320,7 @@ a[href^="http"]::after {
   
   @media (max-width: 305px) {
   .modal {
-  left:98%;
+  left:97%;
   }
 }  
 
