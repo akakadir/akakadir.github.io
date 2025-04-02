@@ -10,14 +10,12 @@ $(document).ready(function() {
     $("body").css("font-size", size + "px");
   });
   
-  var linkColorPicker = $("#linkColor");
-  var linkColorDisplay = $(".link-color");
+  var textColorPicker = $("#linkColor");
   var selectedColorText = $("#selectedColor");
 
-  linkColorPicker.on("input", function() {
-    var selectedColor = linkColorPicker.val();
-    linkColorDisplay.css("color", selectedColor);
+  textColorPicker.on("input", function() {
+    var selectedColor = textColorPicker.val();
     selectedColorText.text(selectedColor);
-    $("a").css("color", selectedColor);
+    $("p").css("color", selectedColor);
   });
 });
