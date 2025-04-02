@@ -245,11 +245,11 @@ img {
     text-decoration: underline;
 }
 a[href^="http"]::after {
-    content: "⭷";
+    content: "🔗";
     display: inline-block;
     width: 0.8em;
     height: 0.8em;
-    margin-left: 0.25em;
+    margin-left: 0.15em;
     background-size: 100%;
 }
 
