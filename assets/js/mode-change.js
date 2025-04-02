@@ -1,33 +1,39 @@
-function setLightMode() {
-    document.body.setAttribute("data-theme", "light");
-    localStorage.setItem("theme", "light");
-    updateGiscusTheme("light");
-}
+function changeMode() {
+    let theme = document.body.getAttribute("data-theme");
+    theme = theme === "dark" ? "light" : "dark";
+    document.body.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+    updateGiscusTheme(theme);
 
-function setDarkMode() {
-    document.body.setAttribute("data-theme", "dark");
-    localStorage.setItem("theme", "dark");
-    updateGiscusTheme("dark");
+    const modeButton = document.getElementById("mode");
+    if (modeButton) {
+        modeButton.textContent = theme === "dark" ? "Açık" : "Kapalı";
+    }
 }
 
 function updateGiscusTheme(theme) {
-    const giscusTheme = theme === "dark"  
-        ? "https://akakadir.github.io/assets/css/giscus_dark.css"  
-        : "https://akakadir.github.io/assets/css/giscus_light.css"; 
+    const giscusTheme = theme === "dark" 
+        ? "https://akakadir.github.io/assets/css/giscus_dark.css" 
+        : "https://akakadir.github.io/assets/css/giscus_light.css";
 
-    const iframe = document.querySelector("iframe.giscus-frame"); 
-    if (iframe) { 
-        iframe.contentWindow.postMessage( 
-            { giscus: { setConfig: { theme: giscusTheme } } }, 
-            "https://giscus.app" 
-        ); 
-    } 
+    const iframe = document.querySelector("iframe.giscus-frame");
+    if (iframe) {
+        iframe.contentWindow.postMessage(
+            { giscus: { setConfig: { theme: giscusTheme } } },
+            "https://giscus.app"
+        );
+    }
 }
 
 function applyThemeOnLoad() {
     const theme = localStorage.getItem("theme") || "light";
     document.body.setAttribute("data-theme", theme);
     updateGiscusTheme(theme);
+
+    const modeButton = document.getElementById("mode");
+    if (modeButton) {
+        modeButton.textContent = theme === "dark" ? "Açık" : "Kapalı";
+    }
 }
 
 function monitorGiscus() {
@@ -42,8 +48,7 @@ function monitorGiscus() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("mode")?.addEventListener("click", () => setLightMode());
-    document.getElementById("mode2")?.addEventListener("click", () => setDarkMode());
+    document.getElementById("mode")?.addEventListener("click", () => changeMode());
     applyThemeOnLoad();
     monitorGiscus();
 });
