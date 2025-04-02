@@ -1,5 +1,5 @@
 $(document).ready(function() {
-  var fontSizeSlider = $("#fontSizeSlider");
+  var fontSizeSlider = $("#fontSize");
   var fontSizeValue = $("#fontSizeValue");
   var fontSizeDisplay = $("#fontSizeDisplay");
 
@@ -8,8 +8,9 @@ $(document).ready(function() {
     fontSizeValue.text(size + "px");
     fontSizeDisplay.css("font-size", size + "px");
     $("body").not("#ayarlar").css("font-size", size + "px");
+    $("#ayarlar").css("font-size", "initial");
   });
-  
+
   var linkColorPicker = $("#linkColor");
   var linkColorDisplay = $(".link-color");
   var selectedColorText = $("#selectedColor");
