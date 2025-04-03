@@ -29,25 +29,23 @@ layout: default
   {% else %}
   | <span><a class="noncolor" style="color:#f11115;" href="javascript:void(0);" title="zaten en sondasın">sonraki</a></span>
   {% endif %}
-
   <p class="post-meta">
   ⏱️ <span id="readcounter"></span> | <time datetime="{{ page.date }}">{{ page.date | date: site.theme_config.date_format }}</time>
   </p>
-
-<article>
+  <article>
   
   <h1>{{ page.title }}</h1>
 
   {{ content }}
   
-<div id="giscus-container">
-<script type="text/javascript" src="/assets/js/giscus.js"></script>
-</div>
+  <div id="giscus-container">
+  <script type="text/javascript" src="/assets/js/giscus.js"></script>
+  </div>
 
-<script>
-const articleText = document.querySelector('article').innerText;
-const wordsPerMinute = 200;
-const wordCount = articleText.split(/\s+/).length;
-const readingTime = Math.ceil(wordCount / wordsPerMinute);
-document.getElementById('readcounter').innerText = readingTime + " " + "dk.";
-</script>
+  <script>
+  const articleText = document.querySelector('article').innerText;
+  const wordsPerMinute = 200;
+  const wordCount = articleText.split(/\s+/).length;
+  const readingTime = Math.ceil(wordCount / wordsPerMinute);
+  document.getElementById('readcounter').innerText = readingTime + " " + "dk.";
+  </script>
