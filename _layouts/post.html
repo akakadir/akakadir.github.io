@@ -2,7 +2,20 @@
 layout: default
 ---
 
-  {%- assign cat = page.categories[0] -%}
+  <p class="post-meta">
+  <time datetime="{{ page.date }}">{{ page.date | date: site.theme_config.date_format }}</time>
+  </p>
+  <article>
+  
+  <h1>{{ page.title }}</h1>
+
+  {{ content }}
+  
+  <div id="giscus-container">
+  <script type="text/javascript" src="/assets/js/giscus.js"></script>
+  </div>
+
+      {%- assign cat = page.categories[0] -%}
 {%- assign cat_list = site.categories[cat] -%}
 {%- for post in cat_list -%}
   {%- if post.url == page.url -%}
@@ -18,34 +31,14 @@ layout: default
   {%- endif -%}
 {%- endfor -%}
 
-  {% if prev_post %}
-  <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">önceki</a></span> |
-  {% else %}
-  <span><a class="noncolor" style="color:#f11115;" href="javascript:void(0);" title="zaten en baştasın">önceki</a></span></del> |
-  {% endif %}
-  {%- include back_link.html -%}
-  {% if next_post %}
-  | <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki</a></span>
-  {% else %}
-  | <span><a class="noncolor" style="color:#f11115;" href="javascript:void(0);" title="zaten en sondasın">sonraki</a></span>
-  {% endif %}
-  <p class="post-meta">
-  ⏱️ <span id="readcounter"></span> | <time datetime="{{ page.date }}">{{ page.date | date: site.theme_config.date_format }}</time>
-  </p>
-  <article>
-  
-  <h1>{{ page.title }}</h1>
-
-  {{ content }}
-  
-  <div id="giscus-container">
-  <script type="text/javascript" src="/assets/js/giscus.js"></script>
-  </div>
-
-  <script>
-  const articleText = document.querySelector('article').innerText;
-  const wordsPerMinute = 200;
-  const wordCount = articleText.split(/\s+/).length;
-  const readingTime = Math.ceil(wordCount / wordsPerMinute);
-  document.getElementById('readcounter').innerText = readingTime + " " + "dk.";
-  </script>
+  {%- if prev_post -%}
+  <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">önceki yazı</a></span>
+  {%- else -%}
+  <span><a class="noncolor" style="color:#f11115;" href="javascript:void(0);" title="zaten en baştasın">önceki yazı</a></span></del>
+  {%- endif -%}
+  |
+  {%- if next_post -%}
+  <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki yazı</a></span>
+  {- else -%}
+  <span><a class="noncolor" style="color:#f11115;" href="javascript:void(0);" title="zaten en sondasın">sonraki yazı</a></span>
+  {%- endif -%}
