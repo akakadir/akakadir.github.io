@@ -53,7 +53,7 @@
   body[data-theme="light"] {
 }
 
-html { height: 100%; }
+  html { height: 100%; }
 
   body {
   background: #eee; 
@@ -76,13 +76,13 @@ html { height: 100%; }
 
 .post-meta { text-align: right; }
 
-h2, h3, h4, h5, h6 { margin-top: 3rem; }
+  h2, h3, h4, h5, h6 { margin-top: 3rem; }
 
-p { margin: 1rem 0; }
+  p { margin: 1rem 0; }
 
-li { margin: 0.4rem 0; }
+  li { margin: 0.4rem 0; }
 
-*:target { background: yellow; }
+  *:target { background: yellow; }
 
   .w {
   max-width: 640px;
@@ -90,7 +90,7 @@ li { margin: 0.4rem 0; }
   padding: 4rem 2rem;
   }
 
-table { width: 100%; }
+  table { width: 100%; }
 
   table, th, td {
   border: thin solid black;
@@ -221,54 +221,6 @@ table { width: 100%; }
   }
 
   .noncolor {color: #f11115;}
-
-  .onc::after {
-  content: "";
-  display: inline-block;
-  background-image: url('/assets/img/gif/text.gif');
-  background-size: cover;
-  width:15px;
-  height:15px;
-  margin-left: 1px;
-  margin-right: 1px;
-  vertical-align: middle;
-  }
-
-  .onc2::after {
-  content: "";
-  display: inline-block;
-  background-image: url('/assets/img/gif/unknown.gif');
-  background-size: cover;
-  width:15px;
-  height:15px;
-  margin-left: 1px;
-  margin-right: 1px;
-  vertical-align: middle;
-  }
-
-  .son::before {
-  content: "";
-  display: inline-block;
-  background-image: url('/assets/img/gif/text.gif');
-  background-size: cover;
-  width:15px;
-  height:15px;
-  margin-left: 1px;
-  margin-right: 1px;
-  vertical-align: middle;
-  }
-
-  .son2::before {
-  content: "";
-  display: inline-block;
-  background-image: url('/assets/img/gif/unknown.gif');
-  background-size: cover;
-  width:15px;
-  height:15px;
-  margin-left: 1px;
-  margin-right: 1px;
-  vertical-align: middle;
-  }
 
   nav {text-align: center;}
 
