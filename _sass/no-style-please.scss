@@ -3,9 +3,18 @@
 @mixin dark-appearance {
 
   input[type="color"] {
-  color: #555555;
-  background:#333;
-  border:1px solid #444;
+  color:#ccc;
+  background-color: #222;
+  border: 1px solid #444;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.2);
+  }
+
+  input[type="color"]:focus {
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.2), 0 0 8px rgba(82, 168, 236, 0.6);
+  -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.2), 0 0 8px rgba(82, 168, 236, 0.6);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.2), 0 0 8px rgba(82, 168, 236, 0.6);
   }
 
   hr {
@@ -271,3 +280,54 @@ table { width: 100%; }
   #l {text-decoration: line-through;}
 
   nav {text-align: center;}
+
+  input[type="color"] {
+  display: inline-block;
+  height: 20px;
+  padding: 8px 6x;
+  margin-bottom: 10px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #555;
+  vertical-align: middle;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  -webkit-transition: border linear .2s, box-shadow linear .2s;
+  -moz-transition: border linear .2s, box-shadow linear .2s;
+  -o-transition: border linear .2s, box-shadow linear .2s;
+  transition: border linear .2s, box-shadow linear .2s;
+  }
+
+  input[type="color"]:focus {
+  border-color: rgba(82, 168, 236, 0.8);
+  outline: 0;
+  outline: thin dotted \9;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+  -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+  }
+
+  input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+  }
+
+  input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+  }
+
+  input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: 3px;
+  }
+
+  input[type="color"]::-ms-color-swatch {
+  border: none;
+  border-radius: 3px;
+  }
