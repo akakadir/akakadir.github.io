@@ -33,6 +33,7 @@ layout: default
   {%- endif -%}
 {%- endfor -%}
 
+</nav>
   {% if prev_post %}
   <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">« önceki</a></span>
   {% else %}
@@ -44,3 +45,4 @@ layout: default
   {½ else %}
   <span><a class="noncolor" href="javascript:void(0);" title="zaten en sondasın">sonraki <span id="l">»</span></a></span>
   {% endif %}
+</nav>
