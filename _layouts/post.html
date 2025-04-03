@@ -42,7 +42,7 @@ layout: default
   |
   {% if next_post %}
   <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki »</a></span>
-  {½ else %}
+  {% else %}
   <span><a class="noncolor" href="javascript:void(0);" title="zaten en sondasın">sonraki <span id="l">»</span></a></span>
   {% endif %}
 </nav>
