@@ -11,7 +11,7 @@ function changeMode() {
 function updateModeButton(theme) {
     const modeButton = document.getElementById("mode");
     if (modeButton) {
-        modeButton.textContent = theme === "dark" ? "koyu" : "açık";
+        modeButton.textContent = theme === "dark" ? "karanlık" : "aydınlık";
         if (theme === "dark") {
             modeButton.classList.add("btn-inverse");
         } else {
