@@ -3,8 +3,8 @@
 @mixin dark-appearance {
 
   input[type="color"] {
-  background-color: #222;
-  border: 1px solid #333;
+  background-color: #333;
+  border: 1px solid #444;
   }
 
   hr {
@@ -230,7 +230,7 @@ table { width: 100%; }
   display: inline-block;
   height: 25px;
   width: 30px;
-  padding: 4px 5px;
+  padding: 5px 6px;
   vertical-align: middle;
   color: #555;
   -webkit-border-radius: 4px;
