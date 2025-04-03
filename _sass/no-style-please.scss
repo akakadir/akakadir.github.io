@@ -35,15 +35,16 @@
 }
 
 .modal.fade {
-  top: -100%;
-  -webkit-transition: opacity 0.3s linear, top 0.3s ease-out;
-  -moz-transition: opacity 0.3s linear, top 0.3s ease-out;
-  -o-transition: opacity 0.3s linear, top 0.3s ease-out;
-  transition: opacity 0.3s linear, top 0.3s ease-out;
+  opacity: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s linear;
 }
 
 .modal.fade.in {
-  top: 10%;
+  opacity: 1;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 @media (max-width: 480px) {
@@ -248,15 +249,16 @@ a[href^="http"]::after {
 }
 
 .modal.fade {
-  top: -100%;
-  -webkit-transition: opacity 0.3s linear, top 0.3s ease-out;
-  -moz-transition: opacity 0.3s linear, top 0.3s ease-out;
-  -o-transition: opacity 0.3s linear, top 0.3s ease-out;
-  transition: opacity 0.3s linear, top 0.3s ease-out;
+  opacity: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s linear;
 }
 
 .modal.fade.in {
-  top: 10%;
+  opacity: 1;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 @media (max-width: 480px) {
