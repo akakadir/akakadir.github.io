@@ -17,38 +17,40 @@
 
 .modal {
   position: fixed;
-  top: 10%;
+  top: 50%; /* Dikey merkezleme için değiştirildi */
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%); /* Hem yatay hem dikey merkezleme */
   z-index: 1050;
   max-width: 275px;
-  width: 100%;
-  background-color: #2c2c2c;
-  border: 1px solid #999;
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  *border: 1px solid #999;
-  -webkit-border-radius: 6px;
-  -moz-border-radius: 6px;
+  width: 90%; /* 100% yerine 90% olarak değiştirildi */
+  background-color: #2c2c2c; /* veya dark theme için #2c2c2c */
+  border: 1px solid rgba(0, 0, 0, 0.3);
   border-radius: 6px;
   outline: none;
-  -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.5);
-  -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.5);
-  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.5);
-  -webkit-background-clip: padding-box;
-  -moz-background-clip: padding-box;
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
   background-clip: padding-box;
+  overflow: auto; /* İçerik taşarsa kaydırma çubuğu ekler */
+  max-height: 90vh; /* Ekran yüksekliğinin %90'ını geçmemesi için */
 }
 
+/* Mobil cihazlar için ek medya sorgusu */
+@media (max-width: 480px) {
+  .modal {
+    width: 85%; /* Mobil cihazlarda biraz daha dar */
+    max-height: 80vh; /* Mobil cihazlarda biraz daha kısa */
+  }
+}
+
+/* Animasyon için fade sınıfınızı da güncelleyin */
 .modal.fade {
-  top: -25%;
-  -webkit-transition: opacity 0.3s linear, top 0.3s ease-out;
-  -moz-transition: opacity 0.3s linear, top 0.3s ease-out;
-  -o-transition: opacity 0.3s linear, top 0.3s ease-out;
-  transition: opacity 0.3s linear, top 0.3s ease-out;
+  opacity: 0;
+  transition: opacity 0.3s linear, transform 0.3s ease-out;
+  transform: translate(-50%, -60%); /* Başlangıç pozisyonu biraz yukarıda */
 }
 
 .modal.fade.in {
-  top: 10%;
+  opacity: 1;
+  transform: translate(-50%, -50%); /* Son pozisyon ortada */
 }
 
 .hide {
@@ -253,26 +255,40 @@ a[href^="http"]::after {
 
 .modal {
   position: fixed;
-  top: 10%;
+  top: 50%; /* Dikey merkezleme için değiştirildi */
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%); /* Hem yatay hem dikey merkezleme */
   z-index: 1050;
   max-width: 275px;
-  width: 100%;
-  background-color: #ffffff;
-  border: 1px solid #999;
+  width: 90%; /* 100% yerine 90% olarak değiştirildi */
+  background-color: #ffffff; /* veya dark theme için #2c2c2c */
   border: 1px solid rgba(0, 0, 0, 0.3);
-  *border: 1px solid #999;
-  -webkit-border-radius: 6px;
-  -moz-border-radius: 6px;
   border-radius: 6px;
   outline: none;
-  -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-  -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
   box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-  -webkit-background-clip: padding-box;
-  -moz-background-clip: padding-box;
   background-clip: padding-box;
+  overflow: auto; /* İçerik taşarsa kaydırma çubuğu ekler */
+  max-height: 90vh; /* Ekran yüksekliğinin %90'ını geçmemesi için */
+}
+
+/* Mobil cihazlar için ek medya sorgusu */
+@media (max-width: 480px) {
+  .modal {
+    width: 85%; /* Mobil cihazlarda biraz daha dar */
+    max-height: 80vh; /* Mobil cihazlarda biraz daha kısa */
+  }
+}
+
+/* Animasyon için fade sınıfınızı da güncelleyin */
+.modal.fade {
+  opacity: 0;
+  transition: opacity 0.3s linear, transform 0.3s ease-out;
+  transform: translate(-50%, -60%); /* Başlangıç pozisyonu biraz yukarıda */
+}
+
+.modal.fade.in {
+  opacity: 1;
+  transform: translate(-50%, -50%); /* Son pozisyon ortada */
 }
 
 .language-plaintext {
