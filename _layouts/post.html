@@ -35,14 +35,14 @@ layout: default
 
 <nav>
   {% if prev_post %}
-  <span><a class="ofc" href="{{ prev_post.url }}" title="{{ prev_post.title }}">önceki</a></span>
+  <span><a class="onc" href="{{ prev_post.url }}" title="{{ prev_post.title }}">önceki</a></span>
   {% else %}
-  <span><a class="blck unknwn" href="javascript:void(0);" title="gerisi yok">önceki</a></span></del>
+  <span><a class="blck onc2" href="javascript:void(0);" title="gerisi yok">önceki</a></span></del>
   {% endif %}
   |
   {% if next_post %}
-  <span><a class="ofc" href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki</a></span>
+  <span><a class="son" href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki</a></span>
   {% else %}
-  <span><a class="blck unknwn" href="javascript:void(0);" title="ilerisi yok">sonraki</a></span>
+  <span><a class="blck son2" href="javascript:void(0);" title="ilerisi yok">sonraki</a></span>
   {% endif %}
 </nav>
