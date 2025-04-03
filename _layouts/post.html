@@ -2,6 +2,8 @@
 layout: default
 ---
 
+  {%-include back_link.html-%}
+
   <p class="post-meta">
   <time datetime="{{ page.date }}">{{ page.date | date: site.theme_config.date_format }}</time>
   </p>
@@ -31,14 +33,14 @@ layout: default
   {%- endif -%}
 {%- endfor -%}
 
-  {%- if prev_post -%}
-  <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">önceki yazı</a></span>
-  {%- else -%}
-  <span><a class="noncolor" style="color:#f11115;" href="javascript:void(0);" title="zaten en baştasın">önceki yazı</a></span></del>
-  {%- endif -%}
+  {% if prev_post %}
+  <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">« önceki</a></span>
+  {% else %}
+  <span><a class="noncolor" href="javascript:void(0);" title="zaten en baştasın"><span id="l">«</span> önceki</a></span></del>
+  {% endif %}
   |
-  {%- if next_post -%}
-  <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki yazı</a></span>
-  {- else -%}
-  <span><a class="noncolor" style="color:#f11115;" href="javascript:void(0);" title="zaten en sondasın">sonraki yazı</a></span>
-  {%- endif -%}
+  {% if next_post %}
+  <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki »</a></span>
+  {½ else %}
+  <span><a class="noncolor" href="javascript:void(0);" title="zaten en sondasın">sonraki <span id="l">»</span></a></span>
+  {% endif %}
