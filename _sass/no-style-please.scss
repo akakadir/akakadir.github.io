@@ -120,6 +120,15 @@ html { height: 100%; }
   border-bottom: 1px solid #ffffff;
   }
 
+ .language-plaintext {
+ border-radius: 0px;
+ background-color: #ededed;
+ border-color: #ededed;
+ font-family: Source Sans Pro, sans-serif;
+ border: 0px;
+ padding: 0px 0px;
+ }
+
 .post-meta { text-align: right; }
 
 h2, h3, h4, h5, h6 { margin-top: 3rem; }
@@ -169,15 +178,6 @@ table { width: 100%; }
   font-size: 15px;
   word-spacing: 1px;
   }
-
- .language-plaintext {
- border-radius: 0px;
- background-color: #efefef;
- border-color: #efefef;
- font-family: Source Sans Pro, sans-serif;
- border: 0px;
- padding: 0px 0px;
- }
 
   blockquote {
   font-style: italic;
