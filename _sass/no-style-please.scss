@@ -222,7 +222,7 @@ table { width: 100%; }
 
   .blck {color: #f11115;}
 
-  .ofc::before {
+  .onc::after {
   content: "";
   display: inline-block;
   background-image: url('/assets/img/gif/text.gif');
@@ -231,9 +231,10 @@ table { width: 100%; }
   height:20px;
   margin-left: 1px;
   margin-right: 1px;
+  vertical-align: middle;
   }
 
-  .unknwn::before {
+  .onc2::after {
   content: "";
   display: inline-block;
   background-image: url('/assets/img/gif/unknown.gif');
@@ -242,6 +243,31 @@ table { width: 100%; }
   height:20px;
   margin-left: 1px;
   margin-right: 1px;
+  vertical-align: middle;
+  }
+
+  .son::before {
+  content: "";
+  display: inline-block;
+  background-image: url('/assets/img/gif/text.gif');
+  background-size: cover;
+  width:16px;
+  height:16px;
+  margin-left: 1px;
+  margin-right: 1px;
+  vertical-align: middle;
+  }
+
+  .son2::before {
+  content: "";
+  display: inline-block;
+  background-image: url('/assets/img/gif/unknown.gif');
+  background-size: cover;
+  width:16px;
+  height:16px;
+  margin-left: 1px;
+  margin-right: 1px;
+  vertical-align: middle;
   }
 
   nav {text-align: center;}
