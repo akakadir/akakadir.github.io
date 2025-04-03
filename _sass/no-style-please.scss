@@ -220,7 +220,25 @@ table { width: 100%; }
   padding: 0px 0px;
   }
 
-  .noncolor {color: #f11115;}
+  .blck {color: #f11115;}
+
+  .ofc::before {
+  content: "";
+  display: inline-block;
+  background-image: url('/assets/img/gif/text.gif');
+  background-size: cover;
+  margin-left: 1px;
+  margin-right: 1px;
+  }
+
+  .unknwn::before {
+  content: "";
+  display: inline-block;
+  background-image: url('/assets/img/gif/unknown.gif');
+  background-size: cover;
+  margin-left: 1px;
+  margin-right: 1px;
+  }
 
   nav {text-align: center;}
 
