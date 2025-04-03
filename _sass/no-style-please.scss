@@ -222,10 +222,10 @@ img {
     text-decoration: underline;
 }
 a[href^="http"]::after {
-    content: "➲";
+    content: "⇲";
     display: inline-block;
     background-size: 100%;
-    transform: rotate(-45deg);
+    transform: rotate(-90deg);
     margin-left: 0.10em;
 }
 
