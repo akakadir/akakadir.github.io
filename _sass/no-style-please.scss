@@ -34,57 +34,12 @@
   }
 
   .modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1050;
-  max-width: 275px;
-  width: auto;
-  min-width: 275px;
-  margin: 0;
   background-color: #2c2c2c;
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  border-radius: 6px;
-  outline: none;
-  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.5);
-  background-clip: padding-box;
-  box-sizing: border-box;
   }
-
-  .modal.fade {
-  opacity: 0;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.3s linear;
-  }
-
-  .modal.fade.in {
-  opacity: 1;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  }
-
-  @media (max-width: 480px) {
-  .modal {
-  width: 80%;
-  min-width: auto;
-  left: 50% !important;
-  margin-left: 0 !important;
-  transform: translate(-50%, -50%) !important;
-  }
-}
 
   .modal-footer {
-  padding: 14px 15px 15px;
-  margin-bottom: 0;
-  text-align: right;
   background-color: #222222;
   border-top: 1px solid #444;
-  -webkit-border-radius: 0 0 6px 6px;
-  -moz-border-radius: 0 0 6px 6px;
-  border-radius: 0 0 6px 6px;
-  *zoom: 1;
   -webkit-box-shadow: inset 0 1px 0 #333333;
   -moz-box-shadow: inset 0 1px 0 #333333;
   box-shadow: inset 0 1px 0 #333333;
