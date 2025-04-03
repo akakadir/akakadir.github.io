@@ -4,7 +4,7 @@
 
   input[type="color"] {
   color:#ccc;
-  background-color: #222;
+  background-color: #333;
   border: 1px solid #444;
   -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.2);
   -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.2);
@@ -298,10 +298,6 @@ table { width: 100%; }
   -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
   -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
-  -webkit-transition: border linear .2s, box-shadow linear .2s;
-  -moz-transition: border linear .2s, box-shadow linear .2s;
-  -o-transition: border linear .2s, box-shadow linear .2s;
-  transition: border linear .2s, box-shadow linear .2s;
   }
 
   input[type="color"]:focus {
