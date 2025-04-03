@@ -198,11 +198,6 @@ table { width: 100%; }
   margin-left: 0 !important;
   transform: translate(-50%, -50%) !important;
   }
-  input[type="color"] {
-  height: 25px;
-  width: 30px;
-  padding: 6px 5px;
-  }
 }
 
   .dot {
@@ -233,9 +228,9 @@ table { width: 100%; }
 
   input[type="color"] {
   display: inline-block;
-  height: 30px;
-  width: 35px;
-  padding: 6px 6px;
+  height:2rem;
+  width: 2rem;
+  padding: 0.4rem 0.3rem;
   vertical-align: middle;
   color: #555;
   -webkit-border-radius: 4px;
