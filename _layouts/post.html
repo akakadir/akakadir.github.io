@@ -37,12 +37,12 @@ layout: default
   {% if prev_post %}
   <span><a class="onc" href="{{ prev_post.url }}" title="{{ prev_post.title }}">önceki</a></span>
   {% else %}
-  <span><a id="blck" class="onc2" href="javascript:void(0);" title="gerisi yok">önceki</a></span></del>
+  <span><a class="noncolor onc2" href="javascript:void(0);" title="gerisi yok">önceki</a></span></del>
   {% endif %}
   |
   {% if next_post %}
   <span><a class="son" href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki</a></span>
   {% else %}
-  <span><a id="blck" class="son2" href="javascript:void(0);" title="ilerisi yok">sonraki</a></span>
+  <span><a class="noncolor son2" href="javascript:void(0);" title="ilerisi yok">sonraki</a></span>
   {% endif %}
 </nav>
