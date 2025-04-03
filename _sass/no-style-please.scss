@@ -229,9 +229,9 @@ table { width: 100%; }
 
   input[type="color"] {
   display: inline-block;
-  height: 16px;
+  height: 20px;
   padding: 8px 6x;
-  line-height: 20px;
+  vertical-align: middle;
   color: #555;
   -webkit-border-radius: 4px;
   -moz-border-radius: 4px;
