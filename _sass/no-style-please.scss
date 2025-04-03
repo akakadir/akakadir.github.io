@@ -220,15 +220,15 @@ table { width: 100%; }
   padding: 0px 0px;
   }
 
-  #blck {color: #f11115;}
+  .noncolor {color: #f11115;}
 
   .onc::after {
   content: "";
   display: inline-block;
   background-image: url('/assets/img/gif/text.gif');
   background-size: cover;
-  width:20px;
-  height:20px;
+  width:15px;
+  height:15px;
   margin-left: 1px;
   margin-right: 1px;
   vertical-align: middle;
@@ -239,8 +239,8 @@ table { width: 100%; }
   display: inline-block;
   background-image: url('/assets/img/gif/unknown.gif');
   background-size: cover;
-  width:20px;
-  height:20px;
+  width:15px;
+  height:15px;
   margin-left: 1px;
   margin-right: 1px;
   vertical-align: middle;
@@ -251,8 +251,8 @@ table { width: 100%; }
   display: inline-block;
   background-image: url('/assets/img/gif/text.gif');
   background-size: cover;
-  width:16px;
-  height:16px;
+  width:15px;
+  height:15px;
   margin-left: 1px;
   margin-right: 1px;
   vertical-align: middle;
@@ -263,8 +263,8 @@ table { width: 100%; }
   display: inline-block;
   background-image: url('/assets/img/gif/unknown.gif');
   background-size: cover;
-  width:16px;
-  height:16px;
+  width:15px;
+  height:15px;
   margin-left: 1px;
   margin-right: 1px;
   vertical-align: middle;
