@@ -1,8 +1,7 @@
 ---
 layout: page
+title: gizlilik politikası
 ---
-
-# gizlilik politikası
 
 ## giriş
 merhaba sayın okur,
