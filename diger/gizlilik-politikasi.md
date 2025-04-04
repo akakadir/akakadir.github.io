@@ -28,7 +28,6 @@ bu yazı bloguma geldiğinde seninle aramızda olan bi anlaşma gibidir. ekşi'd
 
 * github pages'in kendi kayıtları (mecbur)
 * giscus yorum modülü (olmasa yorum yazamıyorsunuz)
-* yandex çeviri (yabancı girerse ayıksın diye)
 * goat counter (giren çıkan falan olursa)
 
 ## çerez politikası
