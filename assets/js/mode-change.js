@@ -70,12 +70,16 @@ document.addEventListener("DOMContentLoaded", function () {
     monitorGiscus();
 });
 
-window.addEventListener("storage", (event) => {
-    if (event.key === "theme") {
-        const theme = localStorage.getItem("theme") || "light";
-        document.body.setAttribute("data-theme", theme);
-        updateGiscusTheme(theme);
-        updateAyarMenu(theme);
-        updateModeButton(theme);
+setInterval(() => {
+    const iframe = document.querySelector("iframe.giscus-frame");
+    const currentTheme = document.body.getAttribute("data-theme");
+    if (iframe) {
+        updateGiscusTheme(currentTheme);
     }
-});
+
+    const theme = localStorage.getItem("theme") || "light";
+    if (document.body.getAttribute("data-theme") !== theme) {
+        document.body.setAttribute("data-theme", theme);
+    }
+
+}, 3000);
