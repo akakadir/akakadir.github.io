@@ -3,6 +3,10 @@ layout: page
 title: çerez politikası
 ---
 
+<p align="right">
+son güncelleme: 14 mart 2025
+</p>
+
 giriş
 ------
 valla arkadaşlar, siteye girdiğiniz anda bilmenizi istiyorum ki bazı çerezleri kullanıyoruz. yani buraya ayak bastığınız anda, tarayıcınızın bir köşesine minik minik dosyalar bırakıyoruz. he tabi "ben izin vermiyorum kardeşim" diyorsanız tarayıcı ayarlarınızdan kapatabilirsiniz ama sonra sitede bazı şeyler yamuk yumuk çalışırsa bizi aramayın.
@@ -33,5 +37,3 @@ kısacası
 siteme hoş geldiniz, çay-kahve-çerez ikram ediyoruz. ücretsiz ve zararsız. verilerinizi satmıyorum, kimseyle paylaşmıyorum, zaten o kadar değerli şeyler de toplamıyorum. sadece blog işletmek için lazım olan standart şeyler. hepsi bu.
 
 dipnot: çerez politikamız, gizlilik politikamızın sadece bir parçasını oluşturur. tamamına ekteki adresten erişebilirsin. (bkz: [gizlilik politikası](https://akakadir.github.io/diger/gizlilik-politikasi.html))
-
-son güncelleme: 14 mart 2025.
