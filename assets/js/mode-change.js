@@ -77,6 +77,14 @@ window.addEventListener("message", (event) => {
     }
 });
 
+window.onpopstate = function () {
+    const theme = localStorage.getItem("theme") || "light";
+    document.body.setAttribute("data-theme", theme);
+    updateGiscusTheme(theme);
+    updateAyarMenu(theme);
+    updateModeButton(theme);
+};
+
 setInterval(() => {
     const iframe = document.querySelector("iframe.giscus-frame");
     const currentTheme = document.body.getAttribute("data-theme");
