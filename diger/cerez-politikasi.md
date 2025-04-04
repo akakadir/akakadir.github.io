@@ -1,8 +1,7 @@
 ---
 layout: page
+title: çerez politikası
 ---
-
-# çerez politikası
 
 giriş
 ------
