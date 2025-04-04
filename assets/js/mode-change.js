@@ -2,7 +2,7 @@ function changeMode() {
     let theme = document.body.getAttribute("data-theme");
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
+    sessionStorage.setItem("theme", theme);
     updateGiscusTheme(theme);
     updateAyarMenu(theme);
     updateModeButton(theme);
@@ -46,7 +46,7 @@ function updateGiscusTheme(theme) {
 }
 
 function applyThemeOnLoad() {
-    const theme = localStorage.getItem("theme") || "light";
+    const theme = sessionStorage.getItem("theme") || "light";
     document.body.setAttribute("data-theme", theme);
     updateGiscusTheme(theme);
     updateAyarMenu(theme);
@@ -76,14 +76,6 @@ window.addEventListener("message", (event) => {
         updateGiscusTheme(theme);
     }
 });
-
-window.onpopstate = function () {
-    const theme = localStorage.getItem("theme") || "light";
-    document.body.setAttribute("data-theme", theme);
-    updateGiscusTheme(theme);
-    updateAyarMenu(theme);
-    updateModeButton(theme);
-};
 
 setInterval(() => {
     const iframe = document.querySelector("iframe.giscus-frame");
