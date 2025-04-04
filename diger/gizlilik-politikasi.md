@@ -1,11 +1,8 @@
 ---
-layout: page
-title: gizlilik politikası
+layout: default
 ---
 
-<p align="right">
-son güncelleme: 14 mart 2025
-</p>
+# gizlilik politikası
 
 ## giriş
 merhaba sayın okur,
@@ -43,7 +40,7 @@ minik çerezler var, buyur listeledim:
 ## senin hakların
 
 * çerezleri reddetme hakkı (tarayıcı ayarlarından halledersin)
-* veri silme talebi ("silsene verilerimi" diye mesaj atma hakkı)
+* veri silme talebi ("silsene verilerimi" diye mesaj atabilirsin)
 * "hakkımda ne biliyorsun" diye sorma hakkı
 
 ## başka sitelerle olan muhabbetim
@@ -71,3 +68,5 @@ bu metni istediğim gibi değiştirebilirim. değiştirirsem blog'da duyururum (
 * sosyal medyadan yazarak (ana sayfada x var)
 
 velhasıl, bu politikayı okuduğun için sağol. saygılı olalım, kimse kimseyi üzmesin, her şey güzel olsun.
+
+son güncelleme: 14 mart 2025.
