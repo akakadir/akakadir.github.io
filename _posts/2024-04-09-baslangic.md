@@ -18,8 +18,4 @@ temel yapı: [jekyll](https://jekyllrb.com/)
 
 jekyll teması: [no-style-please](https://github.com/riggraz/no-style-please/)
 
--edit-
-
-çeviri eklentisi: [yandex translate](https://translate.yandex.com/)
-
 yorum modülü: [giscus](https://giscus.app/)
