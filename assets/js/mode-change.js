@@ -70,17 +70,19 @@ document.addEventListener("DOMContentLoaded", function () {
     monitorGiscus();
 });
 
-window.addEventListener("message", (event) => {
-    if (event.origin === "https://giscus.app") {
-        const theme = document.body.getAttribute("data-theme");
-        updateGiscusTheme(theme);
-    }
-});
-
 setInterval(() => {
     const iframe = document.querySelector("iframe.giscus-frame");
     const currentTheme = document.body.getAttribute("data-theme");
     if (iframe) {
         updateGiscusTheme(currentTheme);
     }
+
+    const theme = localStorage.getItem("theme") || "light";
+    if (document.body.getAttribute("data-theme") !== theme) {
+        document.body.setAttribute("data-theme", theme);
+        updateGiscusTheme(theme);
+        updateAyarMenu(theme);
+        updateModeButton(theme);
+    }
+
 }, 3000);
