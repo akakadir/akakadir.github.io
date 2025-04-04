@@ -40,7 +40,7 @@ minik çerezler var, buyur listeledim:
 ## senin hakların
 
 * çerezleri reddetme hakkı (tarayıcı ayarlarından halledersin)
-* veri silme talebi ("silsene verilerimi" diye mesaj atabilirsin)
+* veri silme talebi ("silsene verilerimi" diye mesaj atma hakkı)
 * "hakkımda ne biliyorsun" diye sorma hakkı
 
 ## başka sitelerle olan muhabbetim
