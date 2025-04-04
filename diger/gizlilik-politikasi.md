@@ -3,6 +3,10 @@ layout: page
 title: gizlilik politikası
 ---
 
+<p align="right">
+son güncelleme: 14 mart 2025
+</p>
+
 ## giriş
 merhaba sayın okur,
 
@@ -67,5 +71,3 @@ bu metni istediğim gibi değiştirebilirim. değiştirirsem blog'da duyururum (
 * sosyal medyadan yazarak (ana sayfada x var)
 
 velhasıl, bu politikayı okuduğun için sağol. saygılı olalım, kimse kimseyi üzmesin, her şey güzel olsun.
-
-son güncelleme: 14 mart 2025.
