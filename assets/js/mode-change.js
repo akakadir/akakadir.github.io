@@ -2,7 +2,7 @@ function changeMode() {
     let theme = document.body.getAttribute("data-theme");
     theme = theme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", theme);
-    sessionStorage.setItem("theme", theme);
+    localStorage.setItem("theme", theme);
     updateGiscusTheme(theme);
     updateAyarMenu(theme);
     updateModeButton(theme);
@@ -46,7 +46,7 @@ function updateGiscusTheme(theme) {
 }
 
 function applyThemeOnLoad() {
-    const theme = sessionStorage.getItem("theme") || "light";
+    const theme = localStorage.getItem("theme") || "light";
     document.body.setAttribute("data-theme", theme);
     updateGiscusTheme(theme);
     updateAyarMenu(theme);
