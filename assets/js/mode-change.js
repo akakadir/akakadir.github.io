@@ -76,10 +76,13 @@ setInterval(() => {
     if (iframe) {
         updateGiscusTheme(currentTheme);
     }
-
     const theme = localStorage.getItem("theme") || "light";
     if (document.body.getAttribute("data-theme") !== theme) {
         document.body.setAttribute("data-theme", theme);
+        updateAyarMenu(theme);
+        updateModeButton(theme);
+        if (iframe) {
+            updateGiscusTheme(theme);
+        }
     }
-
 }, 3000);
