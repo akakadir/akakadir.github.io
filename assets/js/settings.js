@@ -58,7 +58,7 @@ $(document).ready(function() {
     var selectedColor = linkColorPicker.val();
     linkColorDisplay.css("color", selectedColor);
     selectedColorText.text(selectedColor);
-    $("a").not(".btn").not(".noncolor").css("color", linkColor);
+    $("a").not(".btn").not(".noncolor").css("color", selectedColor);
     $(".noncolor").css("color", "#f11115");
   });
   
@@ -74,4 +74,13 @@ $(document).ready(function() {
   $(".modal-footer .btn-danger").click(function() {
     applySettings(originalFontSize, originalLinkColor);
   });
+  
+  setInterval(function() {
+    var storedFontSize = localStorage.getItem("fontSize") || "16";
+    var storedLinkColor = localStorage.getItem("linkColor") || "#53a245";
+    
+    if (fontSizeSlider.val() !== storedFontSize || linkColorPicker.val() !== storedLinkColor) {
+      applySettings(storedFontSize, storedLinkColor);
+    }
+  }, 3000);
 });
