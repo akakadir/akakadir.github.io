@@ -1,22 +1,17 @@
 let lastTrackLink = '';
 
 function getSettings() {
-  const fontSize = localStorage.getItem("fontSize") || "16";
   const linkColor = localStorage.getItem("linkColor") || "#53a245";
-  return { fontSize, linkColor };
+  return { linkColor };
 }
 
 function applySettings() {
   const settings = getSettings();
   
-  const nowPlayingElement = document.getElementById('now-playing');
-  nowPlayingElement.style.fontSize = settings.fontSize + 'px';
-  nowPlayingElement.style.color = settings.linkColor;
-
-  const trackLinks = document.querySelectorAll('#now-playing a');
-  trackLinks.forEach(link => {
-    link.style.color = settings.linkColor;
-  });
+  const trackLink = document.querySelector('#now-playing a');
+  if (trackLink) {
+    trackLink.style.color = settings.linkColor;
+  }
 }
 
 function formatTime(seconds) {
