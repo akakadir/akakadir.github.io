@@ -8,6 +8,8 @@ $(document).ready(function() {
   
   var originalFontSize;
   var originalLinkColor;
+  var isModalOpen = false;
+  var intervalId;
   
   function saveSettings() {
     var currentFontSize = fontSizeSlider.val();
@@ -44,7 +46,23 @@ $(document).ready(function() {
     originalLinkColor = savedLinkColor;
   }
   
+  function startSettingsMonitor() {
+    if (!intervalId) {
+      intervalId = setInterval(function() {
+        if (!isModalOpen) {
+          var storedFontSize = localStorage.getItem("fontSize") || "16";
+          var storedLinkColor = localStorage.getItem("linkColor") || "#53a245";
+          
+          if (fontSizeSlider.val() !== storedFontSize || linkColorPicker.val() !== storedLinkColor) {
+            applySettings(storedFontSize, storedLinkColor);
+          }
+        }
+      }, 3000);
+    }
+  }
+  
   loadSettings();
+  startSettingsMonitor();
   
   fontSizeSlider.on("input", function() {
     var size = fontSizeSlider.val();
@@ -63,8 +81,13 @@ $(document).ready(function() {
   });
   
   $("#ayarlar").on("show", function() {
+    isModalOpen = true;
     originalFontSize = fontSizeSlider.val();
     originalLinkColor = linkColorPicker.val();
+  });
+  
+  $("#ayarlar").on("hide", function() {
+    isModalOpen = false;
   });
   
   $(".modal-footer .btn-primary").click(function() {
@@ -74,13 +97,4 @@ $(document).ready(function() {
   $(".modal-footer .btn-danger").click(function() {
     applySettings(originalFontSize, originalLinkColor);
   });
-  
-  setInterval(function() {
-    var storedFontSize = localStorage.getItem("fontSize") || "16";
-    var storedLinkColor = localStorage.getItem("linkColor") || "#53a245";
-    
-    if (fontSizeSlider.val() !== storedFontSize || linkColorPicker.val() !== storedLinkColor) {
-      applySettings(storedFontSize, storedLinkColor);
-    }
-  }, 3000);
 });
