@@ -33,6 +33,7 @@ $(document).ready(function() {
     selectedColorText.text(linkColor);
     $("a").not(".btn").not(".noncolor").css("color", linkColor);
     $(".noncolor").css("color", "#f11115");
+    $(".dot").css("color", linkColor);
 
     fontSizeSlider.val(fontSize);
     linkColorPicker.val(linkColor);
@@ -80,6 +81,7 @@ $(document).ready(function() {
     selectedColorText.text(selectedColor);
     $("a").not(".btn").not(".noncolor").css("color", selectedColor);
     $(".noncolor").css("color", "#f11115");
+    $(".dot").css("color", linkColor);
   });
 
   $("#ayarlar").on("show", function() {
