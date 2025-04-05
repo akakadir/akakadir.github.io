@@ -24,7 +24,7 @@ function loadGiscus() {
     script.setAttribute("data-reactions-enabled", "0");
     script.setAttribute("data-emit-metadata", "0");
     script.setAttribute("data-input-position", "top");
-    script.setAttribute("data-theme", "fro");
+    script.setAttribute("data-theme", "https://akakadir.github.io/assets/css/giscus_light.css");
     script.setAttribute("data-lang", "tr");
     script.setAttribute("data-loading", "lazy");
     script.setAttribute("crossorigin", "anonymous");
