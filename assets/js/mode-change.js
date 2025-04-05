@@ -48,8 +48,5 @@ setInterval(() => {
         document.body.setAttribute("data-theme", theme);
         updateAyarMenu(theme);
         updateModeButton(theme);
-        if (iframe) {
-            updateGiscusTheme(theme);
-        }
     }
 }, 3000);
