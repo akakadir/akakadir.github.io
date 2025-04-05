@@ -80,7 +80,7 @@ $(document).ready(function() {
     linkColorDisplay.css("color", selectedColor);
     selectedColorText.text(selectedColor);
     $("a").not(".btn").not(".noncolor").css("color", selectedColor);
-    $(".dot").css("color", linkColor);
+    $(".dot").css("color", selectedColor);
     $(".noncolor").css("color", "#f11115");
   });
 
