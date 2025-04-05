@@ -1,4 +1,5 @@
 let lastTrackLink = '';
+let fetchIntervalId = null;
 
 function getSettings() {
   const linkColor = localStorage.getItem("linkColor") || "#53a245";
@@ -42,6 +43,31 @@ function fetchTrackData() {
     });
 }
 
-fetchTrackData();
+function startFetching() {
+  if (!fetchIntervalId) {
+    fetchTrackData();
+    fetchIntervalId = setInterval(fetchTrackData, 1000);
+  }
+}
 
-setInterval(fetchTrackData, 1000);
+function stopFetching() {
+  if (fetchIntervalId) {
+    clearInterval(fetchIntervalId);
+    fetchIntervalId = null;
+  }
+}
+
+(function observeModal() {
+  const modalObserver = new MutationObserver(() => {
+    const isModalOpen = window.isModalOpen;
+    if (isModalOpen) {
+      stopFetching();
+    } else {
+      startFetching();
+    }
+  });
+
+  modalObserver.observe(document.body, { attributes: true, childList: true, subtree: true });
+
+  startFetching();
+})();
