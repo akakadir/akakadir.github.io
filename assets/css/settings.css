@@ -321,6 +321,19 @@ hr {
   border-bottom: 1px solid #ffffff;
 }
 
+input[type="color"] {
+   padding: 4px 6px;
+   margin-bottom: 10px;
+   line-height: 20px;
+   color: #555555;
+   background:#eee;
+   border:1px solid #ccc;
+   vertical-align: middle;
+   -webkit-border-radius: 4px;
+      -moz-border-radius: 4px;
+           border-radius: 4px;
+ }
+
 .hide {
   display: none;
 }
