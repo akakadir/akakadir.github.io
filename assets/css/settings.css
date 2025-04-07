@@ -322,7 +322,6 @@ hr {
 }
 
 input[type="color"] {
-   padding: 4px 6px;
    width: 40px;
    height: 20px;
    background:#eee;
