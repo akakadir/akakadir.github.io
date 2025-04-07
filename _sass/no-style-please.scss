@@ -228,7 +228,7 @@
 
   nav {text-align: center;}
 
-  input[type="color"] {
+input[type="color"] {
   display: inline-block;
   height: 20px;
   width: 40px;
@@ -242,9 +242,10 @@
   position: relative;
   cursor: pointer;
   overflow: hidden;
-  }
+  padding: 0;
+}
 
-  input[type="color"]::-webkit-color-swatch-wrapper {
+input[type="color"]::-webkit-color-swatch-wrapper {
   padding: 0;
   border: none;
   width: 100%;
@@ -253,20 +254,21 @@
   align-items: center;
   justify-content: center;
   background-color: #eee;
-  }
+}
 
-  input[type="color"]::-webkit-color-swatch {
+input[type="color"]::-webkit-color-swatch {
   width: 60%;
   height: 60%;
   border: none;
   border-radius: 1px;
   margin: 0;
-  }
+}
 
-  input[type="color"]::-moz-color-swatch {
-  width: 60%;
-  height: 60%;
+input[type="color"]::-moz-color-swatch {
+  width: 16px;
+  height: 8px;
   border: none;
   border-radius: 1px;
-  margin: 0 auto;
-  }
+  display: block;
+  margin: 5px auto;
+}
