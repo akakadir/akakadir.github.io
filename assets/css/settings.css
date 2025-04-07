@@ -322,12 +322,14 @@ hr {
 }
 
 input[type="color"] {
-   padding: 4px 6px;
+   padding: 8px 6px;
+   width: 20px;
    margin-bottom: 10px;
    line-height: 20px;
    color: #555555;
    background:#eee;
    border:1px solid #ccc;
+   display: inline-block;
    vertical-align: middle;
    -webkit-border-radius: 4px;
       -moz-border-radius: 4px;
