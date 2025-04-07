@@ -243,10 +243,12 @@ input[type="color"] {
   cursor: pointer;
   overflow: hidden;
   padding: 0;
+  box-sizing: border-box;
 }
 
 input[type="color"]::-webkit-color-swatch-wrapper {
   padding: 0;
+  margin: 0;
   border: none;
   width: 100%;
   height: 100%;
@@ -257,18 +259,21 @@ input[type="color"]::-webkit-color-swatch-wrapper {
 }
 
 input[type="color"]::-webkit-color-swatch {
-  width: 60%;
-  height: 60%;
+  width: 24px;
+  height: 12px;
   border: none;
   border-radius: 1px;
   margin: 0;
 }
 
 input[type="color"]::-moz-color-swatch {
-  width: 16px;
-  height: 8px;
+  width: 24px;
+  height: 12px;
   border: none;
   border-radius: 1px;
-  display: block;
-  margin: 5px auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
 }
