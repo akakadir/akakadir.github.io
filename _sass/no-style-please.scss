@@ -7,6 +7,10 @@
   border: 1px solid #333;
   }
 
+  input[type="color"]::-webkit-color-swatch-wrapper {
+  background-color: #222;
+  }
+
   hr {
   margin: 20px 0;
   border: 0;
