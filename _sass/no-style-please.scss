@@ -228,7 +228,7 @@
 
   nav {text-align: center;}
 
-input[type="color"] {
+  input[type="color"] {
   display: inline-block;
   height: 20px;
   width: 40px;
@@ -236,15 +236,15 @@ input[type="color"] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  border-radius: 4px;
+  border-radius: 2px;
   background-color: #eee;
   border: 1px solid #ccc;
   position: relative;
   cursor: pointer;
   overflow: hidden;
-}
+  }
 
-input[type="color"]::-webkit-color-swatch-wrapper {
+  input[type="color"]::-webkit-color-swatch-wrapper {
   padding: 0;
   border: none;
   width: 100%;
@@ -253,20 +253,20 @@ input[type="color"]::-webkit-color-swatch-wrapper {
   align-items: center;
   justify-content: center;
   background-color: #eee;
-}
+  }
 
-input[type="color"]::-webkit-color-swatch {
+  input[type="color"]::-webkit-color-swatch {
   width: 60%;
   height: 60%;
   border: none;
-  border-radius: 2px;
+  border-radius: 1px;
+  margin: 0;
+  }
+
+  input[type="color"]::-moz-color-swatch {
+  width: 60%;
+  height: 60%;
+  border: none;
+  border-radius: 1px;
   margin: 0 auto;
-}
-
-input[type="color"]::-moz-color-swatch {
-  width: 60%;
-  height: 60%;
-  border: none;
-  border-radius: 2px;
-  margin: auto;
-}
+  }
