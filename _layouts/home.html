@@ -7,9 +7,10 @@ layout: default
     <p>{{ site.description }}</p>
   {%-endif-%}
 </header>
-
+<div class="default">
 {%-include menu_item.html collection=site.data.menu.entries-%}
 
 {{ content }}
 <p align="center" id="now-playing"></p>
 <script type="text/javascript" src="/assets/js/spotify.js"></script>
+</div>
