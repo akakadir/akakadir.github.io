@@ -35,13 +35,13 @@ layout: default
 
 <nav>
   {% if prev_post %}
-  <span><a href="{{ prev_post.url }}" title="{{ prev_post.title }}">önceki</a></span>
+  <span><a class="default" href="{{ prev_post.url }}" title="{{ prev_post.title }}">önceki</a></span>
   {% else %}
   <span><a class="noncolor" href="javascript:void(0);">önceki</a></span>
   {% endif %}
   |
   {% if next_post %}
-  <span><a href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki</a></span>
+  <span><a class="default" href="{{ next_post.url }}" title="{{ next_post.title }}">sonraki</a></span>
   {% else %}
   <span><a class="noncolor" href="javascript:void(0);">sonraki</a></span>
   {% endif %}
