@@ -31,9 +31,8 @@ $(document).ready(function() {
 
     linkColorDisplay.css("color", linkColor);
     selectedColorText.text(linkColor);
-    $("a").not(".btn").not(".noncolor").not(".default").css("color", linkColor);
-    $(".noncolor").css("color", "rgb(241, 17, 21)");
-    $(".default").css("color", "#53a245");
+    $('a[href^="http"]').not(".clr").css("color", linkColor);
+    $(".clr").css("color", "rgb(241, 17, 21)");
 
     fontSizeSlider.val(fontSize);
     linkColorPicker.val(linkColor);
@@ -79,9 +78,8 @@ $(document).ready(function() {
     var selectedColor = linkColorPicker.val();
     linkColorDisplay.css("color", selectedColor);
     selectedColorText.text(selectedColor);
-    $("a").not(".btn").not(".noncolor").not(".default").css("color", selectedColor);
-    $(".noncolor").css("color", "rgb(241, 17, 21)");
-    $(".default").css("color", "#53a245");
+    $('a[href^="http"]').not(".clr").css("color", selectedColor);
+    $(".clr").css("color", "rgb(241, 17, 21)");
   });
 
   $("#ayarlar").on("show", function() {
