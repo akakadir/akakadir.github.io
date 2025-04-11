@@ -333,6 +333,21 @@ input[type="color"] {
            border-radius: 4px;
  }
 
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+input[type="color"]::-ms-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
 .hide {
   display: none;
 }
