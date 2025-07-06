@@ -19,7 +19,7 @@ bunlar olmadan site çalışmaz, siteyi doğru düzgün görüntüleyebilmeniz i
 kim gelmiş, kim gitmiş, hangi sayfa popüler, kaç kişi okuyup hiç yorum yapmadan kaçmış falan bunları öğrenmek için. büyük ihtimalle herkes kullanıyor, ben de kullanıyorum. 
 
 3. **fonksiyonel çerezler**: 
-mesela daha önce yaptığınız tercihleri hatırlamamızı sağlayan şeyler. her geldiğinizde "koyu tema mı, açık tema mı?" diye sormak yerine bir kere seçin, hep öyle kalsın diye.
+mesela cihaz tercihlerini bilmemi sağlayan şeyler. her geldiğinde "koyu tema mı, açık tema mı?" diye sormam. cihaz ayarlarına göre seçilir.
 
 github pages ile alakalı durum
 ------
