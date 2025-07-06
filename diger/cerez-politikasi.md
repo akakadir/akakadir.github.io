@@ -35,4 +35,4 @@ siteme hoş geldiniz, çay-kahve-çerez ikram ediyoruz. ücretsiz ve zararsız. 
 
 dipnot: çerez politikamız, gizlilik politikamızın sadece bir parçasını oluşturur. tamamına ekteki adresten erişebilirsin. (bkz: [gizlilik politikası](https://akakadir.github.io/diger/gizlilik-politikasi.html))
 
-son güncelleme: 14 mart 2025.
+son güncelleme: 6 temmuz 2025.
