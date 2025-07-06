@@ -1,0 +1,30 @@
+entries:
+  - title: hakkımda
+    url: false
+    entries:
+      - title: özgeçmişim
+        url: assets/pdf/cv.pdf
+      - title: e-mail adresim
+        url: mailto:k4dir.semih@gmail.com
+      - title: github adresim
+        url: https://github.com/akakadir
+      - title: twitter adresim
+        url: https://twitter.com/kadirdotjar
+
+  - title: blog
+    url: false
+    entries:
+      - title: tüm yazılarım
+        url: diger/arsiv.html
+      - title: yazılım
+        url: diger/yazilim.html
+      - title: manipülasyon
+        url: diger/manipulasyon.html
+
+  - title: okumadan kabul ettiğiniz şeyler
+    url: false
+    entries:
+      - title: gizlilik politikası
+        url: diger/gizlilik-politikasi.html
+      - title: çerez politikası
+        url: diger/cerez-politikasi.html

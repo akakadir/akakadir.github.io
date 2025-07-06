@@ -1,0 +1,20 @@
+title: akakadir
+author: akakadir
+email: kaddir@tuta.io
+url: https://akakadir.github.io
+baseurl: ""
+permalink: /:slug.html
+favicon: "assets/img/baseicon/logo.png"
+
+theme_config:
+  appearance: "auto"
+  back_home_text: "ana sayfa"
+  date_format: "%d.%m.%Y"
+  show_description: false
+
+sass:
+  style: :compressed
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
