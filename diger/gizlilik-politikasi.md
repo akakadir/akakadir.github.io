@@ -62,6 +62,7 @@ bu metni istediğim gibi değiştirebilirim. değiştirirsem blog'da duyururum (
 
 ## bana ulaşma şekilleri
 
+* mail atarak (en garantisi)
 * github üzerinden issue açarak (teknik şeyler için)
 * sosyal medyadan yazarak (ana sayfada x var)
 
