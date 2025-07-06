@@ -5,7 +5,7 @@ layout: page
 # gizlilik politikası
 
 ## giriş
-merhaba sayın okur,
+merhaba,
 
 bu yazı bloguma geldiğinde seninle aramızda olan bi anlaşma gibidir. ekşi'de entry girer gibi yazıyorum ama harbiden önemli.
 
@@ -27,8 +27,7 @@ bu yazı bloguma geldiğinde seninle aramızda olan bi anlaşma gibidir. ekşi'd
 ## kullandığım araçlar
 
 * github pages'in kendi kayıtları (mecbur)
-* giscus yorum modülü (olmasa yorum yazamıyorsunuz)
-* goat counter (giren çıkan falan olursa)
+* google analytics (giren çıkan falan olursa)
 
 ## çerez politikası
 
@@ -45,7 +44,7 @@ minik çerezler var, buyur listeledim:
 
 ## başka sitelerle olan muhabbetim
 
-sosyal medya butonları, yorum sistemi gibi şeyler koyabilirim (koydum). bunlar kendi çerezlerini bırakabilir. onlardan ben sorumlu değilim. kaldı ki ben kendi çerezlerimden bile zor sorumluyum.
+sosyal medya butonları, yorum sistemi gibi şeyler koyabilirim. bunlar kendi çerezlerini bırakabilir. onlardan ben sorumlu değilim. ben kendi çerezlerimden bile zor sorumluyum.
 
 ## güvenlik hakkında
 
@@ -63,10 +62,9 @@ bu metni istediğim gibi değiştirebilirim. değiştirirsem blog'da duyururum (
 
 ## bana ulaşma şekilleri
 
-* blog yorumları (en garantisi)
 * github üzerinden issue açarak (teknik şeyler için)
 * sosyal medyadan yazarak (ana sayfada x var)
 
 velhasıl, bu politikayı okuduğun için sağol. saygılı olalım, kimse kimseyi üzmesin, her şey güzel olsun.
 
-son güncelleme: 14 mart 2025.
+son güncelleme: 6 temmuz 2025.
