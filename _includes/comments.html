@@ -62,7 +62,7 @@ fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/issues/${issueNumbe
   .then(response => response.json())
   .then(data => {
     if (!data || data.length === 0) {
-      commentsContainer.innerHTML = "<p>fazlasıyla sessiz.</p>";
+      commentsContainer.innerHTML = "<p>henüz yorum yapılmamış.</p>";
       return;
     }
 
@@ -113,7 +113,7 @@ fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/issues/${issueNumbe
     });
   })
   .catch(error => {
-    commentsContainer.innerHTML = "<p>nedense yorumları çekemedim.</p>";
+    commentsContainer.innerHTML = "<p>bir şeyler ters gitti.</p>";
     console.error("comments.html:", error);
   });
 </script>
