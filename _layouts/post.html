@@ -20,6 +20,7 @@ layout: default
       {{- content -}}
     </div>
     </article>
+    {% include comments.html %}
 
     {%- assign cat = page.categories[0] -%}
     {%- assign cat_list = site.categories[cat] -%}

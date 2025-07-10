@@ -2,6 +2,7 @@
 layout: post
 title: "başlanıç, ben kimim?"
 categories: [genel, yazılım]
+comment_issue_id: 2
 ---
 
 Hoşgeldin, ben Kadir.
