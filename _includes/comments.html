@@ -92,7 +92,7 @@ fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/issues/${issueNumbe
         <div style="flex: 1;">
           <div style="font-size: 0.9rem; line-height: 1.2;">
             <a href="${comment.user.html_url}" target="_blank" style="text-decoration: none;">${comment.user.login}</a>
-            <span style="font-size: 0.8rem;" title="${fullDate}">${relativeDate}</span>
+            <span style="font-size: 0.8rem; float: right;" title="${fullDate}">${relativeDate}</span>
           </div>
           <div style="font-size: 0.9rem; margin-top: 0.2rem; margin-bottom: 0.4rem; white-space: normal; line-height: 1.4;">
             ${escapeHtml(comment.body)}
