@@ -10,9 +10,7 @@
       </div>
     </main>
 
-    {%- if site.goat_counter and jekyll.environment == "production" -%}
-      {%- include goat_counter.html -%}
-    {%- endif -%}
+    {% include new-window-fix.html %}
 
     <script src="/assets/js/lightbox.js"></script>
     <script src="/assets/js/copy.js" defer></script>
