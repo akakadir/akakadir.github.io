@@ -4,7 +4,7 @@ email: kaddir@tuta.io
 url: https://akakadir.github.io
 baseurl: ""
 permalink: /:slug.html
-favicon: "assets/img/101037506/101037506.png"
+favicon: "assets/img/base/101037506.png"
 
 theme_config:
   appearance: "auto"
