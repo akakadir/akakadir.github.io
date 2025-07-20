@@ -1,13 +1,11 @@
 <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="preconnect" href="https://www.googletagmanager.com">
-  <link rel="preconnect" href="https://www.google-analytics.com">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+  <link rel="dns-prefetch" href="https://www.google-analytics.com">
   <title>
     {%- if page.title -%}
       {{ page.title }}
@@ -17,18 +15,34 @@
   </title>
   {% seo title=false %}
   {% feed_meta %}
-  <link rel="icon" type="image/png" href="{{ site.favicon | relative_url }}" />
-  <link rel="apple-touch-icon" sizes="180x180" href="{{ site.favicon | relative_url }}" />
-  <link rel="stylesheet" href="{{ "/assets/css/main.css" | relative_url }}" />
-  <link rel="stylesheet" href="{{ "/assets/css/tags.css" | relative_url }}" />
-  <link rel="stylesheet" href="{{ "/assets/css/edit.css" | relative_url }}" />
-  <link rel="stylesheet" href="{{ "/assets/css/lightbox.css" | relative_url }}" />
-  <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+  <link rel="icon" type="image/png" href="{{ site.favicon | relative_url }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ site.favicon | relative_url }}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preload" href="{{ "/assets/css/main.css" | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="{{ "/assets/css/main.css" | relative_url }}"></noscript>
+  <link rel="preload" href="{{ "/assets/css/tags.css" | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="{{ "/assets/css/edit.css" | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="{{ "/assets/css/lightbox.css" | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-LK8YCC4QPN"></script>
   <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-LK8YCC4QPN');
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-LK8YCC4QPN', {
+      page_title: document.title,
+      page_location: window.location.href,
+      send_page_view: true
+    });
+  </script>
+  <script>
+    function loadCSS(href) {
+      var ss = window.document.createElement("link");
+      var ref = window.document.getElementsByTagName("script")[0];
+      ss.rel = "stylesheet";
+      ss.href = href;
+      ref.parentNode.insertBefore(ss, ref);
+    }
   </script>
 </head>
