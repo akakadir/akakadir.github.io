@@ -1,105 +1,193 @@
-let lastTrackLink = '';
-let lyricsData = null;
+class SpotifyNowPlaying {
+  constructor() {
+    this.state = {
+      lastTrackLink: '',
+      lyricsData: null,
+      currentTrack: null,
+      isPlaying: false,
+      trackDuration: 0,
+      lastServerProgress: 0,
+      lastServerTime: 0
+    };
+    this.intervals = { fetch: null, lyrics: null };
+    this.init();
+  }
 
-function formatTime(seconds) {
-  const minutes = Math.floor(seconds / 60);
-  seconds = seconds % 60;
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
+  formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
 
-function parseTimeToSeconds(timeStr) {
-  const parts = timeStr.split(':').map(Number);
-  return parts[0] * 60 + parts[1];
-}
+  parseTimeToSeconds(timeStr) {
+    const [minutes, seconds] = timeStr.split(':').map(Number);
+    return minutes * 60 + seconds;
+  }
 
-function getCurrentLyric(lyrics, currentTime) {
-  if (!lyrics || !lyrics.syncedLyrics) return null;
-  
-  const lines = lyrics.syncedLyrics.split('\n');
-  let currentLine = null;
-  
-  for (const line of lines) {
-    const timeMatch = line.match(/\[(\d+):(\d+)\.(\d+)\]/);
-    if (timeMatch) {
-      const minutes = parseInt(timeMatch[1]);
-      const seconds = parseInt(timeMatch[2]);
-      const totalSeconds = minutes * 60 + seconds;
-      
-      if (totalSeconds <= currentTime) {
-        currentLine = line.replace(timeMatch[0], '').trim();
-      } else {
-        break;
-      }
+  calculateCurrentProgress() {
+    if (!this.state.isPlaying || !this.state.lastServerTime || !this.state.currentTrack) {
+      return this.state.lastServerProgress;
+    }
+    const timeSinceLastUpdate = (Date.now() - this.state.lastServerTime) / 1000;
+    const estimatedProgress = this.state.lastServerProgress + timeSinceLastUpdate;
+    return Math.max(0, Math.min(estimatedProgress, this.state.trackDuration));
+  }
+
+  getCurrentLyric(lyrics, currentTime) {
+    if (!lyrics?.syncedLyrics) return null;
+    if (!lyrics._parsedLines) {
+      lyrics._parsedLines = lyrics.syncedLyrics
+        .split('\n')
+        .map(line => {
+          const timeMatch = line.match(/\[(\d+):(\d+)\.(\d+)\]/);
+          if (timeMatch) {
+            const totalSeconds = parseInt(timeMatch[1]) * 60 + parseInt(timeMatch[2]);
+            return { time: totalSeconds, text: line.replace(timeMatch[0], '').trim() };
+          }
+          return null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.time - b.time);
+    }
+    const lines = lyrics._parsedLines;
+    let currentLine = null;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].time <= currentTime) {
+        currentLine = lines[i].text;
+      } else break;
+    }
+    return currentLine;
+  }
+
+  async fetchLyrics(artist, track, album, duration) {
+    try {
+      const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(track)}&album_name=${encodeURIComponent(album)}&duration=${Math.round(duration)}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.error) return { error: '[bir hata oluştu.]' };
+      if (data.syncedLyrics) return { ...data, type: 'synced' };
+      if (data.plainLyrics) return { ...data, type: 'plain' };
+      return { error: '[sözleri bulamadım.]' };
+    } catch (error) {
+      return { error: '[LRCLIB hatası.]' };
     }
   }
-  
-  return currentLine;
-}
 
-function fetchLyrics(artist, track, album, durationSeconds) {
-  const durationInt = Math.round(durationSeconds);
-  const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(track)}&album_name=${encodeURIComponent(album)}&duration=${durationInt}`;
-  
-  fetch(url)
-    .then(response => response.json())
-    .then(data => {
+  async fetchTrackData() {
+    try {
+      const response = await fetch('https://spotify-now-playing-tau-eight.vercel.app/api/now-playing');
+      const data = await response.json();
+      
       if (data.error) {
-        lyricsData = { error: '[bir hata oluştu.]' };
-      } else if (data.syncedLyrics) {
-        lyricsData = { ...data, type: 'synced' };
-      } else if (data.plainLyrics) {
-        lyricsData = { ...data, type: 'plain' };
-      } else {
-        lyricsData = { error: '[sözleri bulamadım.]' };
+        this.state.currentTrack = null;
+        this.state.isPlaying = false;
+        this.state.lyricsData = null;
+        this.state.lastTrackLink = '';
+        this.state.lastServerProgress = 0;
+        this.state.lastServerTime = 0;
+        this.updateUI({ error: data.error });
+        return;
       }
-    })
-    .catch(error => {
-      console.error('Lyrics fetch error:', error);
-      lyricsData = { error: '[LRCLIB hatası.]' };
-    });
+
+      const currentServerProgress = this.parseTimeToSeconds(data.progress);
+      const trackChanged = data.trackLink !== this.state.lastTrackLink;
+      
+      if (trackChanged) {
+        this.state.lastTrackLink = data.trackLink;
+        this.state.lyricsData = null;
+        this.state.trackDuration = this.parseTimeToSeconds(data.duration);
+        this.state.isPlaying = true;
+      }
+
+      const progressStayedSame = this.state.lastServerProgress === currentServerProgress && 
+                                 this.state.lastServerProgress > 0 && !trackChanged;
+      
+      if (progressStayedSame && this.state.isPlaying) {
+        this.state.isPlaying = false;
+      } else if (currentServerProgress !== this.state.lastServerProgress) {
+        this.state.isPlaying = true;
+      }
+
+      this.state.currentTrack = data;
+      this.state.lastServerProgress = currentServerProgress;
+      this.state.lastServerTime = Date.now();
+
+      if (trackChanged) {
+        this.fetchLyrics(data.artists, data.name, data.album, this.state.trackDuration)
+          .then(lyrics => { this.state.lyricsData = lyrics; });
+      }
+
+    } catch (error) {
+      this.updateUI({ error: '[çalma bilgisini çekemedim.]' });
+    }
+  }
+
+  updateUI(errorData = null) {
+    const nowPlayingEl = document.getElementById('now-playing');
+    const lyricsEl = document.getElementById('lyrics');
+
+    if (errorData) {
+      nowPlayingEl.innerHTML = errorData.error;
+      lyricsEl.innerHTML = '';
+      return;
+    }
+
+    if (!this.state.currentTrack) {
+      nowPlayingEl.innerHTML = '[şu an müzik çalmıyor.]';
+      lyricsEl.innerHTML = '';
+      return;
+    }
+
+    const track = this.state.currentTrack;
+    const currentProgress = this.calculateCurrentProgress();
+    const progressFormatted = this.formatTime(Math.floor(currentProgress));
+    const trackLinkHTML = `<a href="${track.trackLink}" target="_blank">${track.name}</a>`;
+    const playingIndicator = this.state.isPlaying ? '🎧' : '⏸️';
+    nowPlayingEl.innerHTML = `${playingIndicator} Şu an dinliyorum: ${track.artists} - ${trackLinkHTML} | ${progressFormatted}/${track.duration}`;
+
+    if (this.state.lyricsData === null) {
+      lyricsEl.innerHTML = '[yükleniyor...]';
+    } else if (this.state.lyricsData.error) {
+      lyricsEl.innerHTML = this.state.lyricsData.error;
+    } else if (this.state.lyricsData.type === 'synced') {
+      const currentLyric = this.getCurrentLyric(this.state.lyricsData, currentProgress);
+      lyricsEl.innerHTML = currentLyric ? `[${currentLyric}]` : '[...]';
+    } else if (this.state.lyricsData.type === 'plain') {
+      lyricsEl.innerHTML = '[bu şarkı sözleri, henüz eş zamanlı değil.]';
+    } else {
+      lyricsEl.innerHTML = '[sözleri bulamadım.]';
+    }
+  }
+
+  startIntervals() {
+    this.intervals.fetch = setInterval(() => this.fetchTrackData(), 5000);
+    this.intervals.lyrics = setInterval(() => { if (this.state.currentTrack) this.updateUI(); }, 500);
+  }
+
+  stopIntervals() {
+    Object.values(this.intervals).forEach(interval => { if (interval) clearInterval(interval); });
+  }
+
+  handleVisibilityChange() {
+    if (document.hidden) {
+      this.stopIntervals();
+      this.intervals.fetch = setInterval(() => this.fetchTrackData(), 10000);
+    } else {
+      this.stopIntervals();
+      this.startIntervals();
+      this.fetchTrackData();
+    }
+  }
+
+  async init() {
+    await this.fetchTrackData();
+    this.startIntervals();
+    document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
+    window.addEventListener('beforeunload', () => this.stopIntervals());
+  }
+
+  refresh() { this.fetchTrackData(); }
 }
 
-function fetchTrackData() {
-  fetch('https://spotify-now-playing-tau-eight.vercel.app/api/now-playing')
-    .then(response => response.json())
-    .then(data => {
-      if (data.error) {
-        document.getElementById('now-playing').innerHTML = `${data.error}`;
-        document.getElementById('lyrics').innerHTML = '';
-      } else {
-        if (data.trackLink !== lastTrackLink) {
-          lastTrackLink = data.trackLink;
-          lyricsData = null;
-          
-          const durationSeconds = parseTimeToSeconds(data.duration);
-          fetchLyrics(data.artists, data.name, data.album, durationSeconds);
-        }
-        
-        const currentProgressSeconds = parseTimeToSeconds(data.progress);
-        const trackLinkHTML = `<a href="${data.trackLink}" target="_blank">${data.name}</a>`;
-        
-        document.getElementById('now-playing').innerHTML = `🎧 Şu an dinliyorum: ${data.artists} - ${trackLinkHTML} | ${data.progress}/${data.duration}`;
-        
-        const lyricsElement = document.getElementById('lyrics');
-        if (lyricsData === null) {
-          lyricsElement.innerHTML = '[yükleniyor...]';
-        } else if (lyricsData.error) {
-          lyricsElement.innerHTML = `${lyricsData.error}`;
-        } else if (lyricsData.type === 'synced') {
-          const currentLyric = getCurrentLyric(lyricsData, currentProgressSeconds);
-          lyricsElement.innerHTML = currentLyric ? `[${currentLyric}]` : '[...]';
-        } else if (lyricsData.type === 'plain') {
-          lyricsElement.innerHTML = '[bu şarkı sözleri, henüz eş zamanlı değil.]';
-        } else {
-          lyricsElement.innerHTML = '[sözleri bulamadım.]';
-        }
-      }
-    })
-    .catch(error => {
-      document.getElementById('now-playing').innerHTML = '[çalma bilgisini çekemedim.]';
-      document.getElementById('lyrics').innerHTML = '';
-    });
-}
-
-fetchTrackData();
-setInterval(fetchTrackData, 1000);
+const spotifyPlayer = new SpotifyNowPlaying();
+window.refreshSpotify = () => spotifyPlayer.refresh();
