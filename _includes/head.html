@@ -1,7 +1,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -19,11 +19,15 @@
   <link rel="apple-touch-icon" sizes="180x180" href="{{ site.favicon | relative_url }}">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="preload" href="{{ "/assets/css/main.css" | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="{{ "/assets/css/main.css" | relative_url }}"></noscript>
-  <link rel="preload" href="{{ "/assets/css/tags.css" | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <link rel="preload" href="{{ "/assets/css/edit.css" | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <link rel="preload" href="{{ "/assets/css/lightbox.css" | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <meta name="theme-color" content="#000000">
+  <style>
+    body { opacity: 0; transition: opacity 0.1s; }
+    .css-loaded body { opacity: 1; }
+  </style>
+  <link rel="stylesheet" href="{{ "/assets/css/main.css" | relative_url }}">
+  <link rel="stylesheet" href="{{ "/assets/css/tags.css" | relative_url }}">
+  <link rel="stylesheet" href="{{ "/assets/css/edit.css" | relative_url }}">
+  <link rel="stylesheet" href="{{ "/assets/css/lightbox.css" | relative_url }}">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-LK8YCC4QPN"></script>
   <script>
@@ -37,12 +41,8 @@
     });
   </script>
   <script>
-    function loadCSS(href) {
-      var ss = window.document.createElement("link");
-      var ref = window.document.getElementsByTagName("script")[0];
-      ss.rel = "stylesheet";
-      ss.href = href;
-      ref.parentNode.insertBefore(ss, ref);
-    }
+    window.addEventListener('load', function() {
+      document.documentElement.classList.add('css-loaded');
+    });
   </script>
 </head>
