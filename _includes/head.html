@@ -11,8 +11,7 @@
       {{ site.title }}
     {%- endif -%}
   </title>
-
-  {%- seo title=false -%}
+  {% seo title=false %}
   {% feed_meta %}
   <link rel="icon" type="image/png" href="{{ site.favicon | relative_url }}" />
   <link rel="apple-touch-icon" sizes="180x180" href="{{ site.favicon | relative_url }}" />
