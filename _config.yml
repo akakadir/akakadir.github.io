@@ -6,7 +6,6 @@ author:
 url: "https://akakadir.github.io"
 baseurl: ""
 permalink: "/:slug.html"
-image: "/assets/img/base/101037506.png"
 locale: "tr_TR"
 timezone: "Europe/Istanbul"
 
