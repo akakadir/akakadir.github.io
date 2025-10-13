@@ -8,7 +8,7 @@ baseurl: ""
 permalink: "/:slug.html"
 favicon: "/assets/img/base/101037506.png"
 logo: "/assets/img/base/101037506.png"
-image: "/assets/img/base/101037506.png"
+image: "/assets/img/base/1337.png"
 locale: "tr_TR"
 timezone: "Europe/Istanbul"
 
