@@ -1,4 +1,12 @@
 User-agent: *
+Disallow: /assets/
+Disallow: /node_modules/
+Disallow: /vendor/
+Disallow: /tmp/
 Allow: /
 
-Sitemap: [https://akakadir.github.io/sitemap.xml](https://akakadir.github.io/sitemap.xml)
+Sitemap: https://akakadir.github.io/sitemap.xml
+
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
