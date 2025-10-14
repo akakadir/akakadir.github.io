@@ -84,7 +84,7 @@ function initLogo(){
     }
     g.position.z=-0.4;
 
-    let tx=0,ty=0,cx=0,cy=0;
+    let tx=0.3,ty=0,cx=10,cy=0;
     const maxRot=0.02;
     const speed=0.4;
     const verticalFactor=0.4;
@@ -119,6 +119,7 @@ function initLogo(){
     }
     setTimeout(a,100);
 }
+
 
 
 
