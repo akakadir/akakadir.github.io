@@ -49,7 +49,7 @@ function initLogo(){
     ctx.imageSmoothingEnabled=true;
     ctx.imageSmoothingQuality='high';
     ctx.clearRect(0,0,tcan.width,tcan.height);
-    ctx.fillStyle='#c40202';
+    ctx.fillStyle='#bd93f9';
     ctx.font='bold 1500px "New Rocker"';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
@@ -71,7 +71,7 @@ function initLogo(){
             side:THREE.FrontSide,
             metalness:0.1,
             roughness:0.1,
-            emissive:0xc40202,
+            emissive:0xbd93f9,
             emissiveIntensity:0.15-(i*0.004),
             alphaTest:0.4,
             depthWrite:true,
@@ -119,5 +119,6 @@ function initLogo(){
     }
     setTimeout(a,100);
 }
+
 
 
