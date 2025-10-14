@@ -69,11 +69,11 @@ function initLogo(){
             map:tex,
             transparent:true,
             side:THREE.FrontSide,
-            metalness:0.1,
-            roughness:0.1,
+            metalness:0.5,
+            roughness:0.5,
             emissive:0x53a245,
             emissiveIntensity:0.15-(i*0.004),
-            alphaTest:0.4,
+            alphaTest:0,
             depthWrite:true,
             depthTest:true
         });
@@ -119,6 +119,7 @@ function initLogo(){
     }
     setTimeout(a,100);
 }
+
 
 
 
