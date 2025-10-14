@@ -49,7 +49,7 @@ function initLogo(){
     ctx.imageSmoothingEnabled=true;
     ctx.imageSmoothingQuality='high';
     ctx.clearRect(0,0,tcan.width,tcan.height);
-    ctx.fillStyle='#ffffff';
+    ctx.fillStyle='#ff0000';
     ctx.font='bold 1500px "New Rocker"';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
@@ -71,7 +71,7 @@ function initLogo(){
             side:THREE.FrontSide,
             metalness:0.5,
             roughness:0,
-            emissive:0xffffff,
+            emissive:0xff0000,
             emissiveIntensity:0.15-(i*0.004),
             alphaTest:0,
             depthWrite:true,
@@ -119,6 +119,7 @@ function initLogo(){
     }
     setTimeout(a,100);
 }
+
 
 
 
