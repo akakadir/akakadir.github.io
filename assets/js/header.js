@@ -7,8 +7,8 @@ function initLogo(){
     const c=document.querySelector('.a');
     const x=document.createElement('canvas');
     c.appendChild(x);
-    c.style.width='240px';
-    c.style.height='80px';
+    c.style.width='200px';
+    c.style.height='50px';
     c.style.display='inline-block';
     c.style.position='relative';
     c.style.margin='0';
@@ -49,7 +49,7 @@ function initLogo(){
     ctx.imageSmoothingEnabled=true;
     ctx.imageSmoothingQuality='high';
     ctx.clearRect(0,0,tcan.width,tcan.height);
-    ctx.fillStyle='#53a245';
+    ctx.fillStyle='#ffffff';
     ctx.font='bold 1500px "New Rocker"';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
@@ -70,8 +70,8 @@ function initLogo(){
             transparent:true,
             side:THREE.FrontSide,
             metalness:0.5,
-            roughness:0.5,
-            emissive:0x53a245,
+            roughness:0,
+            emissive:0xffffff,
             emissiveIntensity:0.15-(i*0.004),
             alphaTest:0,
             depthWrite:true,
@@ -119,6 +119,7 @@ function initLogo(){
     }
     setTimeout(a,100);
 }
+
 
 
 
