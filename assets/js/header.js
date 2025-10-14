@@ -1,48 +1,81 @@
 (function(){
-    const f = new FontFace('New Rocker','url(assets/fonts/newrocker-regular.ttf)');
-    f.load().then(font=>{
+    const c = document.createElement('div');
+    c.className = 'header';
+    document.body.prepend(c);
+
+    Object.assign(c.style,{
+        width:'240px',
+        height:'80px',
+        display:'inline-block',
+        position:'relative',
+        margin:'0',
+        padding:'0',
+        lineHeight:'0',
+        verticalAlign:'middle',
+        overflow:'hidden'
+    });
+
+    const x = document.createElement('canvas');
+    c.appendChild(x);
+
+    const s = new THREE.Scene();
+    const cam = new THREE.PerspectiveCamera(35, 240/80, 0.1, 1000);
+    const r = new THREE.WebGLRenderer({canvas:x,antialias:true,alpha:true});
+    
+    function resize(){
+        const rect = c.getBoundingClientRect();
+        r.setSize(rect.width, rect.height, false);
+        cam.aspect = rect.width / rect.height;
+        cam.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    
+    r.setPixelRatio(Math.min(window.devicePixelRatio,3));
+    r.setClearColor(0,0);
+    r.outputEncoding = THREE.sRGBEncoding;
+
+    cam.position.set(0,0,10);
+
+    const al = new THREE.AmbientLight(0x53a245,0.9);
+    const dl = new THREE.DirectionalLight(0xffffff,1.3);
+    dl.position.set(4,5,8);
+    const gl = new THREE.PointLight(0x53a245,1.5);
+    gl.position.set(2,2,5);
+    const fl = new THREE.PointLight(0x6bc459,0.6);
+    fl.position.set(-3,-2,3);
+    s.add(al,dl,gl,fl);
+
+    const g = new THREE.Group();
+    s.add(g);
+
+    const f = new FontFace('NewRocker','url(assets/fonts/newrocker-regular.ttf)');
+    f.load().then(function(font){
         document.fonts.add(font);
+        createText();
+    });
 
-        const c = document.querySelector('.header');
-        const x = document.createElement('canvas');
-        c.appendChild(x);
-
-        const s = new THREE.Scene();
-        const cam = new THREE.PerspectiveCamera(35,240/80,0.1,1000);
-        const r = new THREE.WebGLRenderer({canvas:x,antialias:true,alpha:true});
-        r.setSize(240,80,false);
-        r.setPixelRatio(Math.min(window.devicePixelRatio,3));
-        r.setClearColor(0,0);
-        r.outputEncoding = THREE.sRGBEncoding;
-
-        cam.position.set(0,0,10);
-
-        const al = new THREE.AmbientLight(0x53a245,0.9);
-        const dl = new THREE.DirectionalLight(0xffffff,1.3); dl.position.set(4,5,8);
-        const gl = new THREE.PointLight(0x53a245,1.5); gl.position.set(2,2,5);
-        const fl = new THREE.PointLight(0x6bc459,0.6); fl.position.set(-3,-2,3);
-        s.add(al,dl,gl,fl);
-
-        const g = new THREE.Group(); s.add(g);
-
-        const tcan = document.createElement('canvas'); tcan.width=8192; tcan.height=2048;
+    function createText(){
+        const tcan = document.createElement('canvas');
+        tcan.width = 8192;
+        tcan.height = 2048;
         const ctx = tcan.getContext('2d');
-        ctx.imageSmoothingEnabled=true;
+        ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality='high';
         ctx.clearRect(0,0,tcan.width,tcan.height);
-        ctx.fillStyle='#53a245';
-        ctx.font='bold 1500px "New Rocker"';
-        ctx.textAlign='center';
-        ctx.textBaseline='middle';
+        ctx.fillStyle = '#53a245';
+        ctx.font = 'bold 1500px "NewRocker"';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
         ctx.fillText('akakadir',4096,1024);
 
         const tex = new THREE.CanvasTexture(tcan);
-        tex.generateMipmaps=true;
-        tex.minFilter=THREE.LinearMipMapLinearFilter;
-        tex.magFilter=THREE.LinearFilter;
-        tex.anisotropy=r.capabilities.getMaxAnisotropy();
-        tex.encoding=THREE.sRGBEncoding;
-        tex.needsUpdate=true;
+        tex.generateMipmaps = true;
+        tex.minFilter = THREE.LinearMipMapLinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.anisotropy = r.capabilities.getMaxAnisotropy();
+        tex.encoding = THREE.sRGBEncoding;
+        tex.needsUpdate = true;
 
         for(let i=0;i<16;i++){
             const pg = new THREE.PlaneGeometry(24,8);
@@ -59,8 +92,8 @@
                 depthTest:true
             });
             const m = new THREE.Mesh(pg,pm);
-            m.position.z=i*0.05;
-            m.renderOrder=i;
+            m.position.z = i*0.05;
+            m.renderOrder = i;
             g.add(m);
         }
         g.position.z=-0.4;
@@ -74,12 +107,16 @@
             const rect=x.getBoundingClientRect();
             const mx=(e.clientX-rect.left)/rect.width-0.5;
             const my=(e.clientY-rect.top)/rect.height-0.5;
-            ty=mx*maxRot*2;
-            tx=-my*maxRot*2*verticalFactor;
 
-            dl.position.x=4+mx*4; dl.position.y=5+my*4*verticalFactor;
-            gl.position.x=2+mx*3; gl.position.y=2+my*3*verticalFactor;
-            fl.position.x=-3-mx*3; fl.position.y=-2-my*3*verticalFactor;
+            ty = mx*maxRot*2;
+            tx = -my*maxRot*2*verticalFactor;
+
+            dl.position.x=4+mx*4;
+            dl.position.y=5+my*4*verticalFactor;
+            gl.position.x=2+mx*3;
+            gl.position.y=2+my*3*verticalFactor;
+            fl.position.x=-3-mx*3;
+            fl.position.y=-2-my*3*verticalFactor;
         });
 
         let t=0;
@@ -96,6 +133,6 @@
             fl.intensity=0.5+Math.sin(t*2+1)*0.1;
             r.render(s,cam);
         }
-        setTimeout(a,100);
-    });
+        a();
+    }
 })();
