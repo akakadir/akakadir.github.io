@@ -1,5 +1,5 @@
 (function(){
-    const c=document.querySelector('.a');
+    const c=document.querySelector('.header');
     const x=document.createElement('canvas');
     c.appendChild(x);
     const s=new THREE.Scene();
@@ -40,3 +40,4 @@
         gl.intensity=1.4+Math.sin(t*1.5)*0.2; fl.intensity=0.5+Math.sin(t*2+1)*0.1;
         r.render(s,cam);} setTimeout(a,100);
 })();
+
