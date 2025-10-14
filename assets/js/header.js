@@ -1,29 +1,24 @@
-(function(){
+const fnt=new FontFace('New Rocker','url(assets/fonts/newrocker-regular.ttf)');
+fnt.load().then(loadedFont=>{
+    document.fonts.add(loadedFont);
+    initLogo();
+});
+function initLogo(){
     const c=document.querySelector('.a');
-
-    Object.assign(c.style,{
-        width:'240px',
-        height:'80px',
-        display:'inline-block',
-        position:'relative',
-        margin:0,
-        padding:0,
-        lineHeight:0,
-        verticalAlign:'middle',
-        overflow:'hidden'
-    });
-
     const x=document.createElement('canvas');
-    Object.assign(x.style,{
-        width:'100%',
-        height:'100%',
-        display:'block'
-    });
     c.appendChild(x);
-
-    const f=document.createElement('style');
-    f.textContent=`@font-face{font-family:'New Rocker';src:url('assets/fonts/newrocker-regular.ttf') format('truetype');font-weight:normal;font-style:normal;}`;
-    document.head.appendChild(f);
+    c.style.width='240px';
+    c.style.height='80px';
+    c.style.display='inline-block';
+    c.style.position='relative';
+    c.style.margin='0';
+    c.style.padding='0';
+    c.style.lineHeight='0';
+    c.style.verticalAlign='middle';
+    c.style.overflow='hidden';
+    x.style.width='100%';
+    x.style.height='100%';
+    x.style.display='block';
 
     const s=new THREE.Scene();
     const cam=new THREE.PerspectiveCamera(35,240/80,0.1,1000);
@@ -98,10 +93,8 @@
         const rect=x.getBoundingClientRect();
         const mx=(e.clientX-rect.left)/rect.width-0.5;
         const my=(e.clientY-rect.top)/rect.height-0.5;
-
         ty=mx*maxRot*2;
         tx=-my*maxRot*2*verticalFactor;
-
         dl.position.x=4+mx*4;
         dl.position.y=5+my*4*verticalFactor;
         gl.position.x=2+mx*3;
@@ -125,4 +118,4 @@
         r.render(s,cam);
     }
     setTimeout(a,100);
-})();
+}
