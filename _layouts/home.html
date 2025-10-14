@@ -4,7 +4,11 @@ layout: default
 <header>
   <nav class="container navbar navbar-light navbar-expand-sm" style="position: relative;">
     <span class="navbar-brand">
-      {%- include header.html -%}
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+     <script src="/assets/js/header.js"></script>
+       <script>
+        createLogo('logo-container');
+      </script>
     </span>
     <ul class="navbar-nav"></ul>
     <div>
