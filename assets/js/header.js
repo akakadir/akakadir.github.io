@@ -119,12 +119,3 @@ function initLogo(){
     }
     setTimeout(a,100);
 }
-
-
-
-
-
-
-
-
-
