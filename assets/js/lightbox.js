@@ -173,7 +173,7 @@ document.addEventListener("DOMContentLoaded", function() {
             var pdfUrl = encodeURIComponent(this.getAttribute('href'));
             
             // PDF.js viewer'ı iframe içinde aç
-            document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="videoWrapperContainer"><div class="videoWrapper"><iframe src="'+pdfViewerUrl+'?file='+pdfUrl+'" style="width:100%;height:100%;border:none;"></iframe></div></div>';
+            document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="videoWrapperContainer"><div class="videoWrapper"><iframe src="'+pdfViewerUrl+'?file=https://akakadir.github.io/'+pdfUrl+'" style="width:100%;height:100%;border:none;"></iframe></div></div>';
             document.getElementById('lightbox').style.display = 'block';
 
             setGallery(this);
