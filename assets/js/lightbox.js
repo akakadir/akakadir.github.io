@@ -145,10 +145,9 @@ document.addEventListener("DOMContentLoaded", function() {
             event.preventDefault();
             var pdfViewerUrl = 'https://mozilla.github.io/pdf.js/web/viewer.html';
             var pdfUrl = encodeURIComponent(this.getAttribute('href'));
-            document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="videoWrapperContainer"><div class="videoWrapper" style="left:25%;max-width:500px;height:600px;"><iframe src="'+pdfViewerUrl+'?file=https://akakadir.github.io/'+pdfUrl+'"></iframe></div></div>';
+            document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="pdfWrapperContainer"><div class="pdfWrapper"><iframe src="'+pdfViewerUrl+'?file=https://akakadir.github.io/'+pdfUrl+'" style="width:100%;height:100%;border:none;"></iframe></div></div>';
             document.getElementById('lightbox').style.display = 'block';
             setGallery(this);
         });
     });
 });
-
