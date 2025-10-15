@@ -143,11 +143,23 @@ document.addEventListener("DOMContentLoaded", function() {
     elements.forEach(element => {
         element.addEventListener("click", function(event) {
             event.preventDefault();
-            var pdfViewerUrl = 'https://mozilla.github.io/pdf.js/web/viewer.html';
-            var pdfUrl = encodeURIComponent(this.getAttribute('href'));
-            document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="pdfWrapperContainer"><div class="pdfWrapper"><iframe src="'+pdfViewerUrl+'?file=https://akakadir.github.io/'+pdfUrl+'" style="width:100%;height:100%;border:none;"></iframe></div></div>';
-            document.getElementById('lightbox').style.display = 'block';
-            setGallery(this);
+            var pdfUrl = this.getAttribute('href');
+            var currentDomain = window.location.hostname;
+            var linkDomain;
+            try {
+                linkDomain = new URL(pdfUrl, window.location.href).hostname;
+            } catch(e) {
+                linkDomain = currentDomain;
+            }
+            if (linkDomain === currentDomain || pdfUrl.startsWith('/') || pdfUrl.startsWith('./')) {
+                var pdfViewerUrl = 'https://mozilla.github.io/pdf.js/web/viewer.html';
+                var encodedPdfUrl = encodeURIComponent(pdfUrl);
+                document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="pdfWrapperContainer"><div class="pdfWrapper"><iframe src="'+pdfViewerUrl+'?file=https://akakadir.github.io/'+encodedPdfUrl+'" style="width:100%;height:100%;border:none;"></iframe></div></div>';
+                document.getElementById('lightbox').style.display = 'block';
+                setGallery(this);
+            } else {
+                window.open(pdfUrl, '_blank');
+            }
         });
     });
 });
