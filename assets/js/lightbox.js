@@ -1,16 +1,27 @@
+// YouTube link kontrolü
 function is_youtubelink(url) {
     var p = /^(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/;
     return (url.match(p)) ? RegExp.$1 : false;
 }
+
+// Resim link kontrolü
 function is_imagelink(url) {
     var p = /([a-z\-_0-9\/\:\.]*\.(jpg|jpeg|png|gif))/i;
     return (url.match(p)) ? true : false;
 }
+
+// PDF link kontrolü
+function is_pdflink(url) {
+    var p = /([a-z\-_0-9\/\:\.]*\.(pdf))/i;
+    return (url.match(p)) ? true : false;
+}
+
+// Vimeo link kontrolü ve event listener ekleme
 function is_vimeolink(url,el) {
     var id = false;
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState == XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
+        if (xmlhttp.readyState == XMLHttpRequest.DONE) {
             if (xmlhttp.status == 200) {
                 var response = JSON.parse(xmlhttp.responseText);
                 id = response.video_id;
@@ -37,6 +48,8 @@ function is_vimeolink(url,el) {
     xmlhttp.open("GET", 'https://vimeo.com/api/oembed.json?url='+url, true);
     xmlhttp.send();
 }
+
+// Galeri navigasyonu ayarlama
 function setGallery(el) {
     var elements = document.body.querySelectorAll(".gallery");
     elements.forEach(element => {
@@ -78,25 +91,37 @@ function setGallery(el) {
 
 document.addEventListener("DOMContentLoaded", function() {
 
-    //create lightbox div in the footer
+    // Footer'a lightbox div'i oluştur
     var newdiv = document.createElement("div");
     newdiv.setAttribute('id',"lightbox");
     document.body.appendChild(newdiv);
 
-    //add classes to links to be able to initiate lightboxes
+    // Linklere class ekleyerek lightbox başlatılabilir hale getir
     var elements = document.querySelectorAll('a');
     elements.forEach(element => {
         var url = element.getAttribute('href');
         if(url) {
+            // Vimeo link kontrolü
             if(url.indexOf('vimeo') !== -1 && !element.classList.contains('no-lightbox')) {
                 is_vimeolink(url,element);
             }
+            // YouTube link kontrolü
             if(is_youtubelink(url) && !element.classList.contains('no-lightbox')) {
                 element.classList.add('lightbox-youtube');
                 element.setAttribute('data-id',is_youtubelink(url));
             }
+            // Resim link kontrolü
             if(is_imagelink(url) && !element.classList.contains('no-lightbox')) {
                 element.classList.add('lightbox-image');
+                var href = element.getAttribute('href');
+                var filename = href.split('/').pop();
+                var split = filename.split(".");
+                var name = split[0];
+                element.setAttribute('title',name);
+            }
+            // PDF link kontrolü
+            if(is_pdflink(url) && !element.classList.contains('no-lightbox')) {
+                element.classList.add('lightbox-pdf');
                 var href = element.getAttribute('href');
                 var filename = href.split('/').pop();
                 var split = filename.split(".");
@@ -106,7 +131,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    //remove the clicked lightbox
+    // Lightbox'a tıklanınca kapat (next/prev hariç)
     document.getElementById('lightbox').addEventListener("click", function(event) {
         if(event.target.id != 'next' && event.target.id != 'prev'){
             this.innerHTML = '';
@@ -114,7 +139,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
     
-    //add the youtube lightbox on click
+    // YouTube lightbox click event
     var elements = document.querySelectorAll('a.lightbox-youtube');
     elements.forEach(element => {
         element.addEventListener("click", function(event) {
@@ -126,12 +151,29 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    //add the image lightbox on click
+    // Resim lightbox click event
     var elements = document.querySelectorAll('a.lightbox-image');
     elements.forEach(element => {
         element.addEventListener("click", function(event) {
             event.preventDefault();
             document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="img" style="background: url(\''+this.getAttribute('href')+'\') center center / contain no-repeat;" title="'+this.getAttribute('title')+'" ><img src="'+this.getAttribute('href')+'" alt="'+this.getAttribute('title')+'" /></div><span>'+this.getAttribute('title')+'</span>';
+            document.getElementById('lightbox').style.display = 'block';
+
+            setGallery(this);
+        });
+    });
+
+    // PDF lightbox click event - PDF.js viewer kullanarak
+    var elements = document.querySelectorAll('a.lightbox-pdf');
+    elements.forEach(element => {
+        element.addEventListener("click", function(event) {
+            event.preventDefault();
+            // PDF.js viewer URL'i - Mozilla'nın CDN'inden
+            var pdfViewerUrl = 'https://mozilla.github.io/pdf.js/web/viewer.html';
+            var pdfUrl = encodeURIComponent(this.getAttribute('href'));
+            
+            // PDF.js viewer'ı iframe içinde aç
+            document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="videoWrapperContainer"><div class="videoWrapper"><iframe src="'+pdfViewerUrl+'?file='+pdfUrl+'" style="width:100%;height:100%;border:none;"></iframe></div></div>';
             document.getElementById('lightbox').style.display = 'block';
 
             setGallery(this);
