@@ -1,4 +1,8 @@
-const fnt=new FontFace('New Rocker','url(assets/fonts/newrocker-regular.ttf)');
+const s=new THREE.Scene();
+    const cam=new THREE.PerspectiveCamera(35,240/80,0.1,1000);
+    const r=new THREE.WebGLRenderer({canvas:x,antialias:true,alpha:true});
+    r.setSize(240,80,false);
+    r.setPixelRatio(1);const fnt=new FontFace('New Rocker','url(assets/fonts/newrocker-regular.ttf)');
 fnt.load().then(loadedFont=>{
     document.fonts.add(loadedFont);
     initLogo();
@@ -43,14 +47,14 @@ function initLogo(){
     const g=new THREE.Group();
     s.add(g);
     const tcan=document.createElement('canvas');
-    tcan.width=shouldOptimize ? 1024 : 8192;
-    tcan.height=shouldOptimize ? 256 : 2048;
+    tcan.width=512;
+    tcan.height=128;
     const ctx=tcan.getContext('2d');
     ctx.imageSmoothingEnabled=true;
     ctx.imageSmoothingQuality='high';
     ctx.clearRect(0,0,tcan.width,tcan.height);
     ctx.fillStyle='#53a245';
-    ctx.font=shouldOptimize ? 'bold 187px "New Rocker"' : 'bold 1500px "New Rocker"';
+    ctx.font='bold 93px "New Rocker"';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
     ctx.fillText('akakadir',tcan.width/2,tcan.height/2);
