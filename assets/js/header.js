@@ -1,6 +1,6 @@
 const fnt=new FontFace('New Rocker','url(assets/fonts/newrocker-regular.ttf)');
-fnt.load().then(loadedFont=>{
-  document.fonts.add(loadedFont);
+fnt.load().then(l=>{
+  document.fonts.add(l);
   initLogo();
 });
 
@@ -8,21 +8,11 @@ function initLogo(){
   const c=document.querySelector('.a');
   const x=document.createElement('canvas');
   c.appendChild(x);
-  c.style.width='200px';
-  c.style.height='50px';
-  c.style.display='inline-block';
-  c.style.position='relative';
-  c.style.margin='0';
-  c.style.padding='0';
-  c.style.lineHeight='0';
-  c.style.verticalAlign='middle';
-  c.style.overflow='hidden';
-  x.style.width='100%';
-  x.style.height='100%';
-  x.style.display='block';
+  Object.assign(c.style,{width:'200px',height:'50px',display:'inline-block',position:'relative',margin:'0',padding:'0',lineHeight:'0',verticalAlign:'middle',overflow:'hidden'});
+  Object.assign(x.style,{width:'100%',height:'100%',display:'block'});
 
   const s=new THREE.Scene();
-  const cam=new THREE.PerspectiveCamera(35,240/80,0.1,1000);
+  const cam=new THREE.PerspectiveCamera(35,3,0.1,1000);
   const r=new THREE.WebGLRenderer({canvas:x,antialias:false,alpha:true,powerPreference:'high-performance'});
   r.setSize(240,80,false);
   r.setPixelRatio(window.devicePixelRatio>1.5?1.5:1);
@@ -46,7 +36,7 @@ function initLogo(){
   const tcan=document.createElement('canvas');
   tcan.width=4096;
   tcan.height=1024;
-  const ctx=tcan.getContext('2d',{alpha:true,willReadFrequently:false});
+  const ctx=tcan.getContext('2d');
   ctx.imageSmoothingEnabled=true;
   ctx.imageSmoothingQuality='high';
   ctx.fillStyle='#53a245';
@@ -64,32 +54,10 @@ function initLogo(){
   tex.needsUpdate=true;
 
   const pg=new THREE.PlaneGeometry(24,8);
-  const mt=new THREE.MeshStandardMaterial({
-    map:tex,
-    transparent:true,
-    side:THREE.FrontSide,
-    metalness:0.5,
-    roughness:0,
-    emissive:0x53a245,
-    emissiveIntensity:0.15,
-    alphaTest:0.1,
-    depthWrite:true,
-    depthTest:true
-  });
+  const mt={map:tex,transparent:true,side:THREE.FrontSide,metalness:0.5,roughness:0,alphaTest:0.1,depthWrite:true,depthTest:true};
 
   for(let i=0;i<16;i++){
-    const m=new THREE.Mesh(pg,new THREE.MeshStandardMaterial({
-      map:tex,
-      transparent:true,
-      side:THREE.FrontSide,
-      metalness:0.5,
-      roughness:0,
-      emissive:0x53a245,
-      emissiveIntensity:0.15-i*0.004,
-      alphaTest:0.1,
-      depthWrite:true,
-      depthTest:true
-    }));
+    const m=new THREE.Mesh(pg,new THREE.MeshStandardMaterial({...mt,emissive:0x53a245,emissiveIntensity:0.15-i*0.004}));
     m.position.z=i*0.05;
     m.renderOrder=i;
     m.frustumCulled=true;
@@ -99,22 +67,21 @@ function initLogo(){
   g.position.z=-0.4;
 
   let tx=0.3,ty=0,cx=10,cy=0;
-  const maxRot=0.02,speed=0.4,vf=0.4;
-  let moving=false;
+  const maxRot=0.02,speed=0.4;
+  let dlx=4,dly=5,glx=2,gly=2,flx=-3,fly=-2;
 
   document.addEventListener('mousemove',e=>{
     const rect=x.getBoundingClientRect();
     const mx=(e.clientX-rect.left)/rect.width-0.5;
     const my=(e.clientY-rect.top)/rect.height-0.5;
-    ty=mx*maxRot*2;
-    tx=-my*maxRot*2*vf;
-    dl.position.x=4+mx*4;
-    dl.position.y=5+my*4*vf;
-    gl.position.x=2+mx*3;
-    gl.position.y=2+my*3*vf;
-    fl.position.x=-3-mx*3;
-    fl.position.y=-2-my*3*vf;
-    moving=true;
+    ty=mx*0.04;
+    tx=-my*0.016;
+    dl.position.x=dlx+mx*4;
+    dl.position.y=dly+my*3.2;
+    gl.position.x=glx+mx*3;
+    gl.position.y=gly+my*2.4;
+    fl.position.x=flx-mx*3;
+    fl.position.y=fly-my*2.4;
   },{passive:true});
 
   let t=0;
@@ -133,4 +100,3 @@ function initLogo(){
   }
   setTimeout(a,100);
 }
-
