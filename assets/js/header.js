@@ -1,8 +1,4 @@
-const s=new THREE.Scene();
-    const cam=new THREE.PerspectiveCamera(35,240/80,0.1,1000);
-    const r=new THREE.WebGLRenderer({canvas:x,antialias:true,alpha:true});
-    r.setSize(240,80,false);
-    r.setPixelRatio(1);const fnt=new FontFace('New Rocker','url(assets/fonts/newrocker-regular.ttf)');
+const fnt=new FontFace('New Rocker','url(assets/fonts/newrocker-regular.ttf)');
 fnt.load().then(loadedFont=>{
     document.fonts.add(loadedFont);
     initLogo();
@@ -24,15 +20,11 @@ function initLogo(){
     x.style.height='100%';
     x.style.display='block';
     
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isLowEnd = performance.memory?.jsHeapSizeLimit < 500000000;
-    const shouldOptimize = isMobile || isLowEnd;
-    
     const s=new THREE.Scene();
     const cam=new THREE.PerspectiveCamera(35,240/80,0.1,1000);
-    const r=new THREE.WebGLRenderer({canvas:x,antialias:!shouldOptimize,alpha:true});
+    const r=new THREE.WebGLRenderer({canvas:x,antialias:true,alpha:true});
     r.setSize(240,80,false);
-    r.setPixelRatio(shouldOptimize ? 1 : Math.min(window.devicePixelRatio,3));
+    r.setPixelRatio(1);
     r.setClearColor(0,0);
     r.outputEncoding=THREE.sRGBEncoding;
     cam.position.set(0,0,10);
@@ -57,7 +49,7 @@ function initLogo(){
     ctx.font='bold 93px "New Rocker"';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
-    ctx.fillText('akakadir',tcan.width/2,tcan.height/2);
+    ctx.fillText('akakadir',256,64);
     const tex=new THREE.CanvasTexture(tcan);
     tex.generateMipmaps=true;
     tex.minFilter=THREE.LinearMipMapLinearFilter;
