@@ -23,7 +23,7 @@ function initLogo(){
 
   const s=new THREE.Scene();
   const cam=new THREE.PerspectiveCamera(35,240/80,0.1,1000);
-  const r=new THREE.WebGLRenderer({canvas:x,antialias:true,alpha:true,powerPreference:'high-performance'});
+  const r=new THREE.WebGLRenderer({canvas:x,antialias:false,alpha:true,powerPreference:'high-performance'});
   r.setSize(240,80,false);
   r.setPixelRatio(window.devicePixelRatio>1.5?1.5:1);
   r.setClearColor(0,0);
@@ -133,3 +133,4 @@ function initLogo(){
   }
   setTimeout(a,100);
 }
+
