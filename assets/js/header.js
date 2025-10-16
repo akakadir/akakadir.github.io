@@ -26,7 +26,6 @@ function initLogo(){
     r.setSize(240,80,false);
     r.setPixelRatio(1);
     r.setClearColor(0,0);
-    r.outputEncoding=THREE.sRGBEncoding;
     cam.position.set(0,0,10);
     const al=new THREE.AmbientLight(0x53a245,0.9);
     const dl=new THREE.DirectionalLight(0xffffff,1.3);
