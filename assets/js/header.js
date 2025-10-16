@@ -23,11 +23,12 @@ function initLogo(){
 
   const s=new THREE.Scene();
   const cam=new THREE.PerspectiveCamera(35,240/80,0.1,1000);
-  const r=new THREE.WebGLRenderer({canvas:x,antialias:true,alpha:true});
+  const r=new THREE.WebGLRenderer({canvas:x,antialias:true,alpha:true,powerPreference:'high-performance'});
   r.setSize(240,80,false);
   r.setPixelRatio(window.devicePixelRatio>1.5?1.5:1);
   r.setClearColor(0,0);
   r.outputEncoding=THREE.sRGBEncoding;
+  r.shadowMap.enabled=false;
   cam.position.z=10;
 
   const al=new THREE.AmbientLight(0x53a245,0.9);
@@ -45,7 +46,7 @@ function initLogo(){
   const tcan=document.createElement('canvas');
   tcan.width=4096;
   tcan.height=1024;
-  const ctx=tcan.getContext('2d',{alpha:true});
+  const ctx=tcan.getContext('2d',{alpha:true,willReadFrequently:false});
   ctx.imageSmoothingEnabled=true;
   ctx.imageSmoothingQuality='high';
   ctx.fillStyle='#53a245';
@@ -63,7 +64,7 @@ function initLogo(){
   tex.needsUpdate=true;
 
   const pg=new THREE.PlaneGeometry(24,8);
-  const pm=new THREE.MeshStandardMaterial({
+  const mt=new THREE.MeshStandardMaterial({
     map:tex,
     transparent:true,
     side:THREE.FrontSide,
@@ -91,6 +92,7 @@ function initLogo(){
     }));
     m.position.z=i*0.05;
     m.renderOrder=i;
+    m.frustumCulled=true;
     g.add(m);
   }
 
@@ -98,6 +100,7 @@ function initLogo(){
 
   let tx=0.3,ty=0,cx=10,cy=0;
   const maxRot=0.02,speed=0.4,vf=0.4;
+  let moving=false;
 
   document.addEventListener('mousemove',e=>{
     const rect=x.getBoundingClientRect();
@@ -111,7 +114,8 @@ function initLogo(){
     gl.position.y=2+my*3*vf;
     fl.position.x=-3-mx*3;
     fl.position.y=-2-my*3*vf;
-  });
+    moving=true;
+  },{passive:true});
 
   let t=0;
   function a(){
