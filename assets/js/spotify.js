@@ -64,7 +64,7 @@ function fetchTrackData() {
     .then(response => response.json())
     .then(data => {
       if (data.error) {
-        document.getElementById('now-playing').innerHTML = ``;
+        document.getElementById('now-playing').innerHTML = `galiba uyuyorum ya, veya öyle bir şey.`;
         document.getElementById('lyrics').innerHTML = '';
       } else {
         if (data.trackLink !== lastTrackLink) {
