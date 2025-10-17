@@ -14,11 +14,12 @@
   </title>
   {% seo title=false %}
   {% feed_meta %}
-  <style>.a{opacity:0;min-height:50px;display:inline-block;width:200px}</style>
   <meta property="og:image" content="{{ site.favicon | relative_url }}" />
   <link rel="icon" type="image/png" href="{{ site.favicon | relative_url }}" />
   <link rel="apple-touch-icon" sizes="180x180" href="{{ site.favicon | relative_url }}" />
-  <link rel="preload" href="{{ '/assets/fonts/newrocker-regular.ttf' | relative_url }}" as="font" type="font/ttf" />
+  <link rel="preload" href="{{ '/assets/fonts/newrocker-regular.woff2' | relative_url }}" as="font" type="font/woff2" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="{{ "/assets/css/main.css" | relative_url }}" />
   <link rel="stylesheet" href="{{ "/assets/css/tags.css" | relative_url }}" />
   <link rel="stylesheet" href="{{ "/assets/css/edit.css" | relative_url }}" />
