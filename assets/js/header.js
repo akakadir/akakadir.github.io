@@ -6,7 +6,7 @@ fnt.load().then(l=>{
     initLogo(THREE);
 });
 
-function initLogo(){
+function initLogo(THREE){
     const c=document.querySelector('.a');
     const x=document.createElement('canvas');
     c.appendChild(x);
@@ -101,3 +101,4 @@ function initLogo(){
     }
     setTimeout(a,100);
 }
+
