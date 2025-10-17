@@ -1,7 +1,9 @@
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.min.js';
+
 const fnt=new FontFace('New Rocker','url(assets/fonts/newrocker-regular.woff2)');
 fnt.load().then(l=>{
     document.fonts.add(l);
-    initLogo();
+    initLogo(THREE);
 });
 
 function initLogo(){
