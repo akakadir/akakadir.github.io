@@ -18,8 +18,7 @@ layout: default
 </header>
 {%- include menu_item.html collection=site.data.menu.entries -%}
 {{- content -}}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/assets/js/header.js"></script>
+<script type="module" src="/assets/js/header.js"></script>
 <p align="center" id="now-playing"></p>
 <p align="center" id="lyrics"></p>
 <script src="/assets/js/spotify.js"></script>
