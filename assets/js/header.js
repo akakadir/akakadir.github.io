@@ -1,4 +1,4 @@
-const fnt=new FontFace('New Rocker','url(assets/fonts/newrocker-regular.ttf)');
+const fnt=new FontFace('New Rocker','url(assets/fonts/newrocker-regular.woff2)');
 fnt.load().then(l=>{
     document.fonts.add(l);
     initLogo();
@@ -99,3 +99,4 @@ function initLogo(){
     }
     setTimeout(a,100);
 }
+
