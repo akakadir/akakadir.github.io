@@ -1,11 +1,12 @@
+document.querySelector('.a').style.opacity='0';
 const fnt=new FontFace('New Rocker','url(assets/fonts/newrocker-regular.ttf)');
 fnt.load().then(l=>{
     document.fonts.add(l);
     initLogo();
 });
-
 function initLogo(){
     const c=document.querySelector('.a');
+    c.style.opacity='1';
     const x=document.createElement('canvas');
     c.appendChild(x);
     Object.assign(c.style,{width:'200px',height:'50px',display:'inline-block',position:'relative',margin:'0',padding:'0',lineHeight:'0',verticalAlign:'middle',overflow:'hidden'});
@@ -99,5 +100,3 @@ function initLogo(){
     }
     setTimeout(a,100);
 }
-
-
