@@ -78,7 +78,7 @@ function fetchTrackData() {
         const currentProgressSeconds = parseTimeToSeconds(data.progress);
         const trackLinkHTML = `<a href="${data.trackLink}" target="_blank">${data.name}</a>`;
         
-        document.getElementById('now-playing').innerHTML = `🎧 Şu an dinliyorum: ${data.artists} - ${trackLinkHTML} | ${data.progress}/${data.duration}`;
+        document.getElementById('now-playing').innerHTML = `🎧 ${data.artists} - ${trackLinkHTML} | ${data.progress}/${data.duration}`;
         
         const lyricsElement = document.getElementById('lyrics');
         if (lyricsData === null) {
