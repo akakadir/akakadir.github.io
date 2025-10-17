@@ -1,10 +1,9 @@
-document.querySelector('.a').style.opacity='0';
 const fnt=new FontFace('New Rocker','url(assets/fonts/newrocker-regular.ttf)');
 fnt.load().then(l=>{
     document.fonts.add(l);
-    initLogo();
+    aka();
 });
-function initLogo(){
+function aka(){
     const c=document.querySelector('.a');
     c.style.opacity='1';
     const x=document.createElement('canvas');
@@ -100,3 +99,4 @@ function initLogo(){
     }
     setTimeout(a,100);
 }
+
