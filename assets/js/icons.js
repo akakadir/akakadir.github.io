@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!href) return;
 
     if (href.startsWith("mailto:")) {
-      faviconUrl = "/assets/img/webp/formail.webp";
+      faviconUrl = "/assets/img/svg/formail.svg";
     } else if (href.toLowerCase().endsWith(".pdf")) {
       faviconUrl = "/assets/img/ico/forpdf.ico";
     } else if (href.toLowerCase().endsWith(".png")) {
