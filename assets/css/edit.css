@@ -119,8 +119,8 @@
 
   #m::before {
   content: 
-  "eğer sorun yaşıyorsan,\A" 
-  "tarayıcını elzem sürüme yükselt\A"
+  "belirttiğim sürümlerin altında ne olur bilemem,\A" 
+  "ama güzel şeyler olmaz\A"
   "\A"
   url('/assets/img/seticon/opera.png') " opera 48.0.2685.32\A"
   url('/assets/img/seticon/chrome.png') " chrome 61.0.3163.100\A"
@@ -161,3 +161,4 @@
 
   #close:before { transform: rotate(-45deg); }
   #close:after  { transform: rotate(45deg); }
+
