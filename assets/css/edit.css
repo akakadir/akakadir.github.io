@@ -101,7 +101,7 @@
   background:#131618;
   }
    }
-
+  /* eski tarayıcılar için bu kadar ugrasacagımı tahmin etmezdim */
   #m {
   position: fixed;
   top: 0;
@@ -169,8 +169,22 @@
   height: 3px;
   background: white;
   width: 23px;
+  -webkit-transform-origin: 50% 50%;
+  -moz-transform-origin: 50% 50%;
+  -ms-transform-origin: 50% 50%;
+  -o-transform-origin: 50% 50%;
   transform-origin: 50% 50%;
+  -webkit-transform: rotate(-45deg);
+  -moz-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+  transform: rotate(-45deg);
   }
 
-  #close:before { transform: rotate(-45deg); }
-  #close:after  { transform: rotate(45deg); }
+  #close:after {
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+  transform: rotate(45deg);
+  }
