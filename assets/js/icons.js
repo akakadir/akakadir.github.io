@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (href.startsWith("mailto:")) {
       faviconUrl = "/assets/img/png/formail.png";
     } else if (href.toLowerCase().endsWith(".pdf")) {
-      faviconUrl = "/assets/img/ico/forpdf.ico";
+      faviconUrl = "/assets/img/png/forpdf.png";
     } else if (href.toLowerCase().endsWith(".png")) {
       faviconUrl = "/assets/img/png/forimg.png";
     } else if (href.startsWith("http://") || href.startsWith("https://")) {
@@ -50,3 +50,4 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
