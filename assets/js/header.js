@@ -10,8 +10,8 @@ function initLogo(THREE){
     const c=document.querySelector('.a');
     const x=document.createElement('canvas');
     c.appendChild(x);
-    Object.assign(c.style,{width:'200px',height:'50px',display:'inline-block',position:'relative',margin:'0',padding:'0',lineHeight:'0',verticalAlign:'middle',overflow:'hidden',backgroundColor:'transparent'});
-    Object.assign(x.style,{width:'100%',height:'100%',display:'block',backgroundColor:'transparent'});
+    Object.assign(c.style,{background:'transparent',width:'200px',height:'50px'});
+    Object.assign(x.style,{background:'transparent',width:'100%',height:'100%'});
     
     const s=new THREE.Scene();
     const cam=new THREE.PerspectiveCamera(35,3,0.1,1000);
@@ -101,4 +101,3 @@ function initLogo(THREE){
     }
     setTimeout(a,100);
 }
-
