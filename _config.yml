@@ -11,6 +11,7 @@ logo: "/assets/img/base/101037506.png"
 image: "/assets/img/base/qrvibe.png"
 locale: "tr_TR"
 timezone: "Europe/Istanbul"
+encoding: utf-8
 
 theme_config:
   appearance: "auto"
