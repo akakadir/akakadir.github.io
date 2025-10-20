@@ -2,32 +2,27 @@ function is_youtubelink(url) {
     var p = /^(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/;
     return (url.match(p)) ? RegExp.$1 : false;
 }
-
 function is_imagelink(url) {
     var p = /([a-z\-_0-9\/\:\.]*\.(jpg|jpeg|png|gif))/i;
     return (url.match(p)) ? true : false;
 }
-
-function is_pdflink(url) {
-    var p = /([a-z\-_0-9\/\:\.]*\.(pdf))/i;
-    return (url.match(p)) ? true : false;
-}
-
 function is_vimeolink(url,el) {
     var id = false;
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+        if (xmlhttp.readyState == XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
             if (xmlhttp.status == 200) {
                 var response = JSON.parse(xmlhttp.responseText);
                 id = response.video_id;
                 console.log(id);
                 el.classList.add('lightbox-vimeo');
                 el.setAttribute('data-id',id);
+
                 el.addEventListener("click", function(event) {
                     event.preventDefault();
                     document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="videoWrapperContainer"><div class="videoWrapper"><iframe src="https://player.vimeo.com/video/'+el.getAttribute('data-id')+'/?autoplay=1&byline=0&title=0&portrait=0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe></div></div>';
                     document.getElementById('lightbox').style.display = 'block';
+
                     setGallery(this);
                 });
             }
@@ -42,7 +37,6 @@ function is_vimeolink(url,el) {
     xmlhttp.open("GET", 'https://vimeo.com/api/oembed.json?url='+url, true);
     xmlhttp.send();
 }
-
 function setGallery(el) {
     var elements = document.body.querySelectorAll(".gallery");
     elements.forEach(element => {
@@ -83,9 +77,13 @@ function setGallery(el) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+
+    //create lightbox div in the footer
     var newdiv = document.createElement("div");
     newdiv.setAttribute('id',"lightbox");
     document.body.appendChild(newdiv);
+
+    //add classes to links to be able to initiate lightboxes
     var elements = document.querySelectorAll('a');
     elements.forEach(element => {
         var url = element.getAttribute('href');
@@ -105,61 +103,39 @@ document.addEventListener("DOMContentLoaded", function() {
                 var name = split[0];
                 element.setAttribute('title',name);
             }
-            if(is_pdflink(url) && !element.classList.contains('no-lightbox')) {
-                element.classList.add('lightbox-pdf');
-                var href = element.getAttribute('href');
-                var filename = href.split('/').pop();
-                var split = filename.split(".");
-                var name = split[0];
-                element.setAttribute('title',name);
-            }
         }
     });
+
+    //remove the clicked lightbox
     document.getElementById('lightbox').addEventListener("click", function(event) {
         if(event.target.id != 'next' && event.target.id != 'prev'){
             this.innerHTML = '';
             document.getElementById('lightbox').style.display = 'none';
         }
     });
+    
+    //add the youtube lightbox on click
     var elements = document.querySelectorAll('a.lightbox-youtube');
     elements.forEach(element => {
         element.addEventListener("click", function(event) {
             event.preventDefault();
             document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="videoWrapperContainer"><div class="videoWrapper"><iframe src="https://www.youtube.com/embed/'+this.getAttribute('data-id')+'?autoplay=1&showinfo=0&rel=0"></iframe></div>';
             document.getElementById('lightbox').style.display = 'block';
+
             setGallery(this);
         });
     });
+
+    //add the image lightbox on click
     var elements = document.querySelectorAll('a.lightbox-image');
     elements.forEach(element => {
         element.addEventListener("click", function(event) {
             event.preventDefault();
             document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="img" style="background: url(\''+this.getAttribute('href')+'\') center center / contain no-repeat;" title="'+this.getAttribute('title')+'" ><img src="'+this.getAttribute('href')+'" alt="'+this.getAttribute('title')+'" /></div><span>'+this.getAttribute('title')+'</span>';
             document.getElementById('lightbox').style.display = 'block';
+
             setGallery(this);
         });
     });
-    var elements = document.querySelectorAll('a.lightbox-pdf');
-    elements.forEach(element => {
-        element.addEventListener("click", function(event) {
-            event.preventDefault();
-            var pdfUrl = this.getAttribute('href');
-            var currentDomain = window.location.hostname;
-            var linkDomain;
-            try {
-                linkDomain = new URL(pdfUrl, window.location.href).hostname;
-            } catch(e) {
-                linkDomain = currentDomain;
-            }
-            if (linkDomain === currentDomain || pdfUrl.startsWith('/') || pdfUrl.startsWith('./')) {
-                var pdfViewerUrl = 'https://mozilla.github.io/pdf.js/web/viewer.html';
-                var encodedPdfUrl = encodeURIComponent(pdfUrl);
-                document.getElementById('lightbox').innerHTML = '<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="pdfWrapperContainer"><div class="pdfWrapper"><iframe src="'+pdfViewerUrl+'?file=https://akakadir.github.io/'+encodedPdfUrl+'" style="width:100%;height:100%;border:none;"></iframe></div></div>';
-                document.getElementById('lightbox').style.display = 'block';
-                setGallery(this);
-            } else {
-                window.open(pdfUrl, '_blank');
-            }
-        });
-    });
+
 });
