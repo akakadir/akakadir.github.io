@@ -13,7 +13,7 @@
     {%- for post in posts limit: include.limit -%}
       <li class="list-group-item d-flex justify-content-between align-items-center event" style="padding-left:1rem;padding-right:1rem">
         <div class="text-start" style="flex:1">
-          <span>{{ post.title }}</span> <small class="text-muted"><sup>[{{ post.date | date: site.theme_config.date_format }}]</sup></small><br>
+          <span>{{ post.title }}</span><br>
           {%- if post.categories.size > 0 -%}
             {%- assign cat = post.categories[0] -%}
             {%- case cat -%}
