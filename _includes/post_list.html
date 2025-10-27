@@ -25,7 +25,7 @@
             <small><details open><summary><span class="badge bg-{{ bg }} text-white">{{ cat }}</span></summary><div>
               {%- for tag in post.tags -%}
                 {%- if forloop.first -%}<span><img class="arrwline" src="/assets/img/gif/inherit.gif" alt="{{ tag }}"/> <span class="badge {{ tag | slugify }}">{{ tag }}</span></span>
-                {%- else -%}  / <span class="badge {{ tag | slugify }}">{{ tag }}</span>{%- endif -%}
+                {% else %} / <span class="badge {{ tag | slugify }}">{{ tag }}</span>{%- endif -%}
               {%- endfor -%}
             </div></details></small>
           {%- endif -%}
