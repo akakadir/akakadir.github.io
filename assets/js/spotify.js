@@ -1,17 +1,14 @@
 let lastTrackLink = '';
 let lyricsData = null;
-
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
   seconds = seconds % 60;
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
-
 function parseTimeToSeconds(timeStr) {
   const parts = timeStr.split(':').map(Number);
   return parts[0] * 60 + parts[1];
 }
-
 function getCurrentLyric(lyrics, currentTime) {
   if (!lyrics || !lyrics.syncedLyrics) return null;
   
@@ -35,7 +32,6 @@ function getCurrentLyric(lyrics, currentTime) {
   
   return currentLine;
 }
-
 function fetchLyrics(artist, track, album, durationSeconds) {
   const durationInt = Math.round(durationSeconds);
   const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(track)}&album_name=${encodeURIComponent(album)}&duration=${durationInt}`;
@@ -58,7 +54,6 @@ function fetchLyrics(artist, track, album, durationSeconds) {
       lyricsData = { error: '[LRCLIB hatası.]' };
     });
 }
-
 function fetchTrackData() {
   fetch('https://spotify-now-playing-tau-eight.vercel.app/api/now-playing')
     .then(response => response.json())
@@ -71,8 +66,12 @@ function fetchTrackData() {
           lastTrackLink = data.trackLink;
           lyricsData = null;
           
-          const durationSeconds = parseTimeToSeconds(data.duration);
-          fetchLyrics(data.artists, data.name, data.album, durationSeconds);
+          if (data.type !== 'podcast') {
+            const durationSeconds = parseTimeToSeconds(data.duration);
+            fetchLyrics(data.artists, data.name, data.album, durationSeconds);
+          } else {
+            lyricsData = { error: '[podcast çalıyorum, sözleri çekemem.]' };
+          }
         }
         
         const currentProgressSeconds = parseTimeToSeconds(data.progress);
@@ -100,6 +99,5 @@ function fetchTrackData() {
       document.getElementById('lyrics').innerHTML = '';
     });
 }
-
 fetchTrackData();
 setInterval(fetchTrackData, 1000);
