@@ -92,22 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         el.onclick = e => {
             e.preventDefault();
             const pdfUrl = el.getAttribute('href');
-            const currentDomain = window.location.hostname;
-            let linkDomain;
-            
-            try {
-                linkDomain = new URL(pdfUrl, window.location.href).hostname;
-            } catch(err) {
-                linkDomain = currentDomain;
-            }
-            
-            let viewerUrl;
-            if (linkDomain === currentDomain || pdfUrl.startsWith('/') || pdfUrl.startsWith('./')) {
-                viewerUrl = `pdfjs/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`;
-            } else {
-                viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`;
-            }
-            
+            const viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`;
             lightbox.innerHTML = `<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="pdfWrapperContainer"><div class="pdfWrapper"><iframe src="${viewerUrl}"></iframe></div></div>`;
             lightbox.style.display = 'block';
             setGallery(el);
