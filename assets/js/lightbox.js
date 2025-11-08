@@ -101,14 +101,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 linkDomain = currentDomain;
             }
             
+            let viewerUrl;
             if (linkDomain === currentDomain || pdfUrl.startsWith('/') || pdfUrl.startsWith('./')) {
-                const encodedUrl = encodeURIComponent(pdfUrl);
-                lightbox.innerHTML = `<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="pdfWrapperContainer"><div class="pdfWrapper"><iframe src="https://mozilla.github.io/pdf.js/web/viewer.html?file=https://akakadir.github.io/${encodedUrl}"></iframe></div></div>`;
-                lightbox.style.display = 'block';
-                setGallery(el);
+                viewerUrl = `pdfjs/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`;
             } else {
-                window.open(pdfUrl, '_blank');
+                viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`;
             }
+            
+            lightbox.innerHTML = `<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="pdfWrapperContainer"><div class="pdfWrapper"><iframe src="${viewerUrl}"></iframe></div></div>`;
+            lightbox.style.display = 'block';
+            setGallery(el);
         };
     });
 });
