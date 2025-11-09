@@ -39,8 +39,6 @@ function setGallery(el) {
     }
 }
 
-const stablePdfHeight = window.innerHeight * 0.85;
-
 document.addEventListener('DOMContentLoaded', () => {
     const lightbox = document.createElement('div');
     lightbox.id = 'lightbox';
@@ -116,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(absoluteUrl)}`;
             }
             
-            lightbox.innerHTML = `<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="pdfWrapperContainer" style="height: ${stablePdfHeight}px;"><div class="pdfWrapper"><iframe src="${viewerUrl}"></iframe></div></div>`;
+            lightbox.innerHTML = `<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="pdfWrapperContainer"><div class="pdfWrapper"><iframe src="${viewerUrl}"></iframe></div></div>`;
             lightbox.style.display = 'block';
             setGallery(el);
         };
