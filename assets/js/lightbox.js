@@ -87,12 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setGallery(el);
         };
     });
-
-    const setAppHeight = () => {
-    document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
-};
-setAppHeight();
-window.addEventListener('resize', setAppHeight);
     
     document.querySelectorAll('a.lightbox-pdf').forEach(el => {
         el.onclick = e => {
