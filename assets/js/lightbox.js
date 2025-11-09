@@ -65,12 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.id !== 'next' && e.target.id !== 'prev') {
             lightbox.innerHTML = '';
             lightbox.style.display = 'none';
+            document.body.style.overflow = '';
         }
     };
     
     document.querySelectorAll('a.lightbox-youtube').forEach(el => {
         el.onclick = e => {
             e.preventDefault();
+            document.body.style.overflow = 'hidden';
             lightbox.innerHTML = `<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="videoWrapperContainer"><div class="videoWrapper"><iframe src="https://www.youtube.com/embed/${el.getAttribute('data-id')}?autoplay=1&showinfo=0&rel=0"></iframe></div>`;
             lightbox.style.display = 'block';
             setGallery(el);
@@ -80,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('a.lightbox-image').forEach(el => {
         el.onclick = e => {
             e.preventDefault();
+            document.body.style.overflow = 'hidden';
             const href = el.getAttribute('href');
             const title = el.getAttribute('title');
             lightbox.innerHTML = `<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="img" style="background-image: url('${href}');" title="${title}"><img src="${href}" alt="${title}"></div><span>${title}</span>`;
@@ -91,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('a.lightbox-pdf').forEach(el => {
         el.onclick = e => {
             e.preventDefault();
+            document.body.style.overflow = 'hidden';
             const pdfUrl = el.getAttribute('href');
             const currentDomain = window.location.hostname;
             let linkDomain;

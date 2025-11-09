@@ -10,6 +10,7 @@
     cursor: pointer;
     display: none;
     user-select: none;
+    overflow: hidden;
 }
 #lightbox * {user-select: none;}
 #lightbox .img,
@@ -62,7 +63,7 @@
     width: 100%;
     max-width: 950px;
     height: 80%;
-    max-height: 85svh;
+    max-height: 85vh;
 }
 #lightbox .pdfWrapperContainer .pdfWrapper {
     width: 100%;
