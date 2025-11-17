@@ -108,10 +108,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let viewerUrl;
             if (linkDomain === currentDomain || pdfUrl.startsWith('/') || pdfUrl.startsWith('./')) {
                 const encodedUrl = encodeURIComponent(pdfUrl);
-                viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=https://akakadir.github.io/${encodedUrl}`;
+                viewerUrl = `https://mozilla.github.io/pdf.js/legacy/web/viewer.html?file=https://akakadir.github.io/${encodedUrl}`;
             } else {
                 const absoluteUrl = new URL(pdfUrl, window.location.href).href;
-                viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(absoluteUrl)}`;
+                viewerUrl = `https://mozilla.github.io/pdf.js/legacy/web/viewer.html?file=${encodeURIComponent(absoluteUrl)}`;
             }
             
             lightbox.innerHTML = `<a id="close"></a><a id="next">&rsaquo;</a><a id="prev">&lsaquo;</a><div class="pdfWrapperContainer"><div class="pdfWrapper"><iframe src="${viewerUrl}"></iframe></div></div>`;
