@@ -21,8 +21,6 @@ document.addEventListener("DOMContentLoaded", function () {
         faviconUrl = "/assets/img/png/github.png";
       } else if (hostname === "files.catbox.moe") {
         faviconUrl = "/assets/img/png/forimg.png";
-      } else if (hostname === "akakadir.github.io") {
-        faviconUrl = "/assets/img/png/fordir.png";
       } else if (hostname !== currentHost) {
         faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=256`;
       }
@@ -48,3 +46,4 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
