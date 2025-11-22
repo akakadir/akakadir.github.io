@@ -67,10 +67,10 @@
     max-height: 100%;
 }
 @media (min-width: 1200px) {
-    #lightbox .pdfWrapperContainer {max-width: 1200px;}
+    #lightbox .pdfWrapperContainer {max-width: 950px;}
 }
 @media (min-height: 1200px) {
-    #lightbox .pdfWrapperContainer {max-height: 1200px;}
+    #lightbox .pdfWrapperContainer {max-height: 950px;}
 }
 #lightbox .pdfWrapperContainer .pdfWrapper {
     width: 100%;
