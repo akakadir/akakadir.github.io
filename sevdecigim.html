@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seni Seviyorum Sevdeciğim ❤️</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0a0014;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(138, 43, 226, 0.05) 0%, transparent 70%);
+            animation: bgPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .pixel-heart {
+            display: inline-grid;
+            grid-template-columns: repeat(15, 20px);
+            gap: 2px;
+            margin-bottom: 60px;
+            filter: drop-shadow(0 0 40px rgba(255, 0, 128, 0.8));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        .pixel {
+            width: 20px;
+            height: 20px;
+            background: transparent;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .pixel.active {
+            background: linear-gradient(45deg, #ff0080, #ff0080);
+            box-shadow: 
+                0 0 10px rgba(255, 0, 128, 0.8),
+                0 0 20px rgba(255, 0, 128, 0.6),
+                0 0 30px rgba(255, 0, 128, 0.4),
+                inset 0 0 10px rgba(255, 255, 255, 0.3);
+            animation: pixelPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pixelPulse {
+            0%, 100% { 
+                opacity: 1;
+                box-shadow: 
+                    0 0 10px rgba(255, 0, 128, 0.8),
+                    0 0 20px rgba(255, 0, 128, 0.6),
+                    0 0 30px rgba(255, 0, 128, 0.4);
+            }
+            50% { 
+                opacity: 0.7;
+                box-shadow: 
+                    0 0 20px rgba(255, 0, 128, 1),
+                    0 0 30px rgba(255, 0, 128, 0.8),
+                    0 0 40px rgba(255, 0, 128, 0.6);
+            }
+        }
+
+        .love-text {
+            font-size: 48px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 
+                0 0 10px rgba(0, 255, 255, 0.8),
+                0 0 20px rgba(0, 255, 255, 0.6),
+                0 0 30px rgba(0, 255, 255, 0.4),
+                0 0 40px rgba(0, 255, 255, 0.2);
+            animation: textGlow 2s ease-in-out infinite alternate;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+        }
+
+        @keyframes textGlow {
+            from {
+                text-shadow: 
+                    0 0 10px rgba(0, 255, 255, 0.8),
+                    0 0 20px rgba(0, 255, 255, 0.6),
+                    0 0 30px rgba(0, 255, 255, 0.4);
+            }
+            to {
+                text-shadow: 
+                    0 0 20px rgba(0, 255, 255, 1),
+                    0 0 30px rgba(0, 255, 255, 0.8),
+                    0 0 40px rgba(0, 255, 255, 0.6),
+                    0 0 50px rgba(0, 255, 255, 0.4);
+            }
+        }
+
+        .subtitle {
+            font-size: 24px;
+            color: #ff0080;
+            text-shadow: 
+                0 0 10px rgba(255, 0, 128, 0.8),
+                0 0 20px rgba(255, 0, 128, 0.4);
+            animation: subtitlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes subtitlePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        .web3-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, rgba(138, 43, 226, 0.3), rgba(0, 255, 255, 0.3));
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            border-radius: 20px;
+            color: #00ffff;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+            animation: badgeFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes badgeFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00ffff;
+            border-radius: 50%;
+            animation: particleFloat 4s linear infinite;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) translateX(0) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(100px) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .interactive-text {
+            margin-top: 40px;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background"></div>
+    <div class="particles" id="particles"></div>
+    
+    <div class="web3-badge">⬡ WEB3 POWERED</div>
+    
+    <div class="container">
+        <div class="pixel-heart" id="pixelHeart"></div>
+        <div class="love-text">SENİ SEVİYORUM</div>
+        <div class="subtitle">SEVDECİĞİM ❤️</div>
+        <div class="interactive-text">◆ BLOCKCHAIN OF LOVE ◆</div>
+    </div>
+
+    <script>
+        // Pixel art kalp deseni (15x13)
+        const heartPattern = [
+            [0,0,1,1,1,0,0,0,1,1,1,0,0,0,0],
+            [0,1,1,1,1,1,0,1,1,1,1,1,0,0,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+            [0,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+            [0,0,1,1,1,1,1,1,1,1,1,0,0,0,0],
+            [0,0,0,1,1,1,1,1,1,1,0,0,0,0,0],
+            [0,0,0,0,1,1,1,1,1,0,0,0,0,0,0],
+            [0,0,0,0,0,1,1,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+        ];
+
+        // Kalp oluştur
+        const pixelHeart = document.getElementById('pixelHeart');
+        heartPattern.forEach(row => {
+            row.forEach(cell => {
+                const pixel = document.createElement('div');
+                pixel.className = cell ? 'pixel active' : 'pixel';
+                pixelHeart.appendChild(pixel);
+            });
+        });
+
+        // Partiküller oluştur
+        const particlesContainer = document.getElementById('particles');
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 4 + 's';
+            particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+            
+            const colors = ['#00ffff', '#ff0080', '#8a2be2', '#ffffff'];
+            particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+            
+            particlesContainer.appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 7000);
+        }
+
+        // Sürekli partiküller oluştur
+        setInterval(createParticle, 200);
+
+        // Kalp tıklama animasyonu
+        pixelHeart.addEventListener('click', () => {
+            pixelHeart.style.animation = 'none';
+            setTimeout(() => {
+                pixelHeart.style.animation = 'float 3s ease-in-out infinite';
+            }, 10);
+            
+            // Eksplosyon efekti
+            const pixels = document.querySelectorAll('.pixel.active');
+            pixels.forEach((pixel, i) => {
+                setTimeout(() => {
+                    pixel.style.transform = 'scale(1.3)';
+                    setTimeout(() => {
+                        pixel.style.transform = 'scale(1)';
+                    }, 100);
+                }, i * 5);
+            });
+        });
+
+        // Mouse takip efekti
+        document.addEventListener('mousemove', (e) => {
+            if (Math.random() > 0.9) {
+                const trail = document.createElement('div');
+                trail.className = 'particle';
+                trail.style.left = e.clientX + 'px';
+                trail.style.top = e.clientY + 'px';
+                trail.style.position = 'fixed';
+                trail.style.width = '6px';
+                trail.style.height = '6px';
+                trail.style.animation = 'none';
+                trail.style.opacity = '1';
+                document.body.appendChild(trail);
+                
+                setTimeout(() => {
+                    trail.style.opacity = '0';
+                    trail.style.transform = 'scale(0)';
+                    trail.style.transition = 'all 0.5s ease';
+                }, 10);
+                
+                setTimeout(() => trail.remove(), 500);
+            }
+        });
+    </script>
+</body>
+</html>
