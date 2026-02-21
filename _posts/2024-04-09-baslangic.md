@@ -17,6 +17,16 @@ sunucu: [github](https://pages.github.com/)
 
 temel yapı: [jekyll](https://jekyllrb.com/)
 
-jekyll teması: [no-style-please](https://github.com/riggraz/no-style-please/)
+yapı teması: [no-style-please(cok degistirdim)](https://github.com/riggraz/no-style-please/)
 
-yorum modülü: [giscus](https://giscus.app/)
+yorum modülü: [kendim yazdım](https://github.com/akakadir/akakadir.github.io/blob/main/assets/js/lightbox.js)
+
+lightbox: [fslightbox](https://fslightbox.com/)
+
+3d banner: [three.js ile yazıldı](https://threejs.org/)
+
+link-favicon eklentisi: [kendim yazdım](https://github.com/akakadir/akakadir.github.io/blob/main/assets/js/icons.js)
+
+birkaç şey daha var ama temel aldığım yapılar bu kadar.
+edited: 21.02.2026
+
