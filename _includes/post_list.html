@@ -1,0 +1,40 @@
+{%- if include.category -%}
+  {%- assign posts = site.categories[include.category] -%}  
+{%- else -%}
+  {%- assign posts = site.posts -%}
+{%- endif -%}
+{%- if include.limit and posts.size > include.limit -%}
+  {%- assign limit_exceeded = true -%}
+{%- else -%}
+  {%- assign limit_exceeded = false -%}
+{%- endif -%}
+{%- if posts.size > 0 -%}
+  <ul class="list-group" style="padding-left:0;margin:0">
+    {%- for post in posts limit: include.limit -%}
+      <li class="list-group-item d-flex justify-content-between align-items-center event" style="padding-left:1rem;padding-right:1rem">
+        <div class="text-start" style="flex:1">
+          <span>{{ post.title }}</span><br>
+          {%- if post.categories.size > 0 -%}
+            {%- assign cat = post.categories[0] -%}
+            {%- case cat -%}
+              {%- when "yazılım" -%}{%- assign bg = "success" -%}
+              {%- when "genel" -%}{%- assign bg = "dark" -%}
+              {%- when "manipülasyon" -%}{%- assign bg = "danger" -%}
+              {%- else -%}{%- assign bg = "info" -%}
+            {%- endcase -%}
+            <small><details open><summary><span class="badge bg-{{ bg }} text-white">{{ cat }}</span></summary><div>
+              {%- for tag in post.tags -%}
+                {%- if forloop.first -%}<span><img class="arrwline" src="/assets/img/gif/inherit.gif" alt="{{ tag }}"/> <span class="badge {{ tag | slugify }}">{{ tag }}</span></span>
+                {% else %} / <span class="badge {{ tag | slugify }}">{{ tag }}</span>{%- endif -%}
+              {%- endfor -%}
+            </div></details></small>
+          {%- endif -%}
+        </div>
+        <a class="btn btn-primary btn-sm ms-3" href="{{ post.url | relative_url }}">göz at<span class="icon icon-caret-right" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512"><path d="M0 384.662V127.338c0-17.818 21.543-26.741 34.142-14.142l128.662 128.662c7.81 7.81 7.81 20.474 0 28.284L34.142 398.804C21.543 411.404 0 402.48 0 384.662z"/></svg></span></a>
+      </li>
+    {%- endfor -%}
+    {%- if include.show_more and limit_exceeded -%}
+      <li class="list-group-item text-center"><a class="btn btn-outline-secondary" href="{{ include.show_more_url }}">{{ include.show_more_text | default: "..." }}</a></li>
+    {%- endif -%}
+  </ul>
+{%- endif -%}

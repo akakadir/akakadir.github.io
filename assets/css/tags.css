@@ -1,0 +1,30 @@
+small div .badge{display:inline-flex;align-items:center;}
+small div .badge::after{content:"";display:inline-block;width:1em;height:1em;margin-left:1px;background-size:contain;background-repeat:no-repeat;background-position:center;}
+.siyah-şapka{background:#333333;color:#ffffff;}
+.siyah-şapka::after{background-image:url('//api.iconify.design/mdi/hat-fedora.svg?color=%23fff')}
+.beyaz-şapka{background:#f8fafc;color:#1e293b;}
+.beyaz-şapka::after{background-image:url('//api.iconify.design/mdi/hat-fedora.svg?color=%23fff')}
+.crack-warez{background:#2563eb;color:#ffffff;}
+.crack-warez::after{background-image:url('//api.iconify.design/simple-icons/hackaday.svg?color=%23fff')}
+.ios{background:#06b6d4;color:#ffffff;}
+.ios::after{background-image:url('//api.iconify.design/bi/apple.svg?color=%23fff')}
+.html{background:#e34c26;color:#ffffff;}
+.html::after{background-image:url('//api.iconify.design/mdi/language-html5.svg?color=%23fff')}
+.javascript{background:#facc15;color:#1e293b;}
+.javascript::after{background-image:url('//api.iconify.design/mdi/language-javascript.svg?color=%231e293b')}
+.psiko-saldırı{background:#7e22ce;color:#ffffff;}
+.psiko-saldırı::after{background-image:url('//api.iconify.design/mdi/brain.svg?color=%23fff')}
+.windows{background:#0284c7;color:#ffffff;}
+.windows::after{background-image:url('//api.iconify.design/mdi/microsoft-windows.svg?color=%23fff')}
+.frontend{background:#10b981;color:#ffffff;}
+.frontend::after{background-image:url('//api.iconify.design/mdi/layers-outline.svg?color=%23fff')}
+.backend{background:#8b5cf6;color:#ffffff;}
+.backend::after{background-image:url('//api.iconify.design/mdi/database-cog.svg?color=%23fff')}
+.makale{background:#475569;color:#ffffff;}
+.makale::after{background-image:url('//api.iconify.design/mdi/file-document-edit.svg?color=%23fff')}
+.programlar{background:#3b82f6;color:#ffffff;}
+.programlar::after{background-image:url('//api.iconify.design/mdi/package-variant-closed.svg?color=%23fff')}
+.araçlar{background:#f97316;color:#ffffff;}
+.araçlar::after{background-image:url('//api.iconify.design/mdi/hammer-wrench.svg?color=%23fff')}
+.anlatım{background:#64748b;color:#ffffff;}
+.anlatım::after{background-image:url('//api.iconify.design/mdi/comment-quote.svg?color=%23fff')}

@@ -1,0 +1,32 @@
+title: "akakadir"
+description: "dünyama hoşgeldin, yazılım ve manipülasyon üzerine; en azından ben öyle diye biliyorum."
+author:
+  name: "akakadir"
+  email: "kaddir@tuta.io"
+url: "https://akakadir.github.io"
+baseurl: ""
+permalink: "/:slug.html"
+favicon: "/assets/img/base/101037506.png"
+logo: "/assets/img/base/101037506.png"
+image: "/assets/img/base/qrvibe.png"
+locale: "tr_TR"
+encoding: utf-8
+
+theme_config:
+  appearance: "auto"
+  back_home_text: "ana sayfa"
+  date_format: "%d.%m.%Y"
+  show_description: false
+
+sass:
+  style: :compressed
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+markdown: kramdown
+highlighter: rouge
+
+future: true

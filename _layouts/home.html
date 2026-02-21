@@ -1,0 +1,24 @@
+---
+layout: default
+---
+<header>
+  <nav class="container navbar navbar-light navbar-expand-sm" style="position: relative;">
+    <span class="navbar-brand">
+    <div class="a"></div>
+    </span>
+    <ul class="navbar-nav"></ul>
+    <div>
+      <span class="navbar-text">
+      </span>
+    </div>
+  </nav>
+  {%- if site.theme_config.show_description -%}
+    <p>{{- site.description -}}</p>
+  {%- endif -%}
+</header>
+{%- include menu_item.html collection=site.data.menu.entries -%}
+{{- content -}}
+<script type="module" src="/assets/js/header.js"></script>
+<p align="center" id="now-playing"></p>
+<p align="center" id="lyrics"></p>
+<script src="/assets/js/spotify.js"></script>

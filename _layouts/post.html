@@ -1,0 +1,38 @@
+---
+layout: default
+---
+<div class="container py-5">
+  <div class="mx-auto" style="max-width:800px">
+    <div class="d-flex justify-content-between align-items-center mb-4" style="height:40px">
+      <div>{%- include index_of.html -%}</div>
+      <div class="text-muted">{{- page.date | date: "%d.%m.%Y" -}}</div>
+    </div>
+    <article>
+      <h1 class="mb-4">{{- page.title -}}</h1>
+      <div class="content">{{- content -}}</div>
+    </article>
+    <script src="/assets/js/copy.js" defer></script>
+    {% include comments.html %}
+    {%- assign cat = page.categories[0] -%}
+    {%- assign cat_list = site.categories[cat] -%}
+    {%- for post in cat_list -%}
+      {%- if post.url == page.url -%}
+        {%- assign nOffset = forloop.index0 | minus: 1 -%}
+        {%- assign pOffset = forloop.index0 | plus: 1 -%}
+        {%- unless forloop.first -%}{%- assign next_post = cat_list[nOffset] -%}{%- endunless -%}
+        {%- unless forloop.last -%}{%- assign prev_post = cat_list[pOffset] -%}{%- endunless -%}
+        {%- break -%}
+      {%- endif -%}
+    {%- endfor -%}
+    <div class="d-flex justify-content-between mt-5">
+      {%- if prev_post -%}
+        <a class="btn btn-default d-flex align-items-center" href="{{- prev_post.url -}}" title="{{- prev_post.title -}}"><span class="icon icon-caret-left mr-2" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512"><path d="M192 127.338v257.324c0 17.818-21.543 26.741-34.142 14.142L29.196 270.142c-7.81-7.81-7.81-20.474 0-28.284l128.662-128.662c12.599-12.6 34.142-3.676 34.142 14.142z"/></svg></span>önceki</a>
+      {%- else -%}
+        <span></span>
+      {%- endif -%}
+      {%- if next_post -%}
+        <a class="btn btn-default d-flex align-items-center" href="{{- next_post.url -}}" title="{{- next_post.title -}}">sonraki<span class="icon icon-caret-right ml-2" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512"><path d="M0 384.662V127.338c0-17.818 21.543-26.741 34.142-14.142l128.662 128.662c7.81 7.81 7.81 20.474 0 28.284L34.142 398.804C21.543 411.404 0 402.48 0 384.662z"/></svg></span></a>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
