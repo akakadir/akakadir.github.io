@@ -6,18 +6,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const wrapper = document.createElement('div');
     wrapper.className = 'player-wrapper';
+    wrapper.setAttribute('aria-hidden', 'true');
+    wrapper.setAttribute('role', 'none');
+    
     wrapper.innerHTML = `
         <div id="ppb">
-            <svg class="pi" id="pl" viewBox="0 0 14 16"><polygon points="0,0 14,8 0,16"/></svg>
-            <svg class="pa" id="ps" viewBox="0 0 14 16"><rect x="0" width="4" height="16"/><rect x="10" width="4" height="16"/></svg>
+            <svg class="pi" id="pl" viewBox="0 0 14 16" style="width:14px;height:16px;"><polygon points="0,0 14,8 0,16"/></svg>
+            <svg class="pa" id="ps" viewBox="0 0 14 16" style="width:14px;height:16px;"><rect x="0" width="4" height="16"/><rect x="10" width="4" height="16"/></svg>
         </div>
         <div id="prog">
-            <div id="tt">0:00</div>
+            <div id="tt" data-time="0:00"></div>
             <div id="pf"></div>
         </div>
-        <div id="dt">0:00</div>
+        <div id="dt" data-time="0:00"></div>
         <div id="vc">
-            <svg id="vi" viewBox="0 0 24 24">
+            <svg id="vi" viewBox="0 0 24 24" style="width:17px;height:17px;">
                 <path d="M3 9v6h4l5 5V4L7 9H3z"/>
                 <g id="sw">
                     <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
@@ -34,6 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
     `;
+
+    const style = document.createElement('style');
+    style.textContent = `
+        #tt::after, #dt::after { content: attr(data-time); }
+        @media print { .player-wrapper { display: none !important; } }
+    `;
+    document.head.appendChild(style);
 
     link.replaceWith(wrapper);
 
@@ -72,9 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const ratio = Math.max(0, Math.min((x - r.left) / r.width, 1));
         const d = audio.duration || 0;
         pf.style.width    = ratio * 100 + '%';
-        tt.style.left     = ratio * 100 + '%';
-        tt.textContent    = fmt(ratio * d);
-        dt.textContent    = fmt(d - ratio * d);
+        tt.style.left      = ratio * 100 + '%';
+        tt.setAttribute('data-time', fmt(ratio * d));
+        dt.setAttribute('data-time', fmt(d - ratio * d));
         audio.currentTime = ratio * d;
     };
 
@@ -99,15 +109,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    audio.addEventListener('loadedmetadata', () => dt.textContent = fmt(audio.duration));
+    audio.addEventListener('loadedmetadata', () => dt.setAttribute('data-time', fmt(audio.duration)));
 
     audio.addEventListener('timeupdate', () => {
         if (scrub) return;
         const p = audio.currentTime / (audio.duration || 1) * 100;
         pf.style.width = p + '%';
         tt.style.left  = p + '%';
-        tt.textContent = fmt(audio.currentTime);
-        dt.textContent = fmt((audio.duration || 0) - audio.currentTime);
+        tt.setAttribute('data-time', fmt(audio.currentTime));
+        dt.setAttribute('data-time', fmt((audio.duration || 0) - audio.currentTime));
     });
 
     audio.addEventListener('ended', () => {
