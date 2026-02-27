@@ -7,15 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const wrapper = document.createElement('div');
     wrapper.className = 'player-wrapper';
     wrapper.innerHTML = `
-        <div id="ppb" aria-hidden="true">
+        <div id="ppb" aria-hidden="true" role="none">
             <svg class="pi" id="pl" viewBox="0 0 14 16"><polygon points="0,0 14,8 0,16"/></svg>
             <svg class="pa" id="ps" viewBox="0 0 14 16"><rect x="0" width="4" height="16"/><rect x="10" width="4" height="16"/></svg>
         </div>
         <div id="prog">
-            <div id="tt" aria-hidden="true">0:00</div>
+            <div id="tt" aria-hidden="true" role="none">0:00</div>
             <div id="pf"></div>
         </div>
-        <div id="dt" aria-hidden="true">0:00</div>
+        <div id="dt" aria-hidden="true" role="none">0:00</div>
         <div id="vc">
             <svg id="vi" viewBox="0 0 24 24">
                 <path d="M3 9v6h4l5 5V4L7 9H3z"/>
