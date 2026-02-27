@@ -12,10 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <svg class="pa" id="ps" viewBox="0 0 14 16"><rect x="0" width="4" height="16"/><rect x="10" width="4" height="16"/></svg>
         </div>
         <div id="prog">
-            <div id="tt">0:00</div>
+            <div id="tt" aria-hidden="true">0:00</div>
             <div id="pf"></div>
         </div>
-        <div id="dt">0:00</div>
+        <div id="dt" aria-hidden="true">0:00</div>
         <div id="vc">
             <svg id="vi" viewBox="0 0 24 24">
                 <path d="M3 9v6h4l5 5V4L7 9H3z"/>
