@@ -55,7 +55,7 @@ function fetchLyrics(artist, track, album, durationSeconds) {
     });
 }
 function fetchTrackData() {
-  fetch('https://spotify-now-playing-tau-eight.vercel.app/api/now-playing')
+  fetch('https://akakadir.vercel.app/api/now-playing')
     .then(response => response.json())
     .then(data => {
       if (data.error) {
@@ -100,4 +100,4 @@ function fetchTrackData() {
     });
 }
 fetchTrackData();
-setInterval(fetchTrackData, 1000);
+setInterval(fetchTrackData, 1000)
