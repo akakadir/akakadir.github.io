@@ -100,4 +100,4 @@ function fetchTrackData() {
     });
 }
 fetchTrackData();
-setInterval(fetchTrackData, 1000)
+setInterval(fetchTrackData, 1000);
