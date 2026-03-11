@@ -70,7 +70,7 @@ function fetchTrackData() {
             const durationSeconds = parseTimeToSeconds(data.duration);
             fetchLyrics(data.artists, data.name, data.album, durationSeconds);
           } else {
-            lyricsData = { error: '[podcast dinliyorum, sözleri çekemem.]' };
+            lyricsData = { error: '[podcast sözlerini çekemem sanırım.]' };
           }
         }
         
