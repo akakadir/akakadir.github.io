@@ -1,1 +1,48 @@
-document.addEventListener("DOMContentLoaded",(()=>{const t=window.location.hostname;document.querySelectorAll("a[href]").forEach((e=>{let i,n=e.getAttribute("href");if(!n)return;const r=n.toLowerCase();if(n.startsWith("mailto:"))i="/assets/img/png/formail.png";else if(r.endsWith(".pdf"))i="/assets/img/png/forpdf.png";else if(r.endsWith(".png"))i="/assets/img/png/forimg.png";else if(n.startsWith("http")){const r=new URL(n),a=r.hostname;i="github.com"===a?"/assets/img/png/github.png":"files.catbox.moe"===a?"/assets/img/png/forimg.png":a!==t?`https://www.google.com/s2/favicons?domain=${a}&sz=256`:null}if(i){const t=document.createElement("img");t.src=i,t.className="favicon",Object.assign(t.style,{width:"13px",height:"13px",maxWidth:"13px",maxHeight:"13px",objectFit:"contain",verticalAlign:"middle",display:"inline-block",marginLeft:"4px"}),e.style.display="inline-flex",e.style.alignItems="center",e.appendChild(t)}}))}));
+document.addEventListener("DOMContentLoaded", function () {
+  const currentHost = window.location.hostname;
+
+  document.querySelectorAll("a[href]").forEach(link => {
+    let href = link.getAttribute("href");
+    let faviconUrl;
+
+    if (!href) return;
+
+    if (href.startsWith("mailto:")) {
+      faviconUrl = "/assets/img/png/formail.png";
+    } else if (href.toLowerCase().endsWith(".pdf")) {
+      faviconUrl = "/assets/img/png/forpdf.png";
+    } else if (href.toLowerCase().endsWith(".png")) {
+      faviconUrl = "/assets/img/png/forimg.png";
+    } else if (href.startsWith("http://") || href.startsWith("https://")) {
+      const url = new URL(href);
+      const hostname = url.hostname;
+
+      if (hostname === "github.com") {
+        faviconUrl = "/assets/img/png/github.png";
+      } else if (hostname === "files.catbox.moe") {
+        faviconUrl = "/assets/img/png/forimg.png";
+      } else if (hostname !== currentHost) {
+        faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=256`;
+      }
+    }
+
+    if (faviconUrl) {
+      const img = document.createElement("img");
+      img.src = faviconUrl;
+      img.className = "favicon";
+      img.setAttribute("width", "13");
+      img.setAttribute("height", "13");
+      img.style.cssText = `
+        width: 13px !important;
+        height: 13px !important;
+        object-fit: contain !important;
+        vertical-align: middle !important;
+        display: inline-block !important;
+        margin-left: 4px !important;
+      `;
+
+      link.classList.add("favicon-link");
+      link.appendChild(img);
+    }
+  });
+});
