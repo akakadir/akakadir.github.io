@@ -53,7 +53,7 @@ function triggerCubeAnimation(newText) {
     cube.classList.remove('show-next');
     front.textContent = `${newText}`;
     currentLyricText = newText;
-  }, 500);
+  }, 600);
 }
 
 function fetchLyrics(artist, track, album, durationSeconds) {
