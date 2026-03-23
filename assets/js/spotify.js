@@ -4,7 +4,7 @@ let currentLyricText = '';
 
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
-  seconds = seconds % 60;
+  seconds = Math.round(seconds % 60);
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
@@ -90,15 +90,21 @@ function fetchTrackData() {
       }
 
       const frontFace = document.getElementById('front');
+      const bottomFace = document.getElementById('bottom');
 
       if (data.error) {
         document.getElementById('now-playing').innerHTML = `${data.error}`;
-        if(frontFace) frontFace.innerHTML = '';
+        if(frontFace) frontFace.textContent = '';
+        if(bottomFace) bottomFace.textContent = '';
+        currentLyricText = '';
       } else {
         if (data.trackLink !== lastTrackLink) {
           lastTrackLink = data.trackLink;
           lyricsData = null;
           currentLyricText = '';
+          
+          if(frontFace) frontFace.textContent = 'yükleniyor...';
+          if(bottomFace) bottomFace.textContent = '';
           
           if (data.type !== 'podcast') {
             const durationSeconds = parseTimeToSeconds(data.duration);
@@ -116,24 +122,24 @@ function fetchTrackData() {
         if (!frontFace) return;
 
         if (lyricsData === null) {
-          frontFace.innerHTML = 'yükleniyor...';
+          frontFace.textContent = 'yükleniyor...';
         } else if (lyricsData.error) {
-          frontFace.innerHTML = `${lyricsData.error}`;
+          frontFace.textContent = lyricsData.error;
+          currentLyricText = lyricsData.error;
         } else if (lyricsData.type === 'synced') {
           const currentLyric = getCurrentLyric(lyricsData, currentProgressSeconds);
           const nextText = currentLyric ? currentLyric : '...';
           triggerCubeAnimation(nextText);
         } else if (lyricsData.type === 'plain') {
-          frontFace.innerHTML = 'şarkı sözleri eş zamanlı değil.';
-        } else {
-          frontFace.innerHTML = 'sözleri bulamadım.';
+          frontFace.textContent = 'şarkı sözleri eş zamanlı değil.';
+          currentLyricText = 'şarkı sözleri eş zamanlı değil.';
         }
       }
     })
     .catch(error => {
       document.getElementById('now-playing').innerHTML = 'bir şeyler ters gitti.';
       const front = document.getElementById('front');
-      if(front) front.innerHTML = '';
+      if(front) front.textContent = '';
     });
 }
 
