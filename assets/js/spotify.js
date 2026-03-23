@@ -2,17 +2,6 @@ let lastTrackLink = '';
 let lyricsData = null;
 let currentLyricText = '';
 
-const style = document.createElement('style');
-style.textContent = `
-  #lyrics {text-align:center;height:1rem}
-  .animate {transition:transform 0.5s}
-  .cube {width:100%;height:100%}
-  .side-front {transform:rotateX(0deg) translateZ(25px)}
-  .side-bottom {transform:rotateX(-90deg) translateZ(25px)}
-  .show-next {transform:rotateX(90deg)}
-`;
-document.head.appendChild(style);
-
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
   seconds = seconds % 60;
