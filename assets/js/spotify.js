@@ -1,14 +1,29 @@
 let lastTrackLink = '';
 let lyricsData = null;
+let currentLyricText = '';
+
+const style = document.createElement('style');
+style.textContent = `
+  #lyrics {text-align:center;height:1rem}
+  .animate {transition:transform 0.5s}
+  .cube {width:100%;height:100%}
+  .side-front {transform:rotateX(0deg) translateZ(25px)}
+  .side-bottom {transform:rotateX(-90deg) translateZ(25px)}
+  .show-next {transform:rotateX(90deg)}
+`;
+document.head.appendChild(style);
+
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
   seconds = seconds % 60;
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
+
 function parseTimeToSeconds(timeStr) {
   const parts = timeStr.split(':').map(Number);
   return parts[0] * 60 + parts[1];
 }
+
 function getCurrentLyric(lyrics, currentTime) {
   if (!lyrics || !lyrics.syncedLyrics) return null;
   
@@ -32,6 +47,26 @@ function getCurrentLyric(lyrics, currentTime) {
   
   return currentLine;
 }
+
+function triggerCubeAnimation(newText) {
+  const cube = document.getElementById('cube');
+  const front = document.getElementById('front');
+  const bottom = document.getElementById('bottom');
+  
+  if (!cube || currentLyricText === newText) return;
+
+  bottom.textContent = `${newText}`;
+  cube.classList.add('animate');
+  cube.classList.add('show-next');
+
+  setTimeout(() => {
+    cube.classList.remove('animate');
+    cube.classList.remove('show-next');
+    front.textContent = `${newText}`;
+    currentLyricText = newText;
+  }, 600);
+}
+
 function fetchLyrics(artist, track, album, durationSeconds) {
   const durationInt = Math.round(durationSeconds);
   const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(track)}&album_name=${encodeURIComponent(album)}&duration=${durationInt}`;
@@ -40,37 +75,47 @@ function fetchLyrics(artist, track, album, durationSeconds) {
     .then(response => response.json())
     .then(data => {
       if (data.error) {
-        lyricsData = { error: '[bir hata oluştu.]' };
+        lyricsData = { error: 'bir şeyler ters gitti.' };
       } else if (data.syncedLyrics) {
         lyricsData = { ...data, type: 'synced' };
       } else if (data.plainLyrics) {
         lyricsData = { ...data, type: 'plain' };
       } else {
-        lyricsData = { error: '[sözleri bulamadım.]' };
+        lyricsData = { error: 'sözleri bulamadım.' };
       }
     })
     .catch(error => {
       console.error('Lyrics fetch error:', error);
-      lyricsData = { error: '[LRCLIB hatası.]' };
+      lyricsData = { error: 'LRCLIB hatası.' };
     });
 }
+
 function fetchTrackData() {
   fetch('https://akakadir.vercel.app/api/now-playing')
     .then(response => response.json())
     .then(data => {
+      const lyricsElement = document.getElementById('lyrics');
+      
+      if (!document.getElementById('cube')) {
+        lyricsElement.innerHTML = `<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>`;
+      }
+
+      const frontFace = document.getElementById('front');
+
       if (data.error) {
         document.getElementById('now-playing').innerHTML = `${data.error}`;
-        document.getElementById('lyrics').innerHTML = '';
+        if(frontFace) frontFace.innerHTML = '';
       } else {
         if (data.trackLink !== lastTrackLink) {
           lastTrackLink = data.trackLink;
           lyricsData = null;
+          currentLyricText = '';
           
           if (data.type !== 'podcast') {
             const durationSeconds = parseTimeToSeconds(data.duration);
             fetchLyrics(data.artists, data.name, data.album, durationSeconds);
           } else {
-            lyricsData = { error: '[podcast sözlerini çekemem sanırım.]' };
+            lyricsData = { error: 'podcast sözlerini henüz çekemem.' };
           }
         }
         
@@ -79,25 +124,29 @@ function fetchTrackData() {
         
         document.getElementById('now-playing').innerHTML = `🎧 ${data.artists} - ${trackLinkHTML} | ${data.progress}/${data.duration}`;
         
-        const lyricsElement = document.getElementById('lyrics');
+        if (!frontFace) return;
+
         if (lyricsData === null) {
-          lyricsElement.innerHTML = '[yükleniyor...]';
+          frontFace.innerHTML = 'yükleniyor...';
         } else if (lyricsData.error) {
-          lyricsElement.innerHTML = `${lyricsData.error}`;
+          frontFace.innerHTML = `${lyricsData.error}`;
         } else if (lyricsData.type === 'synced') {
           const currentLyric = getCurrentLyric(lyricsData, currentProgressSeconds);
-          lyricsElement.innerHTML = currentLyric ? `[${currentLyric}]` : '[...]';
+          const nextText = currentLyric ? currentLyric : '...';
+          triggerCubeAnimation(nextText);
         } else if (lyricsData.type === 'plain') {
-          lyricsElement.innerHTML = '[bu şarkı sözleri, henüz eş zamanlı değil.]';
+          frontFace.innerHTML = 'şarkı sözleri eş zamanlı değil.';
         } else {
-          lyricsElement.innerHTML = '[sözleri bulamadım.]';
+          frontFace.innerHTML = 'sözleri bulamadım.';
         }
       }
     })
     .catch(error => {
-      document.getElementById('now-playing').innerHTML = '[çalma bilgisini çekemedim.]';
-      document.getElementById('lyrics').innerHTML = '';
+      document.getElementById('now-playing').innerHTML = 'bir şeyler ters gitti.';
+      const front = document.getElementById('front');
+      if(front) front.innerHTML = '';
     });
 }
+
 fetchTrackData();
 setInterval(fetchTrackData, 1000);
