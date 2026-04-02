@@ -52,7 +52,7 @@ async function fetchTrackData() {
     const bottom = document.getElementById('bottom');
 
     if (data.error) {
-      document.getElementById('now-playing').innerHTML = `<img src="${data.gif}" ${data.error}`;
+      document.getElementById('now-playing').innerHTML = `${data.error} <img src="${data.gif}">`;
       front.textContent = '';
       return;
     }
