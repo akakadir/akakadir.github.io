@@ -52,7 +52,7 @@ async function fetchTrackData() {
     const bottom = document.getElementById('bottom');
 
     if (data.error) {
-      document.getElementById('now-playing').textContent = data.error;
+      document.getElementById('now-playing').innerHTML = `<img src="${data.gif}" ${data.error}`;
       front.textContent = '';
       return;
     }
@@ -75,7 +75,10 @@ async function fetchTrackData() {
       }
     }
 
-    document.getElementById('now-playing').innerHTML = `🎧 ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}`;
+    document.getElementById('now-playing').innerHTML = `
+      <img src="${data.gif}"> 
+      ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}
+    `;
 
     if (!lyricsData) return;
 
