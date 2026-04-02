@@ -1,4 +1,5 @@
 let lastTrackLink = '';
+let lastGifUrl = '';
 let lyricsData = null;
 let currentLyricText = '';
 
@@ -43,16 +44,30 @@ async function fetchTrackData() {
     const response = await fetch('https://akakadir.vercel.app/api/now-playing');
     const data = await response.json();
     const lyricsDiv = document.getElementById('lyrics');
+    const nowPlaying = document.getElementById('now-playing');
     
     if (!document.getElementById('cube')) {
       lyricsDiv.innerHTML = `<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>`;
+    }
+
+    if (!document.getElementById('main-gif')) {
+      nowPlaying.innerHTML = `<img id="main-gif" src="${data.gif}"><span id="track-content"></span>`;
+      lastGifUrl = data.gif;
+    }
+
+    const gifImg = document.getElementById('main-gif');
+    const trackContent = document.getElementById('track-content');
+
+    if (lastGifUrl !== data.gif) {
+      gifImg.src = data.gif;
+      lastGifUrl = data.gif;
     }
 
     const front = document.getElementById('front');
     const bottom = document.getElementById('bottom');
 
     if (data.error) {
-      document.getElementById('now-playing').innerHTML = `${data.error} <img src="${data.gif}">`;
+      trackContent.innerHTML = ` ${data.error}`;
       front.textContent = '';
       return;
     }
@@ -75,10 +90,7 @@ async function fetchTrackData() {
       }
     }
 
-    document.getElementById('now-playing').innerHTML = `
-      <img src="${data.gif}"> 
-      ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}
-    `;
+    trackContent.innerHTML = ` ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}`;
 
     if (!lyricsData) return;
 
