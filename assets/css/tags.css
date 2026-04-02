@@ -16,17 +16,17 @@ small div .badge::after{content:"";display:inline-block;width:1em;height:1em;mar
 .araçlar{background:#f97316;color:#ffffff;}
 .anlatım{background:#64748b;color:#ffffff;}
 
-.siyah-şapka::after{background-image:url('/assets/img/tagicons/siyah-sapka.png')}
-.beyaz-şapka::after{background-image:url('/assets/img/tagicons/beyaz-sapka.png')}
-.crack-warez::after{background-image:url('/assets/img/tagicons/crack-warez.png')}
-.ios::after{background-image:url('/assets/img/tagicons/ios.png')}
-.html::after{background-image:url('/assets/img/tagicons/html_5.png')}
-.javascript::after{background-image:url('/assets/img/tagicons/javascript.png')}
-.psiko-saldırı::after{background-image:url('/assets/img/tagicons/psiko-saldiri.png')}
-.windows::after{background-image:url('/assets/img/tagicons/windows.png')}
-.frontend::after{background-image:url('/assets/img/tagicons/frontend.png')}
-.backend::after{background-image:url('/assets/img/tagicons/backend.png')}
-.makale::after{background-image:url('/assets/img/tagicons/makale.png')}
-.programlar::after{background-image:url('/assets/img/tagicons/programlar.png')}
-.araçlar::after{background-image:url('/assets/img/tagicons/araclar.png')}
-.anlatım::after{background-image:url('/assets/img/tagicons/anlatim.png')}
+.siyah-şapka::after{background-image:url('//api.iconify.design/mdi/incognito.svg?color=%23ffffff');}
+.beyaz-şapka::after{background-image: url('//api.iconify.design/mdi/incognito.svg?color=%23000000');}
+.crack-warez::after{background-image: url('//api.iconify.design/mdi/skull-crossbones.svg?color=%23ffffff');}
+.psiko-saldırı::after{background-image: url('//api.iconify.design/mdi/brain.svg?color=%23ffffff');}
+.ios::after{background-image: url('//api.iconify.design/mdi/apple.svg?color=%23ffffff');}
+.windows::after{background-image: url('//api.iconify.design/mdi/microsoft-windows.svg?color=%23ffffff');}
+.html::after{background-image: url('//api.iconify.design/mdi/language-html5.svg?color=%23ffffff');}
+.javascript::after{background-image: url('//api.iconify.design/mdi/language-javascript.svg?color=%231e293b');}
+.frontend::after{background-image: url('//api.iconify.design/mdi/layers.svg?color=%23ffffff');}
+.backend::after{background-image: url('//api.iconify.design/mdi/database-cog.svg?color=%23ffffff');}
+.makale::after{background-image: url('//api.iconify.design/mdi/text-box-edit.svg?color=%23ffffff');}
+.programlar::after{background-image: url('//api.iconify.design/mdi/package.svg?color=%23ffffff');}
+.araçlar::after{background-image: url('//api.iconify.design/mdi/tools.svg?color=%23ffffff');}
+.anlatım::after{background-image: url('//api.iconify.design/mdi/comment-quote.svg?color=%23ffffff');}
