@@ -84,7 +84,7 @@ async function fetchTrackData() {
         const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(data.artists)}&track_name=${encodeURIComponent(data.name)}&album_name=${encodeURIComponent(data.album)}&duration=${Math.round(dur)}`;
         const lrcRes = await fetch(url);
         const lrcData = await lrcRes.json();
-        lyricsData = lrcData.syncedLyrics ? { ...lrcData, type: 'synced' } : { error: 'bu lirikler veritabanımda yok.' };
+        lyricsData = lrcData.syncedLyrics ? { ...lrcData, type: 'synced' } : { error: 'bu parça veri setimde yok.' };
       } else {
         lyricsData = { error: 'podcast liriklerini okuyamam.' };
       }
