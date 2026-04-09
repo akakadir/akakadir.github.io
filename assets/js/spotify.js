@@ -25,10 +25,12 @@ async function fetchTrackData() {
     try {
         const res = await fetch('https://akakadir.vercel.app/api/now-playing');
         const data = await res.json();
-        
+
         if (!document.getElementById('cube')) {
-            document.getElementById('lyrics').innerHTML = '<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>';
-            document.getElementById('now-playing').innerHTML = `<img id="main-gif" src="${data.gif}"><span id="track-content"></span>`;
+            document.getElementById('lyrics').innerHTML =
+                '<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>';
+            document.getElementById('now-playing').innerHTML =
+                `<img id="main-gif" src="${data.gif}"><span id="track-content"></span>`;
             lastGifUrl = data.gif;
         }
 
@@ -48,29 +50,39 @@ async function fetchTrackData() {
             lastTrackLink = data.trackLink;
             lyricsData = null;
             front.textContent = 'yükleniyor...';
-            
+
             if (data.type !== 'podcast') {
                 const lrc = await fetch(`https://lrclib.net/api/get?artist_name=${encodeURIComponent(data.artists)}&track_name=${encodeURIComponent(data.name)}&duration=${Math.round(parseTime(data.duration))}`).then(r => r.json());
                 lyricsData = lrc.syncedLyrics ? { ...lrc, type: 'synced' } : { error: 'asenkron parçaların sözlerini çekemem.' };
-            } else lyricsData = { error: 'podcast sözlerini çekemem.' };
+            } else {
+                lyricsData = { error: 'podcast sözlerini çekemem.' };
+            }
         }
 
         if (lastGifUrl !== data.gif) {
             gifImg.src = lastGifUrl = data.gif;
         }
 
-        document.getElementById('track-content').innerHTML = ` ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}`;
+        document.getElementById('track-content').innerHTML =
+            ` ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}`;
 
-        if (lyricsData?.type === 'synced') triggerCube(getCurrentLyric(lyricsData, parseTime(data.progress)) || '...');
-        else if (lyricsData?.error) front.textContent = lyricsData.error;
+        if (lyricsData?.type === 'synced') {
+            triggerCube(getCurrentLyric(lyricsData, parseTime(data.progress)) || '...');
+        } else if (lyricsData?.error) {
+            front.textContent = lyricsData.error;
+        }
 
     } catch (e) {
         const sww = "https://akakadir.vercel.app/gifboard/sww.gif";
-        if (lastGifUrl !== sww) {
+        const gifImg = document.getElementById('main-gif');
+
+        if (gifImg && gifImg.src !== sww) {
             const np = document.getElementById('now-playing');
-            if (np) np.innerHTML = `<img id="main-gif" src="${sww}"><span> bir şeyler ters gitti.</span>`;
-            lastGifUrl = sww;
+            if (np) {
+                np.innerHTML = `<img id="main-gif" src="${sww}"><span> bir şeyler ters gitti.</span>`;
+            }
         }
+
         const f = document.getElementById('front');
         if (f) f.textContent = '';
     }
