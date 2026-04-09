@@ -2,6 +2,7 @@
 layout: post
 title: "başlanıç, ben kimim?"
 categories: [genel, yazılım]
+tags: [anlatım]
 comment_issue_id: 2
 ---
 

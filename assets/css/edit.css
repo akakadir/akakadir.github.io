@@ -62,28 +62,55 @@
   right: 5px;
   }
 
-  .arwbllt li {
+  .tree,
+  .tree ul {
   list-style: none;
+  margin: 0;
+  padding-left: 10px;
+  position: relative;
+  }
+
+  .tree ul {
+  margin-left: 5px;
+  }
+
+  .tree li {
   position: relative;
   padding-left: 20px;
   }
 
-  .arwbllt li::before {
+  .tree li::before {
   content: "";
   position: absolute;
+  top: 0;
   left: 0;
-  top: 3px;
-  width: 14px;
-  height: 14px;
-  background-image: url('/assets/img/gif/inherit.gif');
-  background-size: contain;
-  background-repeat: no-repeat;
+  border-left: 1px solid;
+  height: 100%;
+  }
+
+  .tree li::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 0;
+  width: 12px;
+  border-top: 1px solid;
+  }
+
+  .tree li:last-child::before {
+  height: 12px;
+  }
+
+  .tree:not(.tree .tree) > li:first-child::before {
+  top: 12px;
+  height: calc(100% - 12px);
   }
 
   .arrwline {
   width:14px;
   height:14px;
   margin-right:5px;
+  margin-left:2.6px;
   }
 
   .language-plaintext {
@@ -92,9 +119,6 @@
 
   @media (prefers-color-scheme: dark) {
   .arrwline {
-  filter: invert(1);
-  }
-  .arwbllt li::before {
   filter: invert(1);
   }
   .language-plaintext {
