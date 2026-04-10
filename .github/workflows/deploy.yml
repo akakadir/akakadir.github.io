@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: install minifiers
+      - name: install minibundle stuffs
         run: npm install -g uglify-js clean-css-cli
 
       - uses: ruby/setup-ruby@v1
