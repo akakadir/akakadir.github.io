@@ -35,4 +35,4 @@ future: true
 minibundle:
   minifier_commands:
     js: uglifyjs
-    css: cleancss -O2
+    css: cleancss
