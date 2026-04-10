@@ -21,8 +21,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="{{ "/assets/css/main.css" | relative_url }}" />
-  <link rel="stylesheet" href="{{ site.baseurl }}/{% ministamp assets/css/edit.css assets/css/edit.css %}">
-  <link rel="stylesheet" href="{{ site.baseurl }}/{% ministamp assets/css/tags.css assets/css/tags.css %}">
+    {% minibundle js %}
+      source_dir: assets/css
+      destination_path: assets/bundle
+      assets:
+        - edit
+        - tags
+      attributes:
+        defer: ''
+    {% endminibundle %}
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-LK8YCC4QPN"></script>
   <script>
   window.dataLayer = window.dataLayer || [];
