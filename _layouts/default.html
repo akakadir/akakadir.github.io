@@ -10,15 +10,8 @@
       </div>
     </main>
     {% include_cached new-window-fix.html %}
-    {% minibundle js %}
-      source_dir: assets/js
-      destination_path: assets/bundle
-      assets:
-        - icons
-        - fslightbox
-        - lightbox
-      attributes:
-        defer: ''
-    {% endminibundle %}
+   <script src="{{ site.baseurl }}/{% ministamp assets/js/fslightbox.js assets/js/fslightbox.js %}" defer></script>
+   <script src="{{ site.baseurl }}/{% ministamp assets/js/lightbox.js assets/js/lightbox.js %}" defer></script>
+   <script src="{{ site.baseurl }}/{% ministamp assets/js/icons.js assets/js/icons.js %}" defer></script>
   </body>
 </html>
