@@ -1,4 +1,7 @@
-let lastTrackLink = '', lastGifUrl = '', lyricsData = null, currentLyricText = '';
+let lastTrackLink = '',
+    lastGifUrl = '',
+    lyricsData = null,
+    currentLyricText = '';
 
 const parseTime = (t) => t.split(':').reduce((acc, time) => (60 * acc) + +time);
 
@@ -11,7 +14,9 @@ function getCurrentLyric(lyrics, time) {
 }
 
 function triggerCube(text) {
-    const cube = document.getElementById('cube'), b = document.getElementById('bottom'), f = document.getElementById('front');
+    const cube = document.getElementById('cube'),
+        b = document.getElementById('bottom'),
+        f = document.getElementById('front');
     if (!cube || currentLyricText === text) return;
     b.textContent = text;
     cube.classList.add('animate', 'show-next');
@@ -25,7 +30,7 @@ async function fetchTrackData() {
     try {
         const res = await fetch('https://akakadir.vercel.app/api/now-playing');
         const data = await res.json();
-        
+
         if (!document.getElementById('cube')) {
             document.getElementById('lyrics').innerHTML = '<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>';
             document.getElementById('now-playing').innerHTML = `<img id="main-gif" src="${data.gif}"><span id="track-content"></span>`;
@@ -48,11 +53,18 @@ async function fetchTrackData() {
             lastTrackLink = data.trackLink;
             lyricsData = null;
             front.textContent = 'yükleniyor...';
-            
+
             if (data.type !== 'podcast') {
                 const lrc = await fetch(`https://lrclib.net/api/get?artist_name=${encodeURIComponent(data.artists)}&track_name=${encodeURIComponent(data.name)}&duration=${Math.round(parseTime(data.duration))}`).then(r => r.json());
-                lyricsData = lrc.syncedLyrics ? { ...lrc, type: 'synced' } : { error: 'asenkron parçaların sözlerini çekemem.' };
-            } else lyricsData = { error: 'podcast sözlerini çekemem.' };
+                lyricsData = lrc.syncedLyrics ? {
+                    ...lrc,
+                    type: 'synced'
+                } : {
+                    error: 'asenkron parçaların sözlerini çekemem.'
+                };
+            } else lyricsData = {
+                error: 'podcast sözlerini çekemem.'
+            };
         }
 
         if (lastGifUrl !== data.gif) {
