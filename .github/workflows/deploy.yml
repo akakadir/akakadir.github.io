@@ -17,8 +17,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: install minibundle stuffs
-        run: npm install -g uglify-js clean-css-cli
+      - name: install minibundle stuffs and check
+        run: |
+          npm install -g uglify-js clean-css-cli
+          uglifyjs --version
+          cleancss --version
 
       - uses: ruby/setup-ruby@v1
         with:
