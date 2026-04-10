@@ -34,5 +34,5 @@ future: true
 
 minibundle:
   minifier_commands:
-    js: uglifyjs - --compress --mangle
-    css: cleancss --stdin
+    js: uglifyjs
+    css: cleancss -O2
