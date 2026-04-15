@@ -34,5 +34,5 @@ custom gems: jekyll-minifier, jekyll/minibundle, jekyll-include-cache
 minifiers: uglify-js, clean-css
 
 birkaç şey daha var ama temel aldığım yapılar bu kadar.
-edited: 21.02.2026 / 15.04.2026
 
+edited: 21.02.2026 / 15.04.2026
