@@ -1,0 +1,58 @@
+name: deployment presets
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: install minibundle stuffs and check
+        run: |
+          npm install -g uglify-js clean-css-cli
+          uglifyjs --version
+          cleancss --version
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: false
+
+      - run: |
+          gem install bundler
+          bundle install
+
+      - name: minify assets for ministamp-type
+        run: |
+          for file in assets/css/*.css; do
+            cleancss -o "$file" "$file"
+          done
+          for file in assets/js/*.js; do
+            uglifyjs "$file" -o "$file"
+          done
+
+      - run: bundle exec jekyll build
+        env:
+          JEKYLL_ENV: production
+
+      - uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

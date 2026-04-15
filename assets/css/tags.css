@@ -1,0 +1,32 @@
+small div .badge{display:inline-flex;align-items:center;}
+small div .badge::after{content:"";display:inline-block;width:1em;height:1em;margin-left:1px;background-size:contain;background-repeat:no-repeat;background-position:center;}
+
+.siyah-şapka{background:#333333;color:#ffffff;}
+.beyaz-şapka{background:#f8fafc;color:#1e293b;}
+.crack-warez{background:#2563eb;color:#ffffff;}
+.ios{background:#06b6d4;color:#ffffff;}
+.html{background:#e34c26;color:#ffffff;}
+.javascript{background:#facc15;color:#1e293b;}
+.psiko-saldırı{background:#7e22ce;color:#ffffff;}
+.windows{background:#0284c7;color:#ffffff;}
+.frontend{background:#10b981;color:#ffffff;}
+.backend{background:#8b5cf6;color:#ffffff;}
+.makale{background:#475569;color:#ffffff;}
+.programlar{background:#3b82f6;color:#ffffff;}
+.araçlar{background:#f97316;color:#ffffff;}
+.anlatım{background:#64748b;color:#ffffff;}
+
+.siyah-şapka::after{background-image:url('//api.iconify.design/mdi/incognito.svg?color=%23ffffff');}
+.beyaz-şapka::after{background-image: url('//api.iconify.design/mdi/incognito.svg?color=%23000000');}
+.crack-warez::after{background-image: url('//api.iconify.design/mdi/skull.svg?color=%23ffffff');}
+.psiko-saldırı::after{background-image: url('//api.iconify.design/mdi/brain.svg?color=%23ffffff');}
+.ios::after{background-image: url('//api.iconify.design/mdi/apple.svg?color=%23ffffff');}
+.windows::after{background-image: url('//api.iconify.design/mdi/microsoft-windows.svg?color=%23ffffff');}
+.html::after{background-image: url('//api.iconify.design/mdi/language-html5.svg?color=%23ffffff');}
+.javascript::after{background-image: url('//api.iconify.design/mdi/language-javascript.svg?color=%231e293b');}
+.frontend::after{background-image: url('//api.iconify.design/mdi/layers.svg?color=%23ffffff');}
+.backend::after{background-image: url('//api.iconify.design/mdi/database-cog.svg?color=%23ffffff');}
+.makale::after{background-image: url('//api.iconify.design/mdi/text-box-edit.svg?color=%23ffffff');}
+.programlar::after{background-image: url('//api.iconify.design/mdi/package.svg?color=%23ffffff');}
+.araçlar::after{background-image: url('//api.iconify.design/mdi/tools.svg?color=%23ffffff');}
+.anlatım::after{background-image: url('//api.iconify.design/mdi/comment-quote.svg?color=%23ffffff');}
