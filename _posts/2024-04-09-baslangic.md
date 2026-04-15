@@ -31,6 +31,7 @@ lightbox: [fslightbox](https://fslightbox.com/)
 link-favicon eklentisi: [kendim yazdım](https://github.com/akakadir/akakadir.github.io/blob/main/assets/js/icons.js)
 
 custom gems: jekyll-minifier, jekyll/minibundle, jekyll-include-cache
+
 minifiers: uglify-js, clean-css
 
 birkaç şey daha var ama temel aldığım yapılar bu kadar.
