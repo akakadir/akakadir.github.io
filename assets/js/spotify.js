@@ -13,7 +13,7 @@ async function fetchLyrics({ type, duration, artists, name, album }) {
   if (type === 'podcast') return { error: 'podcast liriklerini okuyamam.' };
   const params = new URLSearchParams({ artist_name: artists, track_name: name, album_name: album, duration: Math.round(parseTimeToSeconds(duration)) });
   const { syncedLyrics } = await fetchJSON(`https://lrclib.net/api/get?${params}`);
-  return syncedLyrics ? { syncedLyrics, type: 'synced' } : { error: 'bu lirikler veritabanımda yok.' };
+  return syncedLyrics ? { syncedLyrics, type: 'synced' } : { error: 'bu şarkı sözleri, henüz eş zamanlı değil.' };
 }
 
 function ensureCube(lyricsDiv) {
