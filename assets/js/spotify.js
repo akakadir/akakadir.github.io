@@ -48,7 +48,7 @@ async function fetchTrackData() {
       document.getElementById('bottom').textContent = '';
       state.lyricsData = await fetchLyrics(data);
     }
-    nowPlayingEl.innerHTML = `🎧 ${data.artists} — <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}`;
+    nowPlayingEl.innerHTML = `🎧 ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}`;
     if (!state.lyricsData) return;
     if (state.lyricsData.error) document.getElementById('front').textContent = state.lyricsData.error;
     else triggerCubeAnimation(getCurrentLyric(state.lyricsData.syncedLyrics, parseTimeToSeconds(data.progress)) || '...');
