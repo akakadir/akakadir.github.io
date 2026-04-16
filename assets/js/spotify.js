@@ -1,92 +1,61 @@
-let lastTrackLink = '',
-    lastGifUrl = '',
-    lyricsData = null,
-    currentLyricText = '';
+const state = { lastTrackLink: '', lyricsData: null, currentLyricText: '' };
 
-const parseTime = (t) => t.split(':').reduce((acc, time) => (60 * acc) + +time);
+const parseTimeToSeconds = (t) => t.split(':').map(Number).reduce((m, s) => m * 60 + s);
+const fetchJSON = (url) => fetch(url).then((r) => r.json());
 
-function getCurrentLyric(lyrics, time) {
-    if (!lyrics?.syncedLyrics) return null;
-    return lyrics.syncedLyrics.split('\n').reduce((prev, line) => {
-        const m = line.match(/\[(\d+):(\d+)\.(\d+)\]/);
-        return m && (parseInt(m[1]) * 60 + parseInt(m[2])) <= time ? line.replace(m[0], '').trim() : prev;
-    }, null);
+function getCurrentLyric(syncedLyrics, currentTime) {
+  return [...syncedLyrics.matchAll(/\[(\d+):(\d+)\.\d+\](.*)/g)]
+    .filter(([, m, s]) => parseInt(m) * 60 + parseInt(s) <= currentTime)
+    .at(-1)?.[3]?.trim() ?? null;
 }
 
-function triggerCube(text) {
-    const cube = document.getElementById('cube'),
-        b = document.getElementById('bottom'),
-        f = document.getElementById('front');
-    if (!cube || currentLyricText === text) return;
-    b.textContent = text;
-    cube.classList.add('animate', 'show-next');
-    setTimeout(() => {
-        cube.classList.remove('animate', 'show-next');
-        f.textContent = currentLyricText = text;
-    }, 600);
+async function fetchLyrics({ type, duration, artists, name, album }) {
+  if (type === 'podcast') return { error: 'podcast liriklerini okuyamam.' };
+  const params = new URLSearchParams({ artist_name: artists, track_name: name, album_name: album, duration: Math.round(parseTimeToSeconds(duration)) });
+  const { syncedLyrics } = await fetchJSON(`https://lrclib.net/api/get?${params}`);
+  return syncedLyrics ? { syncedLyrics, type: 'synced' } : { error: 'bu lirikler veritabanımda yok.' };
+}
+
+function ensureCube(lyricsDiv) {
+  if (!document.getElementById('cube'))
+    lyricsDiv.innerHTML = `<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>`;
+}
+
+function triggerCubeAnimation(newText) {
+  if (state.currentLyricText === newText) return;
+  const cube = document.getElementById('cube');
+  const front = document.getElementById('front');
+  const bottom = document.getElementById('bottom');
+  if (!cube) return;
+  bottom.textContent = newText;
+  cube.classList.add('animate', 'show-next');
+  setTimeout(() => {
+    cube.classList.remove('animate', 'show-next');
+    front.textContent = newText;
+    state.currentLyricText = newText;
+  }, 600);
 }
 
 async function fetchTrackData() {
-    try {
-        const res = await fetch('https://akakadir.vercel.app/api/now-playing');
-        const data = await res.json();
-
-        if (!document.getElementById('cube')) {
-            document.getElementById('lyrics').innerHTML = '<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>';
-            document.getElementById('now-playing').innerHTML = `<img id="main-gif" src="${data.gif}"><span id="track-content"></span>`;
-            lastGifUrl = data.gif;
-        }
-
-        const gifImg = document.getElementById('main-gif');
-        const front = document.getElementById('front');
-
-        if (data.error) {
-            if (lastGifUrl !== data.gif) {
-                gifImg.src = lastGifUrl = data.gif;
-            }
-            document.getElementById('track-content').textContent = ` ${data.error}`;
-            front.textContent = '';
-            return;
-        }
-
-        if (data.trackLink !== lastTrackLink) {
-            lastTrackLink = data.trackLink;
-            lyricsData = null;
-            front.textContent = 'yükleniyor...';
-
-            if (data.type !== 'podcast') {
-                const lrc = await fetch(`https://lrclib.net/api/get?artist_name=${encodeURIComponent(data.artists)}&track_name=${encodeURIComponent(data.name)}&duration=${Math.round(parseTime(data.duration))}`).then(r => r.json());
-                lyricsData = lrc.syncedLyrics ? {
-                    ...lrc,
-                    type: 'synced'
-                } : {
-                    error: 'asenkron parçaların sözlerini çekemem.'
-                };
-            } else lyricsData = {
-                error: 'podcast sözlerini çekemem.'
-            };
-        }
-
-        if (lastGifUrl !== data.gif) {
-            gifImg.src = lastGifUrl = data.gif;
-        }
-
-        document.getElementById('track-content').innerHTML = ` ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}`;
-
-        if (lyricsData?.type === 'synced') triggerCube(getCurrentLyric(lyricsData, parseTime(data.progress)) || '...');
-        else if (lyricsData?.error) front.textContent = lyricsData.error;
-
-    } catch (e) {
-        const sww = "https://akakadir.vercel.app/gifboard/sww.gif";
-        if (lastGifUrl !== sww) {
-            const np = document.getElementById('now-playing');
-            if (np) np.innerHTML = `<img id="main-gif" src="${sww}"><span> bir şeyler ters gitti.</span>`;
-            lastGifUrl = sww;
-        }
-        const f = document.getElementById('front');
-        if (f) f.textContent = '';
+  const nowPlayingEl = document.getElementById('now-playing');
+  try {
+    const data = await fetchJSON('https://akakadir.vercel.app/api/now-playing');
+    ensureCube(document.getElementById('lyrics'));
+    if (data.error) { nowPlayingEl.textContent = data.error; document.getElementById('front').textContent = ''; return; }
+    if (data.trackLink !== state.lastTrackLink) {
+      Object.assign(state, { lastTrackLink: data.trackLink, lyricsData: null, currentLyricText: '' });
+      document.getElementById('front').textContent = 'yükleniyor...';
+      document.getElementById('bottom').textContent = '';
+      state.lyricsData = await fetchLyrics(data);
     }
+    nowPlayingEl.innerHTML = `🎧 ${data.artists} — <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}`;
+    if (!state.lyricsData) return;
+    if (state.lyricsData.error) document.getElementById('front').textContent = state.lyricsData.error;
+    else triggerCubeAnimation(getCurrentLyric(state.lyricsData.syncedLyrics, parseTimeToSeconds(data.progress)) || '...');
+  } catch {
+    nowPlayingEl.textContent = 'bir şeyler ters gitti.';
+  }
 }
 
-setInterval(fetchTrackData, 1000);
 fetchTrackData();
+setInterval(fetchTrackData, 1000);
