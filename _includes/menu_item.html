@@ -1,0 +1,33 @@
+<ul class="tree">
+  {%- for item in include.collection -%}
+    <li>
+      {%- if item.url != false -%}
+        <a href="{{ item.url }}">{{ item.title }}</a>
+      {%- else -%}
+        {{ item.title }}
+      {%- endif -%}
+
+      {%- if item.title == "yazılım" or item.title == "manipülasyon" -%}
+        {%- assign category = item.title -%}
+        {%- assign category_posts = site.posts | where: "categories", category -%}
+        {%- assign latest_post = category_posts.first -%}
+
+        {%- if latest_post -%}
+          <ul>
+            <li>
+              <a href="{{ latest_post.url }}">{{ latest_post.title }}</a>
+            </li>
+          </ul>
+        {%- endif -%}
+      {%- endif -%}
+
+      {%- if item.post_list == true -%}
+        {%- include post_list.html -%}
+      {%- endif -%}
+
+      {%- if item.entries != blank -%}
+        {%- include menu_item.html collection=item.entries -%}
+      {%- endif -%}
+    </li>
+  {%- endfor -%}
+</ul>
