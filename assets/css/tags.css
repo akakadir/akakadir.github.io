@@ -15,6 +15,7 @@ small div .badge::after{content:"";display:inline-block;width:1em;height:1em;mar
 .programlar{background:#3b82f6;color:#ffffff;}
 .araçlar{background:#f97316;color:#ffffff;}
 .anlatım{background:#64748b;color:#ffffff;}
+.android{background:#a4c639;color:#ffffff;}
 
 .siyah-şapka::after{background-image:url('//api.iconify.design/mdi/incognito.svg?color=%23ffffff');}
 .beyaz-şapka::after{background-image: url('//api.iconify.design/mdi/incognito.svg?color=%23000000');}
@@ -30,3 +31,4 @@ small div .badge::after{content:"";display:inline-block;width:1em;height:1em;mar
 .programlar::after{background-image: url('//api.iconify.design/mdi/package.svg?color=%23ffffff');}
 .araçlar::after{background-image: url('//api.iconify.design/mdi/tools.svg?color=%23ffffff');}
 .anlatım::after{background-image: url('//api.iconify.design/mdi/comment-quote.svg?color=%23ffffff');}
+.android:after{background-image: url('//api.iconify.design/mdi/android.svg?color=%23ffffff');}
