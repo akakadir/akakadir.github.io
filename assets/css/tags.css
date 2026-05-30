@@ -16,6 +16,7 @@ small div .badge::after{content:"";display:inline-block;width:1em;height:1em;mar
 .araçlar{background:#f97316;color:#ffffff;}
 .anlatım{background:#64748b;color:#ffffff;}
 .android{background:#a4c639;color:#ffffff;}
+.mtk{background:#ec9430;color:#ffffff;}
 
 .siyah-şapka::after{background-image:url('//api.iconify.design/mdi/incognito.svg?color=%23ffffff');}
 .beyaz-şapka::after{background-image: url('//api.iconify.design/mdi/incognito.svg?color=%23000000');}
@@ -32,3 +33,4 @@ small div .badge::after{content:"";display:inline-block;width:1em;height:1em;mar
 .araçlar::after{background-image: url('//api.iconify.design/mdi/tools.svg?color=%23ffffff');}
 .anlatım::after{background-image: url('//api.iconify.design/mdi/comment-quote.svg?color=%23ffffff');}
 .android:after{background-image: url('//api.iconify.design/mdi/android.svg?color=%23ffffff');}
+.mtk::after{background-image: url('//api.iconify.design/simple-icons/mediatek.svg?color=%23ffffff');}
