@@ -22,7 +22,7 @@ temel yapı: [jekyll](https://jekyllrb.com/)
 
 yapı teması: [no-style-please(cok degistirdim)](https://github.com/riggraz/no-style-please/)
 
-yorum modülü: [kendim yazdım](https://github.com/akakadir/akakadir.github.io/blob/main/assets/js/github-comments.js)
+yorum modülü: [giscus](https://giscus.app/)
 
 lightbox: [fslightbox](https://fslightbox.com/)
 
