@@ -12,7 +12,6 @@ layout: default
       <div class="content">{{- content -}}</div>
     </article>
     <script src="/assets/js/copy.js" defer></script>
-    {% include comments.html %}
     {%- assign cat = page.categories[0] -%}
     {%- assign cat_list = site.categories[cat] -%}
     {%- for post in cat_list -%}
