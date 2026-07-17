@@ -14,7 +14,7 @@ Elimden geldiğince burda olmaya çalışacağım.
 Proje oluşumunda kullanılan bütün yazılımlar ektedir:
 ekleme durumuna göre alttaki liste güncellenecektir.
 
-sunucu: [github](https://pages.github.com/) + high level subdomain
+sunucu: [github](https://pages.github.com/)
 
 anti ddos: [cloudflare](https://www.cloudflare.com/)
 
