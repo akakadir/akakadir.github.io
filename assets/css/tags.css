@@ -1,36 +1,127 @@
-small div .badge{display:inline-flex;align-items:center;}
-small div .badge::after{content:"";display:inline-block;width:1em;height:1em;margin-left:1px;background-size:contain;background-repeat:no-repeat;background-position:center;}
-
-.siyah-şapka{background:#333333;color:#ffffff;}
-.beyaz-şapka{background:#f8fafc;color:#1e293b;}
-.crack-warez{background:#2563eb;color:#ffffff;}
-.ios{background:#06b6d4;color:#ffffff;}
-.html{background:#e34c26;color:#ffffff;}
-.javascript{background:#facc15;color:#1e293b;}
-.psiko-saldırı{background:#7e22ce;color:#ffffff;}
-.windows{background:#0284c7;color:#ffffff;}
-.frontend{background:#10b981;color:#ffffff;}
-.backend{background:#8b5cf6;color:#ffffff;}
-.makale{background:#475569;color:#ffffff;}
-.programlar{background:#3b82f6;color:#ffffff;}
-.araçlar{background:#f97316;color:#ffffff;}
-.anlatım{background:#64748b;color:#ffffff;}
-.android{background:#a4c639;color:#ffffff;}
-.mtk{background:#ec9430;color:#ffffff;}
-
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:1px;
+  padding:2px 2px;
+  font-size:11px;
+  line-height:1;
+  border:1px solid rgba(0,0,0,0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 0 -1px 0 rgba(0,0,0,0.3);
+}
+.badge::after{
+  content:"";
+  display:inline-block;
+  width:12px;
+  height:12px;
+  margin-left:1px;
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-position:center;
+  vertical-align:middle;
+}
+.badge.yazılım::after,
+.badge.genel::after,
+.badge.manipülasyon::after{
+  display:none;
+}
+.siyah-şapka{
+  background:linear-gradient(#4a4a4a,#2b2b2b);
+  color:#ffffff;
+}
+.beyaz-şapka{
+  background:linear-gradient(#ffffff,#e2e8f0);
+  color:#1e293b;
+}
+.crack-warez{
+  background:linear-gradient(#3b82f6,#1d4ed8);
+  color:#ffffff;
+}
+.ios{
+  background:linear-gradient(#22d3ee,#0891b2);
+  color:#ffffff;
+}
+.html{
+  background:linear-gradient(#f16529,#c2410c);
+  color:#ffffff;
+}
+.javascript{
+  background:linear-gradient(#fde047,#eab308);
+  color:#1e293b;
+}
+.psiko-saldırı{
+  background:linear-gradient(#9333ea,#6b21a8);
+  color:#ffffff;
+}
+.windows{
+  background:linear-gradient(#38bdf8,#0369a1);
+  color:#ffffff;
+}
+.frontend{
+  background:linear-gradient(#34d399,#059669);
+  color:#ffffff;
+}
+.backend{
+  background:linear-gradient(#a78bfa,#6d28d9);
+  color:#ffffff;
+}
+.makale{
+  background:linear-gradient(#64748b,#334155);
+  color:#ffffff;
+}
+.programlar{
+  background:linear-gradient(#60a5fa,#2563eb);
+  color:#ffffff;
+}
+.araçlar{
+  background:linear-gradient(#fb923c,#c2410c);
+  color:#ffffff;
+}
+.anlatım{
+  background:linear-gradient(#94a3b8,#475569);
+  color:#ffffff;
+}
+.android{
+  background:linear-gradient(#b0d94b,#6b8e23);
+  color:#ffffff;
+}
+.mtk{
+  background:linear-gradient(#f59e0b,#b45309);
+  color:#ffffff;
+}
+.badge.yazılım{
+  background:linear-gradient(#a3e635,#65a30d);
+  color:#ffffff;
+}
+.badge.manipülasyon{
+  background:linear-gradient(#ff6b6b,#dc3545);
+  color:#ffffff;
+}
+.badge.genel{
+  background:linear-gradient(#ffda6a,#ffc107);
+  color:#1e293b;
+}
 .siyah-şapka::after{background-image:url('//api.iconify.design/mdi/incognito.svg?color=%23ffffff');}
-.beyaz-şapka::after{background-image: url('//api.iconify.design/mdi/incognito.svg?color=%23000000');}
-.crack-warez::after{background-image: url('//api.iconify.design/mdi/skull.svg?color=%23ffffff');}
-.psiko-saldırı::after{background-image: url('//api.iconify.design/mdi/brain.svg?color=%23ffffff');}
-.ios::after{background-image: url('//api.iconify.design/mdi/apple.svg?color=%23ffffff');}
-.windows::after{background-image: url('//api.iconify.design/mdi/microsoft-windows.svg?color=%23ffffff');}
-.html::after{background-image: url('//api.iconify.design/mdi/language-html5.svg?color=%23ffffff');}
-.javascript::after{background-image: url('//api.iconify.design/mdi/language-javascript.svg?color=%231e293b');}
-.frontend::after{background-image: url('//api.iconify.design/mdi/layers.svg?color=%23ffffff');}
-.backend::after{background-image: url('//api.iconify.design/mdi/database-cog.svg?color=%23ffffff');}
-.makale::after{background-image: url('//api.iconify.design/mdi/text-box-edit.svg?color=%23ffffff');}
-.programlar::after{background-image: url('//api.iconify.design/mdi/package.svg?color=%23ffffff');}
-.araçlar::after{background-image: url('//api.iconify.design/mdi/tools.svg?color=%23ffffff');}
-.anlatım::after{background-image: url('//api.iconify.design/mdi/comment-quote.svg?color=%23ffffff');}
-.android:after{background-image: url('//api.iconify.design/mdi/android.svg?color=%23ffffff');}
-.mtk::after{background-image: url('//api.iconify.design/simple-icons/mediatek.svg?color=%23ffffff');}
+.beyaz-şapka::after{background-image:url('//api.iconify.design/mdi/incognito.svg?color=%23000000');}
+.crack-warez::after{background-image:url('//api.iconify.design/mdi/skull.svg?color=%23ffffff');}
+.psiko-saldırı::after{background-image:url('//api.iconify.design/mdi/brain.svg?color=%23ffffff');}
+.ios::after{background-image:url('//api.iconify.design/mdi/apple.svg?color=%23ffffff');}
+.windows::after{background-image:url('//api.iconify.design/mdi/microsoft-windows.svg?color=%23ffffff');}
+.html::after{background-image:url('//api.iconify.design/mdi/language-html5.svg?color=%23ffffff');}
+.javascript::after{background-image:url('//api.iconify.design/mdi/language-javascript.svg?color=%231e293b');}
+.frontend::after{background-image:url('//api.iconify.design/mdi/layers.svg?color=%23ffffff');}
+.backend::after{background-image:url('//api.iconify.design/mdi/database-cog.svg?color=%23ffffff');}
+.makale::after{background-image:url('//api.iconify.design/mdi/text-box-edit.svg?color=%23ffffff');}
+.programlar::after{background-image:url('//api.iconify.design/mdi/package.svg?color=%23ffffff');}
+.araçlar::after{background-image:url('//api.iconify.design/mdi/tools.svg?color=%23ffffff');}
+.anlatım::after{background-image:url('//api.iconify.design/mdi/comment-quote.svg?color=%23ffffff');}
+.android::after{background-image:url('//api.iconify.design/mdi/android.svg?color=%23ffffff');}
+.mtk::after{background-image:url('//api.iconify.design/simple-icons/mediatek.svg?color=%23ffffff');}
+
+.post-row-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
