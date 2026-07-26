@@ -3,7 +3,6 @@ layout: post
 title: "başlanıç, ben kimim?"
 categories: [genel, yazılım]
 tags: [anlatım]
-comment_issue_id: 2
 ---
 
 Hoşgeldin, ben Kadir.
@@ -14,7 +13,7 @@ Elimden geldiğince burda olmaya çalışacağım.
 Proje oluşumunda kullanılan bütün yazılımlar ektedir:
 ekleme durumuna göre alttaki liste güncellenecektir.
 
-sunucu: [github](https://pages.github.com/)
+sunucu: [github](https://pages.github.com/) + high level subdomain
 
 anti ddos: [cloudflare](https://www.cloudflare.com/)
 
@@ -22,7 +21,7 @@ temel yapı: [jekyll](https://jekyllrb.com/)
 
 yapı teması: [no-style-please(cok degistirdim)](https://github.com/riggraz/no-style-please/)
 
-yorum modülü: [giscus](https://giscus.app/)
+yorum modülü: [kendim yazdım](https://github.com/akakadir/akakadir.github.io/blob/main/assets/js/github-comments.js)
 
 lightbox: [fslightbox](https://fslightbox.com/)
 
