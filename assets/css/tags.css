@@ -10,6 +10,7 @@
     inset 0 1px 0 rgba(255,255,255,0.2),
     inset 0 -1px 0 rgba(0,0,0,0.3);
 }
+
 .badge::after{
   content:"";
   display:inline-block;
@@ -21,11 +22,7 @@
   background-position:center;
   vertical-align:middle;
 }
-.badge.yazılım::after,
-.badge.genel::after,
-.badge.manipülasyon::after{
-  display:none;
-}
+
 .siyah-şapka{
   background:linear-gradient(#4a4a4a,#2b2b2b);
   color:#ffffff;
@@ -34,7 +31,7 @@
   background:linear-gradient(#ffffff,#e2e8f0);
   color:#1e293b;
 }
-.crack-warez{
+.root-warez{
   background:linear-gradient(#3b82f6,#1d4ed8);
   color:#ffffff;
 }
@@ -90,21 +87,14 @@
   background:linear-gradient(#f59e0b,#b45309);
   color:#ffffff;
 }
-.badge.yazılım{
-  background:linear-gradient(#a3e635,#65a30d);
+.snapdragon{
+  background:linear-gradient(#e10816, #b10816);
   color:#ffffff;
 }
-.badge.manipülasyon{
-  background:linear-gradient(#ff6b6b,#dc3545);
-  color:#ffffff;
-}
-.badge.genel{
-  background:linear-gradient(#ffda6a,#ffc107);
-  color:#1e293b;
-}
+
 .siyah-şapka::after{background-image:url('//api.iconify.design/mdi/incognito.svg?color=%23ffffff');}
 .beyaz-şapka::after{background-image:url('//api.iconify.design/mdi/incognito.svg?color=%23000000');}
-.crack-warez::after{background-image:url('//api.iconify.design/mdi/skull.svg?color=%23ffffff');}
+.root-warez::after{background-image:url('//api.iconify.design/mdi/skull.svg?color=%23ffffff');}
 .psiko-saldırı::after{background-image:url('//api.iconify.design/mdi/brain.svg?color=%23ffffff');}
 .ios::after{background-image:url('//api.iconify.design/mdi/apple.svg?color=%23ffffff');}
 .windows::after{background-image:url('//api.iconify.design/mdi/microsoft-windows.svg?color=%23ffffff');}
@@ -118,6 +108,7 @@
 .anlatım::after{background-image:url('//api.iconify.design/mdi/comment-quote.svg?color=%23ffffff');}
 .android::after{background-image:url('//api.iconify.design/mdi/android.svg?color=%23ffffff');}
 .mtk::after{background-image:url('//api.iconify.design/simple-icons/mediatek.svg?color=%23ffffff');}
+.snapdragon::after{background-image:url('//api.iconify.design/simple-icons/snapdragon.svg?color=%23ffffff');}
 
 .post-row-tags {
   display: inline-flex;
