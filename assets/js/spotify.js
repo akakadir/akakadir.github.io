@@ -1,61 +1,332 @@
-const state = { lastTrackLink: '', lyricsData: null, currentLyricText: '' };
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
+const helmet = require("helmet");
+const { rateLimit } = require("express-rate-limit");
+require("dotenv").config();
+const qs = require("qs");
 
-const parseTimeToSeconds = (t) => t.split(':').map(Number).reduce((m, s) => m * 60 + s);
-const fetchJSON = (url) => fetch(url).then((r) => r.json());
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-function getCurrentLyric(syncedLyrics, currentTime) {
-  return [...syncedLyrics.matchAll(/\[(\d+):(\d+)\.\d+\](.*)/g)]
-    .filter(([, m, s]) => parseInt(m) * 60 + parseInt(s) <= currentTime)
-    .at(-1)?.[3]?.trim() ?? null;
-}
+const ALLOWED_ORIGIN = "https://akakadir.art";
+const SPOTIFY_PLAYER_URL =
+    "https://api.spotify.com/v1/me/player/currently-playing?additional_types=episode";
+const SPOTIFY_TOKEN_URL =
+    "https://accounts.spotify.com/api/token";
 
-async function fetchLyrics({ type, duration, artists, name, album }) {
-  if (type === 'podcast') return { error: 'podcast liriklerini okuyamam.' };
-  const params = new URLSearchParams({ artist_name: artists, track_name: name, album_name: album, duration: Math.round(parseTimeToSeconds(duration)) });
-  const { syncedLyrics } = await fetchJSON(`https://lrclib.net/api/get?${params}`);
-  return syncedLyrics ? { syncedLyrics, type: 'synced' } : { error: 'bu şarkı sözleri, henüz eş zamanlı değil.' };
-}
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
 
-function ensureCube(lyricsDiv) {
-  if (!document.getElementById('cube'))
-    lyricsDiv.innerHTML = `<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>`;
-}
+app.use(
+    helmet({
+        contentSecurityPolicy: false,
+    })
+);
 
-function triggerCubeAnimation(newText) {
-  if (state.currentLyricText === newText) return;
-  const cube = document.getElementById('cube');
-  const front = document.getElementById('front');
-  const bottom = document.getElementById('bottom');
-  if (!cube) return;
-  bottom.textContent = newText;
-  cube.classList.add('animate', 'show-next');
-  setTimeout(() => {
-    cube.classList.remove('animate', 'show-next');
-    front.textContent = newText;
-    state.currentLyricText = newText;
-  }, 600);
-}
+app.use(
+    cors({
+        origin: ALLOWED_ORIGIN,
+        methods: ["GET"],
+        allowedHeaders: ["Content-Type"],
+    })
+);
 
-async function fetchTrackData() {
-  const nowPlayingEl = document.getElementById('now-playing');
-  try {
-    const data = await fetchJSON('https://akakadir.vercel.app/api/now-playing');
-    ensureCube(document.getElementById('lyrics'));
-    if (data.error) { nowPlayingEl.textContent = data.error; document.getElementById('front').textContent = ''; return; }
-    if (data.trackLink !== state.lastTrackLink) {
-      Object.assign(state, { lastTrackLink: data.trackLink, lyricsData: null, currentLyricText: '' });
-      document.getElementById('front').textContent = 'yükleniyor...';
-      document.getElementById('bottom').textContent = '';
-      state.lyricsData = await fetchLyrics(data);
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    const referer = req.headers.referer;
+
+    if (!origin && !referer) {
+        return res
+            .status(403)
+            .json({ error: "403: erişim isteği reddedildi" });
     }
-    nowPlayingEl.innerHTML = `🎧 ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}`;
-    if (!state.lyricsData) return;
-    if (state.lyricsData.error) document.getElementById('front').textContent = state.lyricsData.error;
-    else triggerCubeAnimation(getCurrentLyric(state.lyricsData.syncedLyrics, parseTimeToSeconds(data.progress)) || '...');
-  } catch {
-    nowPlayingEl.textContent = 'bir şeyler ters gitti.';
-  }
+
+    if (origin === ALLOWED_ORIGIN) {
+        return next();
+    }
+
+    if (referer) {
+        try {
+            const refererOrigin = new URL(referer).origin;
+
+            if (refererOrigin === ALLOWED_ORIGIN) {
+                return next();
+            }
+        } catch {}
+    }
+
+    return res
+        .status(403)
+        .json({ error: "403 - erişim isteği reddedildi" });
+});
+
+const nowPlayingLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 120,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        error: "çok fazla istek gönderildi."
+    },
+    handler: (req, res) => {
+        res.status(429).json({
+            error: "çok fazla istek gönderildi."
+        });
+    }
+});
+
+let cachedAccessToken = null;
+let tokenExpiresAt = 0;
+let tokenRequestPromise = null;
+
+async function getAccessToken() {
+    if (
+        cachedAccessToken &&
+        Date.now() < tokenExpiresAt
+    ) {
+        return cachedAccessToken;
+    }
+
+    if (tokenRequestPromise) {
+        return tokenRequestPromise;
+    }
+
+    tokenRequestPromise = (async () => {
+        try {
+            const response = await axios.post(
+                SPOTIFY_TOKEN_URL,
+                qs.stringify({
+                    grant_type: "refresh_token",
+                    refresh_token:
+                        process.env.SPOTIFY_REFRESH_TOKEN,
+                    client_id:
+                        process.env.SPOTIFY_CLIENT_ID,
+                    client_secret:
+                        process.env.SPOTIFY_CLIENT_SECRET,
+                }),
+                {
+                    headers: {
+                        "Content-Type":
+                            "application/x-www-form-urlencoded",
+                    },
+                    timeout: 10000,
+                }
+            );
+
+            cachedAccessToken =
+                response.data.access_token;
+
+            const expiresIn =
+                Number(response.data.expires_in) || 3600;
+
+            tokenExpiresAt =
+                Date.now() +
+                Math.max(expiresIn - 60, 60) * 1000;
+
+            return cachedAccessToken;
+        } finally {
+            tokenRequestPromise = null;
+        }
+    })();
+
+    return tokenRequestPromise;
 }
 
-fetchTrackData();
-setInterval(fetchTrackData, 1000);
+function invalidateAccessToken() {
+    cachedAccessToken = null;
+    tokenExpiresAt = 0;
+}
+
+let cachedNowPlaying = null;
+let cachedNowPlayingAt = 0;
+
+const RESPONSE_CACHE_MS = 750;
+
+function getCachedResponse() {
+    if (
+        cachedNowPlaying &&
+        Date.now() - cachedNowPlayingAt < RESPONSE_CACHE_MS
+    ) {
+        return cachedNowPlaying;
+    }
+
+    return null;
+}
+
+function setCachedResponse(data) {
+    cachedNowPlaying = data;
+    cachedNowPlayingAt = Date.now();
+}
+
+function formatTime(ms) {
+    const safeMs = Number(ms) || 0;
+    const minutes = Math.floor(safeMs / 60000);
+    const seconds = Math.floor(
+        (safeMs % 60000) / 1000
+    )
+        .toString()
+        .padStart(2, "0");
+
+    return `${minutes}:${seconds}`;
+}
+
+app.get(
+    "/api/now-playing",
+    nowPlayingLimiter,
+    async (req, res) => {
+        const cachedResponse = getCachedResponse();
+
+        if (cachedResponse) {
+            return res.json(cachedResponse);
+        }
+
+        try {
+            let accessToken = await getAccessToken();
+            let response;
+
+            try {
+                response = await axios.get(
+                    SPOTIFY_PLAYER_URL,
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${accessToken}`,
+                        },
+                        timeout: 10000,
+                    }
+                );
+            } catch (error) {
+                if (
+                    error.response?.status === 401
+                ) {
+                    invalidateAccessToken();
+
+                    accessToken =
+                        await getAccessToken();
+
+                    response = await axios.get(
+                        SPOTIFY_PLAYER_URL,
+                        {
+                            headers: {
+                                Authorization:
+                                    `Bearer ${accessToken}`,
+                            },
+                            timeout: 10000,
+                        }
+                    );
+                } else {
+                    throw error;
+                }
+            }
+
+            if (
+                response.status === 204 ||
+                !response.data ||
+                !response.data.item
+            ) {
+                const result = {
+                    error:
+                        "galiba uyuyorum ya, veya öyle bir şey."
+                };
+
+                setCachedResponse(result);
+
+                return res.json(result);
+            }
+
+            const item = response.data.item;
+            const progress = formatTime(
+                response.data.progress_ms
+            );
+            const duration = formatTime(
+                item.duration_ms
+            );
+            const trackLink =
+                item.external_urls?.spotify;
+
+            let result;
+
+            if (item.type === "episode") {
+                result = {
+                    type: "podcast",
+                    name: item.name,
+                    artists:
+                        item.show?.publisher ||
+                        item.show?.name,
+                    album: item.show?.name,
+                    albumArt:
+                        item.images?.[0]?.url ||
+                        item.show?.images?.[0]?.url,
+                    progress,
+                    duration,
+                    trackLink,
+                };
+            } else {
+                result = {
+                    type: "track",
+                    name: item.name,
+                    artists:
+                        item.artists
+                            ?.map(
+                                artist =>
+                                    artist.name
+                            )
+                            .join(", ") || "",
+                    album: item.album?.name,
+                    albumArt:
+                        item.album?.images?.[0]?.url,
+                    progress,
+                    duration,
+                    trackLink,
+                };
+            }
+
+            setCachedResponse(result);
+
+            return res.json(result);
+        } catch (error) {
+            console.error(
+                "SPOTIFY ERROR:",
+                JSON.stringify(
+                    {
+                        status:
+                            error.response?.status ||
+                            null,
+                        data:
+                            error.response?.data ||
+                            null,
+                        message:
+                            error.message,
+                        url:
+                            error.config?.url ||
+                            null,
+                        retryAfter:
+                            error.response?.headers?.[
+                                "retry-after"
+                            ] || null,
+                    },
+                    null,
+                    2
+                )
+            );
+
+            return res.status(500).json({
+                error:
+                    "spotify verilerime erişemedim."
+            });
+        }
+    }
+);
+
+app.use((req, res) => {
+    res.status(404).json({
+        error: "404 - endpoint bulunamadı"
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(
+        `Server is running on port ${PORT}`
+    );
+});
