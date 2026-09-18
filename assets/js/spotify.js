@@ -1,191 +1,200 @@
+const BASE_URL = 'https://akakadir.vercel.app';
+const STREAM_URL = `${BASE_URL}/api/now-playing/stream`;
+const POLL_URL = `${BASE_URL}/api/now-playing`;
+const FALLBACK_POLL_MS = 5000;
+const MAX_STREAM_ERRORS = 3;
+
 const state = {
   lastTrackLink: '',
   lyricsData: null,
   currentLyricText: '',
+  pendingLyricText: null,
+  trackData: null,
   progressMs: 0,
   durationMs: 0,
-  timestamp: 0,
   isPlaying: false,
-  syncTimer: null,
+  lastTickAt: performance.now(),
+  streamErrors: 0,
+  source: null,
   fallbackTimer: null,
-  fetching: false
+  lyricsToken: 0
 };
 
+const fetchJSON = (url) => fetch(url).then((r) => r.json());
 const parseTimeToSeconds = (t) => t.split(':').map(Number).reduce((m, s) => m * 60 + s);
-const fetchJSON = (url) => fetch(url, { cache: 'no-store' }).then((r) => r.json());
 
-function getCurrentLyric(syncedLyrics, currentTime) {
-  return [...syncedLyrics.matchAll(/\[(\d+):(\d+)\.\d+\](.*)/g)]
-    .filter(([, m, s]) => parseInt(m) * 60 + parseInt(s) <= currentTime)
-    .at(-1)?.[3]?.trim() ?? null;
+const formatTime = (ms) => {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+};
+
+function parseSyncedLyrics(synced) {
+  return [...synced.matchAll(/\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g)]
+    .map(([, m, s, frac, text]) => ({
+      time: Number(m) * 60000 + Number(s) * 1000 + (frac ? Number(`0.${frac}`) * 1000 : 0),
+      text: text.trim()
+    }))
+    .sort((a, b) => a.time - b.time);
 }
 
-async function fetchLyrics({ type, duration, artists, name, album }) {
-  if (type === 'podcast') return { error: 'podcast liriklerini okuyamam.' };
+function getCurrentLyric(lines, currentMs) {
+  let found = null;
+  for (const line of lines) {
+    if (line.time > currentMs) break;
+    found = line.text;
+  }
+  return found || null;
+}
 
+async function fetchLyrics({ type, duration, durationMs, artists, name, album }) {
+  if (type === 'podcast') return { error: 'podcast liriklerini okuyamam.' };
   const params = new URLSearchParams({
     artist_name: artists,
     track_name: name,
     album_name: album,
-    duration: Math.round(parseTimeToSeconds(duration))
+    duration: Math.round((durationMs || parseTimeToSeconds(duration) * 1000) / 1000)
   });
-
   const { syncedLyrics } = await fetchJSON(`https://lrclib.net/api/get?${params}`);
-  return syncedLyrics ? { syncedLyrics, type: 'synced' } : { error: 'bu şarkı sözleri, henüz eş zamanlı değil.' };
+  return syncedLyrics
+    ? { lines: parseSyncedLyrics(syncedLyrics), type: 'synced' }
+    : { error: 'bu şarkı sözleri, henüz eş zamanlı değil.' };
 }
 
-function ensureCube(lyricsDiv) {
-  if (!document.getElementById('cube'))
+function ensureCube() {
+  const lyricsDiv = document.getElementById('lyrics');
+  if (lyricsDiv && !document.getElementById('cube'))
     lyricsDiv.innerHTML = `<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>`;
 }
 
 function triggerCubeAnimation(newText) {
-  if (state.currentLyricText === newText) return;
-
+  if (state.currentLyricText === newText || state.pendingLyricText === newText) return;
   const cube = document.getElementById('cube');
   const front = document.getElementById('front');
   const bottom = document.getElementById('bottom');
-
   if (!cube) return;
-
+  state.pendingLyricText = newText;
   bottom.textContent = newText;
   cube.classList.add('animate', 'show-next');
-
   setTimeout(() => {
     cube.classList.remove('animate', 'show-next');
     front.textContent = newText;
     state.currentLyricText = newText;
+    state.pendingLyricText = null;
   }, 600);
 }
 
-function getCurrentProgressMs() {
-  if (!state.timestamp) return state.progressMs;
-
-  if (!state.isPlaying) {
-    return state.progressMs;
-  }
-
-  return Math.min(
-    state.progressMs + (Date.now() - state.timestamp),
-    state.durationMs
-  );
+function renderTrackInfo(data) {
+  document.getElementById('now-playing').innerHTML =
+    `🎧 ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | <span id="progress-time">0:00</span>/${data.duration}`;
 }
 
-function updateUI() {
-  if (!state.lastTrackLink) return;
-
-  const progressMs = getCurrentProgressMs();
-  const currentTime = progressMs / 1000;
-
-  const nowPlayingEl = document.getElementById('now-playing');
-
-  if (!nowPlayingEl) return;
-
-  nowPlayingEl.innerHTML = `🎧 ${nowPlayingEl.dataset.artists} - <a href="${nowPlayingEl.dataset.trackLink}" target="_blank">${nowPlayingEl.dataset.name}</a> | ${formatTime(progressMs)}/${formatTime(state.durationMs)}`;
-
+function render() {
+  if (!state.trackData) return;
+  const timeEl = document.getElementById('progress-time');
+  if (timeEl) timeEl.textContent = formatTime(state.progressMs);
   if (!state.lyricsData) return;
+  if (state.lyricsData.error) document.getElementById('front').textContent = state.lyricsData.error;
+  else triggerCubeAnimation(getCurrentLyric(state.lyricsData.lines, state.progressMs) || '...');
+}
 
-  if (state.lyricsData.error) {
-    document.getElementById('front').textContent = state.lyricsData.error;
+function tick() {
+  const now = performance.now();
+  const delta = now - state.lastTickAt;
+  state.lastTickAt = now;
+  if (state.isPlaying && state.trackData) {
+    state.progressMs += delta;
+    if (state.durationMs && state.progressMs > state.durationMs) state.progressMs = state.durationMs;
+  }
+  render();
+}
+
+async function applyPayload(data) {
+  ensureCube();
+
+  if (!data || data.error) {
+    Object.assign(state, {
+      trackData: null,
+      lastTrackLink: '',
+      lyricsData: null,
+      currentLyricText: '',
+      pendingLyricText: null,
+      isPlaying: false
+    });
+    document.getElementById('now-playing').textContent = data?.error || 'bir şeyler ters gitti.';
+    const front = document.getElementById('front');
+    if (front) front.textContent = '';
     return;
   }
 
-  triggerCubeAnimation(
-    getCurrentLyric(
-      state.lyricsData.syncedLyrics,
-      currentTime
-    ) || '...'
-  );
-}
+  state.isPlaying = Boolean(data.isPlaying);
+  state.durationMs = data.durationMs || parseTimeToSeconds(data.duration) * 1000;
+  state.progressMs = data.progressMs ?? parseTimeToSeconds(data.progress) * 1000;
+  state.trackData = data;
 
-function formatTime(ms) {
-  const minutes = Math.floor(ms / 60000);
-  const seconds = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
-  return `${minutes}:${seconds}`;
-}
-
-function scheduleNextSync() {
-  clearTimeout(state.syncTimer);
-
-  if (!state.isPlaying || !state.durationMs) {
-    return;
+  if (data.trackLink !== state.lastTrackLink) {
+    const token = ++state.lyricsToken;
+    Object.assign(state, {
+      lastTrackLink: data.trackLink,
+      lyricsData: null,
+      currentLyricText: '',
+      pendingLyricText: null
+    });
+    renderTrackInfo(data);
+    document.getElementById('front').textContent = 'yükleniyor...';
+    document.getElementById('bottom').textContent = '';
+    try {
+      const lyrics = await fetchLyrics(data);
+      if (token === state.lyricsToken) state.lyricsData = lyrics;
+    } catch {
+      if (token === state.lyricsToken) state.lyricsData = { error: 'sözleri getiremedim.' };
+    }
   }
 
-  const remaining = state.durationMs - getCurrentProgressMs();
-
-  state.syncTimer = setTimeout(() => {
-    fetchTrackData();
-  }, Math.max(remaining + 1000, 1000));
+  render();
 }
 
-function scheduleFallbackSync() {
-  clearTimeout(state.fallbackTimer);
-
-  state.fallbackTimer = setTimeout(() => {
-    fetchTrackData();
-  }, 30000);
-}
-
-async function fetchTrackData() {
-  if (state.fetching) return;
-
-  state.fetching = true;
-
-  const nowPlayingEl = document.getElementById('now-playing');
-
+async function pollOnce() {
   try {
-    const data = await fetchJSON('https://akakadir.vercel.app/api/now-playing');
-
-    ensureCube(document.getElementById('lyrics'));
-
-    if (data.error) {
-      nowPlayingEl.textContent = data.error;
-      document.getElementById('front').textContent = '';
-      return;
-    }
-
-    const newTrack = data.trackLink !== state.lastTrackLink;
-
-    state.progressMs = parseTimeToSeconds(data.progress) * 1000;
-    state.durationMs = parseTimeToSeconds(data.duration) * 1000;
-    state.timestamp = Number(data.timestamp) || Date.now();
-    state.isPlaying = Boolean(data.isPlaying);
-
-    if (newTrack) {
-      Object.assign(state, {
-        lastTrackLink: data.trackLink,
-        lyricsData: null,
-        currentLyricText: ''
-      });
-
-      document.getElementById('front').textContent = 'yükleniyor...';
-      document.getElementById('bottom').textContent = '';
-
-      state.lyricsData = await fetchLyrics(data);
-    }
-
-    nowPlayingEl.dataset.artists = data.artists;
-    nowPlayingEl.dataset.name = data.name;
-    nowPlayingEl.dataset.trackLink = data.trackLink;
-
-    updateUI();
-    scheduleNextSync();
-    scheduleFallbackSync();
-
+    applyPayload(await fetchJSON(POLL_URL));
   } catch {
-    nowPlayingEl.textContent = 'bir şeyler ters gitti.';
-    scheduleFallbackSync();
-  } finally {
-    state.fetching = false;
+    document.getElementById('now-playing').textContent = 'bir şeyler ters gitti.';
   }
 }
 
-fetchTrackData();
+function startFallback() {
+  if (state.fallbackTimer) return;
+  pollOnce();
+  state.fallbackTimer = setInterval(pollOnce, FALLBACK_POLL_MS);
+}
 
-setInterval(updateUI, 250);
+function startStream() {
+  state.source = new EventSource(STREAM_URL);
+
+  state.source.onmessage = (event) => {
+    state.streamErrors = 0;
+    try {
+      applyPayload(JSON.parse(event.data));
+    } catch {}
+  };
+
+  state.source.onerror = () => {
+    state.streamErrors += 1;
+    if (state.streamErrors >= MAX_STREAM_ERRORS) {
+      state.source.close();
+      state.source = null;
+      startFallback();
+    }
+  };
+}
+
+state.lastTickAt = performance.now();
+setInterval(tick, 100);
+
+if (typeof EventSource !== 'undefined') startStream();
+else startFallback();
 
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
-    fetchTrackData();
-  }
+  if (document.hidden) return;
+  state.lastTickAt = performance.now();
+  if (!state.source) pollOnce();
 });
