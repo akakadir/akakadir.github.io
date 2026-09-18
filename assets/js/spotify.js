@@ -2,6 +2,9 @@ const state = {
   lastTrackLink: '',
   lyricsData: null,
   currentLyricText: '',
+  displayedLyricText: '',
+  pendingLyricText: '',
+  lyricAnimationTimer: null,
   progressSeconds: 0,
   durationSeconds: 0,
   syncedProgress: 0,
@@ -59,22 +62,85 @@ function ensureCube(lyricsDiv) {
   }
 }
 
-function triggerCubeAnimation(newText) {
-  if (state.currentLyricText === newText) return;
-
+function cancelLyricAnimation() {
   const cube = document.getElementById('cube');
   const front = document.getElementById('front');
   const bottom = document.getElementById('bottom');
 
-  if (!cube) return;
+  if (state.lyricAnimationTimer) {
+    clearTimeout(state.lyricAnimationTimer);
+    state.lyricAnimationTimer = null;
+  }
+
+  if (cube) {
+    cube.classList.remove('animate', 'show-next');
+  }
+
+  if (front) {
+    front.textContent = state.displayedLyricText || '';
+  }
+
+  if (bottom) {
+    bottom.textContent = '';
+  }
+
+  state.pendingLyricText = '';
+}
+
+function setLyricInstant(text) {
+  const cube = document.getElementById('cube');
+  const front = document.getElementById('front');
+  const bottom = document.getElementById('bottom');
+
+  cancelLyricAnimation();
+
+  if (!front || !bottom) return;
+
+  front.textContent = text;
+  bottom.textContent = '';
+
+  state.currentLyricText = text;
+  state.displayedLyricText = text;
+  state.pendingLyricText = '';
+
+  if (cube) {
+    cube.classList.remove('animate', 'show-next');
+  }
+}
+
+function triggerCubeAnimation(newText) {
+  const cube = document.getElementById('cube');
+  const front = document.getElementById('front');
+  const bottom = document.getElementById('bottom');
+
+  if (!cube || !front || !bottom) return;
+
+  if (
+    state.displayedLyricText === newText ||
+    state.pendingLyricText === newText
+  ) {
+    return;
+  }
+
+  cancelLyricAnimation();
 
   bottom.textContent = newText;
+
+  state.pendingLyricText = newText;
+  state.currentLyricText = newText;
+
   cube.classList.add('animate', 'show-next');
 
-  setTimeout(() => {
+  state.lyricAnimationTimer = setTimeout(() => {
     cube.classList.remove('animate', 'show-next');
+
     front.textContent = newText;
+    bottom.textContent = '';
+
+    state.displayedLyricText = newText;
     state.currentLyricText = newText;
+    state.pendingLyricText = '';
+    state.lyricAnimationTimer = null;
   }, 600);
 }
 
@@ -91,7 +157,8 @@ function updateProgress() {
 
   state.progressSeconds = getLiveProgress();
 
-  const nowPlayingEl = document.getElementById('now-playing');
+  const nowPlayingEl =
+    document.getElementById('now-playing');
 
   const progressEl =
     nowPlayingEl?.querySelector('[data-progress]');
@@ -154,10 +221,12 @@ async function fetchTrackData() {
     ensureCube(document.getElementById('lyrics'));
 
     if (data.error) {
+      setLyricInstant('');
       nowPlayingEl.textContent = data.error;
-      document.getElementById('front').textContent = '';
 
       clearTimeout(state.nextSyncTimer);
+      clearTimeout(state.fallbackTimer);
+
       return;
     }
 
@@ -171,7 +240,9 @@ async function fetchTrackData() {
       data.trackLink !== state.lastTrackLink;
 
     const localProgress =
-      state.lastTrackLink ? getLiveProgress() : serverProgress;
+      state.lastTrackLink
+        ? getLiveProgress()
+        : serverProgress;
 
     if (
       !newTrack &&
@@ -187,10 +258,14 @@ async function fetchTrackData() {
     state.syncedAt = performance.now();
 
     if (newTrack) {
+      cancelLyricAnimation();
+
       Object.assign(state, {
         lastTrackLink: data.trackLink,
         lyricsData: null,
-        currentLyricText: ''
+        currentLyricText: '',
+        displayedLyricText: '',
+        pendingLyricText: ''
       });
 
       document.getElementById('front').textContent =
@@ -198,24 +273,28 @@ async function fetchTrackData() {
 
       document.getElementById('bottom').textContent = '';
 
-      state.lyricsData = await fetchLyrics(data);
+      state.lyricsData =
+        await fetchLyrics(data);
     }
 
     nowPlayingEl.innerHTML =
       `🎧 ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | <span data-progress>${formatTime(state.progressSeconds)}/${data.duration}</span>`;
 
-    if (state.lyricsData?.error) {
-      document.getElementById('front').textContent =
-        state.lyricsData.error;
+    if (!state.lyricsData) return;
+
+    if (state.lyricsData.error) {
+      setLyricInstant(state.lyricsData.error);
+    } else {
+      updateProgress();
     }
 
-    updateProgress();
     scheduleTrackEndSync();
     scheduleFallbackSync();
 
   } catch {
     nowPlayingEl.textContent =
       'bir şeyler ters gitti.';
+
     scheduleFallbackSync();
   } finally {
     state.fetching = false;
