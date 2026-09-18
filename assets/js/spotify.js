@@ -2,43 +2,26 @@ const state = {
   lastTrackLink: '',
   lyricsData: null,
   currentLyricText: '',
-  displayedLyricText: '',
-  pendingLyricText: '',
-  lyricAnimationTimer: null,
-  progressSeconds: 0,
-  durationSeconds: 0,
-  syncedProgress: 0,
-  syncedAt: 0,
-  nextSyncTimer: null,
+  progressMs: 0,
+  durationMs: 0,
+  timestamp: 0,
+  isPlaying: false,
+  syncTimer: null,
   fallbackTimer: null,
   fetching: false
 };
 
-const parseTimeToSeconds = (t) =>
-  t.split(':').map(Number).reduce((m, s) => m * 60 + s);
-
-const formatTime = (seconds) => {
-  seconds = Math.max(0, Math.floor(seconds));
-  const minutes = Math.floor(seconds / 60);
-  const secs = String(seconds % 60).padStart(2, '0');
-  return `${minutes}:${secs}`;
-};
-
-const fetchJSON = (url) =>
-  fetch(url, { cache: 'no-store' }).then((r) => r.json());
+const parseTimeToSeconds = (t) => t.split(':').map(Number).reduce((m, s) => m * 60 + s);
+const fetchJSON = (url) => fetch(url, { cache: 'no-store' }).then((r) => r.json());
 
 function getCurrentLyric(syncedLyrics, currentTime) {
   return [...syncedLyrics.matchAll(/\[(\d+):(\d+)\.\d+\](.*)/g)]
-    .filter(([, m, s]) =>
-      parseInt(m) * 60 + parseInt(s) <= currentTime
-    )
+    .filter(([, m, s]) => parseInt(m) * 60 + parseInt(s) <= currentTime)
     .at(-1)?.[3]?.trim() ?? null;
 }
 
 async function fetchLyrics({ type, duration, artists, name, album }) {
-  if (type === 'podcast') {
-    return { error: 'podcast liriklerini okuyamam.' };
-  }
+  if (type === 'podcast') return { error: 'podcast liriklerini okuyamam.' };
 
   const params = new URLSearchParams({
     artist_name: artists,
@@ -47,152 +30,90 @@ async function fetchLyrics({ type, duration, artists, name, album }) {
     duration: Math.round(parseTimeToSeconds(duration))
   });
 
-  const { syncedLyrics } = await fetchJSON(
-    `https://lrclib.net/api/get?${params}`
-  );
-
-  return syncedLyrics
-    ? { syncedLyrics, type: 'synced' }
-    : { error: 'bu şarkı sözleri, henüz eş zamanlı değil.' };
+  const { syncedLyrics } = await fetchJSON(`https://lrclib.net/api/get?${params}`);
+  return syncedLyrics ? { syncedLyrics, type: 'synced' } : { error: 'bu şarkı sözleri, henüz eş zamanlı değil.' };
 }
 
 function ensureCube(lyricsDiv) {
-  if (!document.getElementById('cube')) {
+  if (!document.getElementById('cube'))
     lyricsDiv.innerHTML = `<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>`;
-  }
-}
-
-function cancelLyricAnimation() {
-  const cube = document.getElementById('cube');
-  const front = document.getElementById('front');
-  const bottom = document.getElementById('bottom');
-
-  if (state.lyricAnimationTimer) {
-    clearTimeout(state.lyricAnimationTimer);
-    state.lyricAnimationTimer = null;
-  }
-
-  if (cube) {
-    cube.classList.remove('animate', 'show-next');
-  }
-
-  if (front) {
-    front.textContent = state.displayedLyricText || '';
-  }
-
-  if (bottom) {
-    bottom.textContent = '';
-  }
-
-  state.pendingLyricText = '';
-}
-
-function setLyricInstant(text) {
-  const cube = document.getElementById('cube');
-  const front = document.getElementById('front');
-  const bottom = document.getElementById('bottom');
-
-  cancelLyricAnimation();
-
-  if (!front || !bottom) return;
-
-  front.textContent = text;
-  bottom.textContent = '';
-
-  state.currentLyricText = text;
-  state.displayedLyricText = text;
-  state.pendingLyricText = '';
-
-  if (cube) {
-    cube.classList.remove('animate', 'show-next');
-  }
 }
 
 function triggerCubeAnimation(newText) {
+  if (state.currentLyricText === newText) return;
+
   const cube = document.getElementById('cube');
   const front = document.getElementById('front');
   const bottom = document.getElementById('bottom');
 
-  if (!cube || !front || !bottom) return;
-
-  if (
-    state.displayedLyricText === newText ||
-    state.pendingLyricText === newText
-  ) {
-    return;
-  }
-
-  cancelLyricAnimation();
+  if (!cube) return;
 
   bottom.textContent = newText;
-
-  state.pendingLyricText = newText;
-  state.currentLyricText = newText;
-
   cube.classList.add('animate', 'show-next');
 
-  state.lyricAnimationTimer = setTimeout(() => {
+  setTimeout(() => {
     cube.classList.remove('animate', 'show-next');
-
     front.textContent = newText;
-    bottom.textContent = '';
-
-    state.displayedLyricText = newText;
     state.currentLyricText = newText;
-    state.pendingLyricText = '';
-    state.lyricAnimationTimer = null;
   }, 600);
 }
 
-function getLiveProgress() {
+function getCurrentProgressMs() {
+  if (!state.timestamp) return state.progressMs;
+
+  if (!state.isPlaying) {
+    return state.progressMs;
+  }
+
   return Math.min(
-    state.syncedProgress +
-      (performance.now() - state.syncedAt) / 1000,
-    state.durationSeconds
+    state.progressMs + (Date.now() - state.timestamp),
+    state.durationMs
   );
 }
 
-function updateProgress() {
+function updateUI() {
   if (!state.lastTrackLink) return;
 
-  state.progressSeconds = getLiveProgress();
+  const progressMs = getCurrentProgressMs();
+  const currentTime = progressMs / 1000;
 
-  const nowPlayingEl =
-    document.getElementById('now-playing');
+  const nowPlayingEl = document.getElementById('now-playing');
 
-  const progressEl =
-    nowPlayingEl?.querySelector('[data-progress]');
+  if (!nowPlayingEl) return;
 
-  if (progressEl) {
-    progressEl.textContent =
-      `${formatTime(state.progressSeconds)}/${formatTime(state.durationSeconds)}`;
+  nowPlayingEl.innerHTML = `🎧 ${nowPlayingEl.dataset.artists} - <a href="${nowPlayingEl.dataset.trackLink}" target="_blank">${nowPlayingEl.dataset.name}</a> | ${formatTime(progressMs)}/${formatTime(state.durationMs)}`;
+
+  if (!state.lyricsData) return;
+
+  if (state.lyricsData.error) {
+    document.getElementById('front').textContent = state.lyricsData.error;
+    return;
   }
 
-  if (state.lyricsData?.syncedLyrics) {
-    const lyric =
-      getCurrentLyric(
-        state.lyricsData.syncedLyrics,
-        state.progressSeconds
-      ) || '...';
-
-    triggerCubeAnimation(lyric);
-  }
-
-  if (
-    state.durationSeconds &&
-    state.progressSeconds >= state.durationSeconds
-  ) {
-    scheduleTrackEndSync();
-  }
+  triggerCubeAnimation(
+    getCurrentLyric(
+      state.lyricsData.syncedLyrics,
+      currentTime
+    ) || '...'
+  );
 }
 
-function scheduleTrackEndSync() {
-  clearTimeout(state.nextSyncTimer);
+function formatTime(ms) {
+  const minutes = Math.floor(ms / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
 
-  const remaining =
-    (state.durationSeconds - state.progressSeconds) * 1000;
+function scheduleNextSync() {
+  clearTimeout(state.syncTimer);
 
-  state.nextSyncTimer = setTimeout(() => {
+  if (!state.isPlaying || !state.durationMs) {
+    return;
+  }
+
+  const remaining = state.durationMs - getCurrentProgressMs();
+
+  state.syncTimer = setTimeout(() => {
     fetchTrackData();
   }, Math.max(remaining + 1000, 1000));
 }
@@ -210,91 +131,49 @@ async function fetchTrackData() {
 
   state.fetching = true;
 
-  const nowPlayingEl =
-    document.getElementById('now-playing');
+  const nowPlayingEl = document.getElementById('now-playing');
 
   try {
-    const data = await fetchJSON(
-      'https://akakadir.vercel.app/api/now-playing'
-    );
+    const data = await fetchJSON('https://akakadir.vercel.app/api/now-playing');
 
     ensureCube(document.getElementById('lyrics'));
 
     if (data.error) {
-      setLyricInstant('');
       nowPlayingEl.textContent = data.error;
-
-      clearTimeout(state.nextSyncTimer);
-      clearTimeout(state.fallbackTimer);
-
+      document.getElementById('front').textContent = '';
       return;
     }
 
-    const serverProgress =
-      parseTimeToSeconds(data.progress);
+    const newTrack = data.trackLink !== state.lastTrackLink;
 
-    const durationSeconds =
-      parseTimeToSeconds(data.duration);
-
-    const newTrack =
-      data.trackLink !== state.lastTrackLink;
-
-    const localProgress =
-      state.lastTrackLink
-        ? getLiveProgress()
-        : serverProgress;
-
-    if (
-      !newTrack &&
-      Math.abs(serverProgress - localProgress) < 1.5
-    ) {
-      state.syncedProgress = localProgress;
-    } else {
-      state.syncedProgress = serverProgress;
-    }
-
-    state.progressSeconds = state.syncedProgress;
-    state.durationSeconds = durationSeconds;
-    state.syncedAt = performance.now();
+    state.progressMs = parseTimeToSeconds(data.progress) * 1000;
+    state.durationMs = parseTimeToSeconds(data.duration) * 1000;
+    state.timestamp = Number(data.timestamp) || Date.now();
+    state.isPlaying = Boolean(data.isPlaying);
 
     if (newTrack) {
-      cancelLyricAnimation();
-
       Object.assign(state, {
         lastTrackLink: data.trackLink,
         lyricsData: null,
-        currentLyricText: '',
-        displayedLyricText: '',
-        pendingLyricText: ''
+        currentLyricText: ''
       });
 
-      document.getElementById('front').textContent =
-        'yükleniyor...';
-
+      document.getElementById('front').textContent = 'yükleniyor...';
       document.getElementById('bottom').textContent = '';
 
-      state.lyricsData =
-        await fetchLyrics(data);
+      state.lyricsData = await fetchLyrics(data);
     }
 
-    nowPlayingEl.innerHTML =
-      `🎧 ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | <span data-progress>${formatTime(state.progressSeconds)}/${data.duration}</span>`;
+    nowPlayingEl.dataset.artists = data.artists;
+    nowPlayingEl.dataset.name = data.name;
+    nowPlayingEl.dataset.trackLink = data.trackLink;
 
-    if (!state.lyricsData) return;
-
-    if (state.lyricsData.error) {
-      setLyricInstant(state.lyricsData.error);
-    } else {
-      updateProgress();
-    }
-
-    scheduleTrackEndSync();
+    updateUI();
+    scheduleNextSync();
     scheduleFallbackSync();
 
   } catch {
-    nowPlayingEl.textContent =
-      'bir şeyler ters gitti.';
-
+    nowPlayingEl.textContent = 'bir şeyler ters gitti.';
     scheduleFallbackSync();
   } finally {
     state.fetching = false;
@@ -303,7 +182,7 @@ async function fetchTrackData() {
 
 fetchTrackData();
 
-setInterval(updateProgress, 250);
+setInterval(updateUI, 250);
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) {
