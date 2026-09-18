@@ -1,8 +1,6 @@
-const BASE_URL = 'https://akakadir.vercel.app';
-const STREAM_URL = `${BASE_URL}/api/now-playing/stream`;
-const POLL_URL = `${BASE_URL}/api/now-playing`;
-const FALLBACK_POLL_MS = 5000;
-const MAX_STREAM_ERRORS = 3;
+const POLL_URL = 'https://akakadir.vercel.app/api/now-playing';
+const POLL_MS = 5000;
+const SYNC_TOLERANCE_MS = 1500;
 
 const state = {
   lastTrackLink: '',
@@ -14,9 +12,6 @@ const state = {
   durationMs: 0,
   isPlaying: false,
   lastTickAt: performance.now(),
-  streamErrors: 0,
-  source: null,
-  fallbackTimer: null,
   lyricsToken: 0
 };
 
@@ -126,9 +121,9 @@ async function applyPayload(data) {
     return;
   }
 
-  state.isPlaying = Boolean(data.isPlaying);
+  const serverMs = data.progressMs ?? parseTimeToSeconds(data.progress) * 1000;
+  state.isPlaying = data.isPlaying ?? true;
   state.durationMs = data.durationMs || parseTimeToSeconds(data.duration) * 1000;
-  state.progressMs = data.progressMs ?? parseTimeToSeconds(data.progress) * 1000;
   state.trackData = data;
 
   if (data.trackLink !== state.lastTrackLink) {
@@ -137,7 +132,8 @@ async function applyPayload(data) {
       lastTrackLink: data.trackLink,
       lyricsData: null,
       currentLyricText: '',
-      pendingLyricText: null
+      pendingLyricText: null,
+      progressMs: serverMs
     });
     renderTrackInfo(data);
     document.getElementById('front').textContent = 'yükleniyor...';
@@ -148,53 +144,28 @@ async function applyPayload(data) {
     } catch {
       if (token === state.lyricsToken) state.lyricsData = { error: 'sözleri getiremedim.' };
     }
+  } else if (Math.abs(serverMs - state.progressMs) > SYNC_TOLERANCE_MS) {
+    state.progressMs = serverMs;
   }
 
   render();
 }
 
-async function pollOnce() {
+async function pollTrack() {
   try {
-    applyPayload(await fetchJSON(POLL_URL));
+    await applyPayload(await fetchJSON(POLL_URL));
   } catch {
     document.getElementById('now-playing').textContent = 'bir şeyler ters gitti.';
   }
 }
 
-function startFallback() {
-  if (state.fallbackTimer) return;
-  pollOnce();
-  state.fallbackTimer = setInterval(pollOnce, FALLBACK_POLL_MS);
-}
-
-function startStream() {
-  state.source = new EventSource(STREAM_URL);
-
-  state.source.onmessage = (event) => {
-    state.streamErrors = 0;
-    try {
-      applyPayload(JSON.parse(event.data));
-    } catch {}
-  };
-
-  state.source.onerror = () => {
-    state.streamErrors += 1;
-    if (state.streamErrors >= MAX_STREAM_ERRORS) {
-      state.source.close();
-      state.source = null;
-      startFallback();
-    }
-  };
-}
-
 state.lastTickAt = performance.now();
+pollTrack();
+setInterval(pollTrack, POLL_MS);
 setInterval(tick, 100);
-
-if (typeof EventSource !== 'undefined') startStream();
-else startFallback();
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   state.lastTickAt = performance.now();
-  if (!state.source) pollOnce();
+  pollTrack();
 });
