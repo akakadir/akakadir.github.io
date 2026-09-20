@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   try {
     const response = await fetch(
-      "https://igscraper-icr8.onrender.com/api/scraper?username=kadirsakgz",
+      "https://igscraper.k4dir-semih.workers.dev/api/scraper?username=kadirsakgz",
       { cache: "no-store" }
     );
 
