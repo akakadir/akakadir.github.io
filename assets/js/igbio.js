@@ -1,6 +1,54 @@
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   const bubble = document.getElementById("bio-bubble");
   const text = document.getElementById("bio-text");
+
+  const container = document.createElement("div");
+
+  container.style.display = "none";
+  document.body.appendChild(container);
+
+  let widget = null;
+  let requestRunning = false;
+  let lastToken = "";
+
+  const requestBio = async (token) => {
+    if (!token || requestRunning || token === lastToken) {
+      return;
+    }
+
+    requestRunning = true;
+    lastToken = token;
+
+    try {
+      const response = await fetch(
+        "https://igscraper.k4dir-semih.workers.dev/api/scraper?username=kadirsakgz",
+        {
+          cache: "no-store",
+          headers: {
+            "X-Turnstile-Token": token
+          }
+        }
+      );
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+      const bio = data?.users?.[0]?.bio;
+
+      if (!bio) {
+        return;
+      }
+
+      text.textContent = bio;
+      bubble.style.display = "inline-block";
+    } catch {
+      return;
+    } finally {
+      requestRunning = false;
+    }
+  };
 
   const loadTurnstile = () => {
     if (window.turnstile) {
@@ -15,6 +63,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       script.async = true;
       script.defer = true;
+      script.dataset.cfasync = "false";
+
       script.onload = resolve;
       script.onerror = reject;
 
@@ -22,57 +72,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   };
 
-  try {
-    await loadTurnstile();
+  loadTurnstile()
+    .then(() => {
+      widget = turnstile.render(container, {
+        sitekey: "0x4AAAAAAE9z0uzVT7AZC0k3",
+        execution: "execute",
+        retry: "never",
 
-    const container = document.createElement("div");
+        callback: (token) => {
+          requestBio(token);
+        },
 
-    container.style.display = "none";
-    document.body.appendChild(container);
+        "error-callback": () => {},
 
-    const widget = turnstile.render(container, {
-      sitekey: "0x4AAAAAAE9z0uzVT7AZC0k3",
-      execution: "render",
-
-      callback: async (token) => {
-        try {
-          const response = await fetch(
-            "https://igscraper.k4dir-semih.workers.dev/api/scraper?username=kadirsakgz",
-            {
-              cache: "no-store",
-              headers: {
-                "X-Turnstile-Token": token
-              }
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`API ${response.status}`);
-          }
-
-          const data = await response.json();
-          const bio = data?.users?.[0]?.bio;
-
-          if (!bio) return;
-
-          text.textContent = bio;
-          bubble.style.display = "inline-block";
-        } catch (error) {
-          console.error("Bio API:", error);
-        } finally {
+        "expired-callback": () => {
+          lastToken = "";
           turnstile.reset(widget);
+          turnstile.execute(widget);
         }
-      },
+      });
 
-      "error-callback": () => {
-        console.error("Turnstile doğrulaması başarısız.");
-      },
-
-      "expired-callback": () => {
-        turnstile.reset(widget);
-      }
-    });
-  } catch (error) {
-    console.error("Turnstile:", error);
-  }
+      turnstile.execute(widget);
+    })
+    .catch(() => {});
 });
