@@ -1,10 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   const bubble = document.getElementById("bio-bubble");
   const text = document.getElementById("bio-text");
-
   const container = document.createElement("div");
 
-  container.style.display = "none";
   document.body.appendChild(container);
 
   let widget = null;
@@ -50,49 +48,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  const loadTurnstile = () => {
-    if (window.turnstile) {
-      return Promise.resolve();
-    }
+  const init = () => {
+    widget = turnstile.render(container, {
+      sitekey: "0x4AAAAAAE9z0uzVT7AZC0k3",
+      execution: "execute",
+      retry: "never",
+      refreshExpired: "manual",
 
-    return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
+      callback: (token) => {
+        requestBio(token);
+      },
 
-      script.src =
-        "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      "expired-callback": () => {
+        lastToken = "";
+        turnstile.reset(widget);
+        turnstile.execute(widget);
+      },
 
-      script.async = true;
-      script.defer = true;
-      script.dataset.cfasync = "false";
-
-      script.onload = resolve;
-      script.onerror = reject;
-
-      document.head.appendChild(script);
+      "error-callback": () => {},
+      "timeout-callback": () => {}
     });
+
+    turnstile.execute(widget);
   };
 
-  loadTurnstile()
-    .then(() => {
-      widget = turnstile.render(container, {
-        sitekey: "0x4AAAAAAE9z0uzVT7AZC0k3",
-        execution: "execute",
-        retry: "never",
+  if (window.turnstile) {
+    init();
+    return;
+  }
 
-        callback: (token) => {
-          requestBio(token);
-        },
-
-        "error-callback": () => {},
-
-        "expired-callback": () => {
-          lastToken = "";
-          turnstile.reset(widget);
-          turnstile.execute(widget);
-        }
-      });
-
-      turnstile.execute(widget);
-    })
-    .catch(() => {});
+  window.addEventListener("load", init, {
+    once: true
+  });
 });
