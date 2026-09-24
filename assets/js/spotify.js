@@ -80,7 +80,7 @@ function triggerCubeAnimation(newText) {
 
 function renderTrackInfo(data) {
   document.getElementById('now-playing').innerHTML =
-    `🎧 ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | <span id="progress-time">0:00</span>/${data.duration}`;
+    `<img src="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_Green.png" style="width:0.9em;height:0.9em;object-fit:contain;vertical-align:-0.12em;margin-right:1px;"> ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | <span id="progress-time">0:00</span>/${data.duration}`;
 }
 
 function render() {
