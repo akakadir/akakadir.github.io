@@ -80,7 +80,7 @@ function triggerCubeAnimation(newText) {
 
 function renderTrackInfo(data) {
   document.getElementById('now-playing').innerHTML =
-    `<img src="https://open.spotifycdn.com/cdn/images/error-page-logo.24aca703.svg" style="width:0.9em;height:0.9em;object-fit:contain;vertical-align:-0.12em;margin-right:1px;"> ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | <span id="progress-time">0:00</span>/${data.duration}`;
+    `<img src="https://open.spotifycdn.com/cdn/images/error-page-logo.24aca703.svg" style="width:0.9em;height:0.9em;object-fit:contain;vertical-align:-0.12em;margin-right:1px;"> ${data.artists} - <a class="no-favicon" href="${data.trackLink}" target="_blank">${data.name}</a> | <span id="progress-time">0:00</span>/${data.duration}`;
 }
 
 function render() {
