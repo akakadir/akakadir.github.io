@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
     let t = window.location.hostname;
-    document.querySelectorAll("a[href]").forEach(e => {
+    document.querySelectorAll("a[href]:not(.no-favicon)").forEach(e => {
         let i = e.getAttribute("href"),
             s;
         if (i) {
