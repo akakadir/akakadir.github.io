@@ -22,14 +22,11 @@ layout: default
     <p>{{- site.description -}}</p>
   {%- endif -%}
 </header>
-
 {%- include menu_item.html collection=site.data.menu.entries -%}
 {{- content -}}
-
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script type="module" src="{{ site.baseurl }}/{% ministamp assets/js/header.js assets/js/header.js %}"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="{{ site.baseurl }}/{% ministamp assets/js/spotify.js assets/js/spotify.js %}"></script>
 <script src="{{ site.baseurl }}/{% ministamp assets/js/igbio.js assets/js/igbio.js %}"></script>
-
 <p align="center" id="now-playing"></p>
 <p align="center" id="lyrics"></p>
