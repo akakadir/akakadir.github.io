@@ -52,8 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
     widget = turnstile.render(container, {
       sitekey: "0x4AAAAAAE9z0uzVT7AZC0k3",
       execution: "execute",
-      appearance: "interaction-only",
-      theme: "auto",
       retry: "never",
       refreshExpired: "manual",
 
