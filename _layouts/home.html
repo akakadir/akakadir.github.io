@@ -8,7 +8,7 @@ layout: default
         <div class="a"></div>
         <div class="bio-bubble" id="bio-bubble">
           <span id="bio-text"></span>
-          <i>▼</i>
+          <i aria-hidden="true">▼</i>
         </div>
       </div>
     </span>
@@ -22,7 +22,9 @@ layout: default
     <p>{{- site.description -}}</p>
   {%- endif -%}
 </header>
+<div data-nosnippet>
 {%- include menu_item.html collection=site.data.menu.entries -%}
+</div>
 {{- content -}}
 <script type="module" src="{{ site.baseurl }}/{% ministamp assets/js/header.js assets/js/header.js %}"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
