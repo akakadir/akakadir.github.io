@@ -18,54 +18,49 @@ const state = {
 };
 
 const player = {
-  sdkReady: false,
-  instance: null
+  instance: null,
+  deviceId: null
 };
 
-const fetchJSON = (url) =>
-  fetch(url, { cache: 'no-store' }).then(async (response) => {
-    const data = await response.json();
+function fetchJSON(url) {
+  return fetch(url, { cache: 'no-store' }).then((response) =>
+    response.json()
+  );
+}
 
-    if (!response.ok) {
-      throw new Error(
-        data?.error ||
-        data?.spotify_error_description ||
-        `HTTP ${response.status}`
-      );
-    }
+function parseTimeToSeconds(time) {
+  return time
+    .split(':')
+    .map(Number)
+    .reduce((m, s) => m * 60 + s);
+}
 
-    return data;
-  });
-
-const parseTimeToSeconds = (time) =>
-  time.split(':').map(Number).reduce((m, s) => m * 60 + s);
-
-const formatTime = (ms) => {
+function formatTime(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-};
+}
 
 function parseSyncedLyrics(synced) {
   return [...synced.matchAll(/\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g)]
-    .map(([, minutes, seconds, fraction, text]) => ({
+    .map(([, m, s, frac, text]) => ({
       time:
-        Number(minutes) * 60000 +
-        Number(seconds) * 1000 +
-        (fraction ? Number(`0.${fraction}`) * 1000 : 0),
+        Number(m) * 60000 +
+        Number(s) * 1000 +
+        (frac ? Number(`0.${frac}`) * 1000 : 0),
       text: text.trim()
     }))
     .sort((a, b) => a.time - b.time);
 }
 
 function getCurrentLyric(lines, currentMs) {
-  let current = null;
+  let found = null;
 
   for (const line of lines) {
     if (line.time > currentMs) break;
-    current = line.text;
+    found = line.text;
   }
 
-  return current;
+  return found;
 }
 
 async function fetchLyrics(data) {
@@ -78,23 +73,33 @@ async function fetchLyrics(data) {
     track_name: data.name,
     album_name: data.album,
     duration: Math.round(
-      (data.durationMs ||
-        parseTimeToSeconds(data.duration) * 1000) / 1000
+      (data.durationMs || parseTimeToSeconds(data.duration) * 1000) / 1000
     )
   });
 
-  const result = await fetchJSON(
-    `https://lrclib.net/api/get?${params}`
-  );
+  try {
+    const response = await fetch(
+      `https://lrclib.net/api/get?${params}`,
+      { cache: 'no-store' }
+    );
 
-  return result?.syncedLyrics
-    ? {
+    const result = await response.json();
+
+    if (result?.syncedLyrics) {
+      return {
         type: 'synced',
         lines: parseSyncedLyrics(result.syncedLyrics)
-      }
-    : {
-        error: 'bu şarkı sözleri, henüz eş zamanlı değil.'
       };
+    }
+
+    return {
+      error: 'bu şarkı sözleri, henüz eş zamanlı değil.'
+    };
+  } catch {
+    return {
+      error: 'şarkı sözleri alınamadı.'
+    };
+  }
 }
 
 function ensureCube() {
@@ -257,18 +262,10 @@ async function applyPayload(data) {
       bottom.textContent = '';
     }
 
-    try {
-      const lyrics = await fetchLyrics(data);
+    const lyrics = await fetchLyrics(data);
 
-      if (token === state.lyricsToken) {
-        state.lyricsData = lyrics;
-      }
-    } catch {
-      if (token === state.lyricsToken) {
-        state.lyricsData = {
-          error: 'sözleri getiremedim.'
-        };
-      }
+    if (token === state.lyricsToken) {
+      state.lyricsData = lyrics;
     }
   }
 
@@ -301,9 +298,13 @@ async function pollTrack() {
 }
 
 async function getSpotifyAccessToken() {
-  const data = await fetchJSON(TOKEN_URL);
+  const response = await fetch(TOKEN_URL, {
+    cache: 'no-store'
+  });
 
-  if (!data?.access_token) {
+  const data = await response.json();
+
+  if (!response.ok || !data?.access_token) {
     throw new Error('Spotify access token alınamadı.');
   }
 
@@ -311,7 +312,7 @@ async function getSpotifyAccessToken() {
 }
 
 function initSpotifyPlayer() {
-  if (!player.sdkReady || player.instance) return;
+  if (!window.Spotify || player.instance) return;
 
   player.instance = new window.Spotify.Player({
     name: 'akakadir.art',
@@ -326,33 +327,33 @@ function initSpotifyPlayer() {
   });
 
   player.instance.addListener('ready', ({ device_id }) => {
-    console.log('akakadir.art:', device_id);
+    player.deviceId = device_id;
   });
 
-  player.instance.addListener('not_ready', () => {});
+  player.instance.addListener('not_ready', ({ device_id }) => {
+    if (player.deviceId === device_id) {
+      player.deviceId = null;
+    }
+  });
 
   player.instance.addListener('initialization_error', ({ message }) => {
-    console.error(message);
+    console.error('Spotify:', message);
   });
 
   player.instance.addListener('authentication_error', ({ message }) => {
-    console.error(message);
+    console.error('Spotify:', message);
   });
 
   player.instance.addListener('account_error', ({ message }) => {
-    console.error(message);
+    console.error('Spotify:', message);
   });
 
   player.instance.addListener('playback_error', ({ message }) => {
-    console.error(message);
+    console.error('Spotify:', message);
   });
 
   player.instance.connect();
 }
-
-window.onSpotifyWebPlaybackSDKReady = () => {
-  player.sdkReady = true;
-};
 
 function setupSpotifyInvite() {
   const invite = document.getElementById('spotify-invite');
@@ -363,7 +364,11 @@ function setupSpotifyInvite() {
 
   yes.addEventListener('click', () => {
     invite.remove();
+
+    if (!window.Spotify) return;
+
     initSpotifyPlayer();
+
     player.instance?.activateElement().catch(() => {});
   });
 
@@ -371,6 +376,8 @@ function setupSpotifyInvite() {
     invite.remove();
   });
 }
+
+window.onSpotifyWebPlaybackSDKReady = () => {};
 
 ensureCube();
 setupSpotifyInvite();
