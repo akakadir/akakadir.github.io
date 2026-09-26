@@ -19,7 +19,8 @@ const state = {
 
 const player = {
   instance: null,
-  deviceId: null
+  deviceId: null,
+  ready: null
 };
 
 function fetchJSON(url) {
@@ -97,7 +98,7 @@ async function fetchLyrics(data) {
     };
   } catch {
     return {
-      error: 'şarkı sözleri alınamadı.'
+      error: 'sözleri çekemedim.'
     };
   }
 }
@@ -305,66 +306,103 @@ async function getSpotifyAccessToken() {
   const data = await response.json();
 
   if (!response.ok || !data?.access_token) {
-    throw new Error('Spotify access token alınamadı.');
+    throw new Error('access tokenin canı gelmek istemedi.');
   }
 
   return data.access_token;
 }
 
 function initSpotifyPlayer() {
-  if (!window.Spotify || player.instance) return;
+  if (player.instance) return player.ready;
 
-  player.instance = new window.Spotify.Player({
-    name: 'akakadir.art',
-    volume: 1,
-    getOAuthToken: async (callback) => {
-      try {
-        callback(await getSpotifyAccessToken());
-      } catch {
-        callback('');
+  if (!window.Spotify) {
+    throw new Error('Spotify SDK yüklenmedi.');
+  }
+
+  player.ready = new Promise((resolve, reject) => {
+    player.instance = new window.Spotify.Player({
+      name: 'akakadir.art',
+      volume: 1,
+      getOAuthToken: async (callback) => {
+        try {
+          callback(await getSpotifyAccessToken());
+        } catch {
+          callback('');
+        }
       }
-    }
+    });
+
+    player.instance.addListener('ready', ({ device_id }) => {
+      player.deviceId = device_id;
+      resolve(device_id);
+    });
+
+    player.instance.addListener('not_ready', ({ device_id }) => {
+      if (player.deviceId === device_id) {
+        player.deviceId = null;
+      }
+    });
+
+    player.instance.addListener(
+      'initialization_error',
+      ({ message }) => {
+        reject(new Error(message));
+      }
+    );
+
+    player.instance.addListener(
+      'authentication_error',
+      ({ message }) => {
+        reject(new Error(message));
+      }
+    );
+
+    player.instance.addListener(
+      'account_error',
+      ({ message }) => {
+        reject(new Error(message));
+      }
+    );
+
+    player.instance.addListener(
+      'playback_error',
+      ({ message }) => {
+        console.error('Spotify:', message);
+      }
+    );
+
+    player.instance.connect().then((success) => {
+      if (!success) {
+        reject(new Error('oynatıcı napıyo acaba?'));
+      }
+    });
   });
 
-  player.instance.addListener('ready', ({ device_id }) => {
-    player.deviceId = device_id;
-  });
+  return player.ready;
+}
 
-  player.instance.addListener('not_ready', ({ device_id }) => {
-    if (player.deviceId === device_id) {
-      player.deviceId = null;
-    }
-  });
+async function transferPlayback() {
+  const deviceId = await player.ready;
+  const token = await getSpotifyAccessToken();
 
-  player.instance.addListener(
-    'initialization_error',
-    ({ message }) => {
-      console.error('Spotify:', message);
-    }
-  );
-
-  player.instance.addListener(
-    'authentication_error',
-    ({ message }) => {
-      console.error('Spotify:', message);
+  const response = await fetch(
+    'https://api.spotify.com/v1/me/player',
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        device_ids: [deviceId],
+        play: true
+      })
     }
   );
 
-  player.instance.addListener(
-    'account_error',
-    ({ message }) => {
-      console.error('Spotify:', message);
-    }
-  );
-
-  player.instance.addListener(
-    'playback_error',
-    ({ message }) => {
-      console.error('Spotify:', message);
-    }
-  );
-
-  player.instance.connect();
+  if (!response.ok) {
+    throw new Error('playback gelmedi(denedi de gelemedi).');
+  }
 }
 
 function setupSpotifyInvite() {
@@ -374,14 +412,19 @@ function setupSpotifyInvite() {
 
   if (!invite || !yes || !no) return;
 
-  yes.addEventListener('click', () => {
+  yes.addEventListener('click', async () => {
     invite.remove();
 
-    if (!window.Spotify) return;
+    try {
+      const ready = initSpotifyPlayer();
 
-    initSpotifyPlayer();
+      player.instance.activateElement().catch(() => {});
 
-    player.instance?.activateElement().catch(() => {});
+      await ready;
+      await transferPlayback();
+    } catch (error) {
+      console.error('Spotify:', error);
+    }
   });
 
   no.addEventListener('click', () => {
