@@ -1,7 +1,6 @@
 const POLL_URL = 'https://akakadir.vercel.app/api/now-playing';
 const TOKEN_URL = 'https://akakadir.vercel.app/api/spotify-token';
-const POLL_MS = 5000;
-const SYNC_TOLERANCE_MS = 1500;
+const POLL_MS = 1000;
 
 const state = {
   lastTrackLink: '',
@@ -19,34 +18,20 @@ const state = {
 const playback = {
   player: null,
   deviceId: null,
-  readyPromise: null,
-  readyResolve: null,
-  readyReject: null,
-  isPlaying: false,
-  initialized: false,
-  transferInProgress: false
+  allowed: false,
+  sdkReady: false
 };
 
-const fetchJSON = (url, options = {}) =>
-  fetch(url, {
-    cache: 'no-store',
-    ...options
-  }).then(async (response) => {
-    let data = null;
+const fetchJSON = (url) =>
+  fetch(url, { cache: 'no-store' }).then(async (r) => {
+    const data = await r.json();
 
-    try {
-      data = await response.json();
-    } catch {
-      data = null;
-    }
-
-    if (!response.ok) {
-      const message =
+    if (!r.ok) {
+      throw new Error(
         data?.error ||
         data?.spotify_error_description ||
-        `HTTP ${response.status}`;
-
-      throw new Error(message);
+        `HTTP ${r.status}`
+      );
     }
 
     return data;
@@ -57,139 +42,99 @@ const parseTimeToSeconds = (t) =>
 
 const formatTime = (ms) => {
   const total = Math.max(0, Math.floor(ms / 1000));
-
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 };
-
-const wait = (ms) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
 
 async function getSpotifyAccessToken() {
   const data = await fetchJSON(TOKEN_URL);
 
   if (!data?.access_token) {
-    throw new Error('Spotify access token alınamadı.');
+    throw new Error('access tokenle aramda bi mevzu var galiba.');
   }
 
   return data.access_token;
 }
 
-function getPlayButton() {
-  return document.getElementById('spotify-play-button');
-}
+function initializeSpotifyPlayer() {
+  if (!playback.allowed || !playback.sdkReady || playback.player) return;
 
-function setPlayButton(mode, disabled = false) {
-  const button = getPlayButton();
+  playback.player = new window.Spotify.Player({
+    name: 'akakadir.art',
+    volume: 0.85,
+    getOAuthToken: async (callback) => {
+      try {
+        callback(await getSpotifyAccessToken());
+      } catch {
+        callback('');
+      }
+    }
+  });
 
-  if (!button) return;
+  playback.player.addListener('ready', ({ device_id }) => {
+    playback.deviceId = device_id;
+  });
 
-  button.disabled = disabled;
+  playback.player.addListener('not_ready', ({ device_id }) => {
+    if (playback.deviceId === device_id) {
+      playback.deviceId = null;
+    }
+  });
 
-  if (mode === 'loading') {
-    button.textContent = '…';
-    button.setAttribute('aria-label', 'Spotify hazırlanıyor');
-    button.title = 'Spotify hazırlanıyor';
-    return;
-  }
+  playback.player.addListener('initialization_error', ({ message }) => {
+    console.error(message);
+  });
 
-  if (mode === 'pause') {
-    button.textContent = '❚❚';
-    button.setAttribute('aria-label', 'Spotify oynatmayı duraklat');
-    button.title = 'Duraklat';
-    return;
-  }
+  playback.player.addListener('authentication_error', ({ message }) => {
+    console.error(message);
+  });
 
-  button.textContent = '▶';
-  button.setAttribute('aria-label', 'Spotify şarkıyı oynat');
-  button.title = 'Oynat';
-}
+  playback.player.addListener('account_error', ({ message }) => {
+    console.error(message);
+  });
 
-function ensurePlayButton() {
-  const button = getPlayButton();
+  playback.player.addListener('playback_error', ({ message }) => {
+    console.error(message);
+  });
 
-  if (!button || button.dataset.bound === '1') return;
-
-  button.dataset.bound = '1';
-
-  button.addEventListener('click', async () => {
-    await toggleSpotifyPlayback();
+  playback.player.connect().then((success) => {
+    if (!success) {
+      playback.player = null;
+    }
   });
 }
 
-function renderTrackInfo(data) {
-  document.getElementById('now-playing').innerHTML = `
-    <img
-      src="https://open.spotifycdn.com/cdn/images/error-page-logo.24aca703.svg"
-      style="width:0.9em;height:0.9em;object-fit:contain;vertical-align:-0.12em"
-      alt="Spotify"
-    >
+window.onSpotifyWebPlaybackSDKReady = () => {
+  playback.sdkReady = true;
 
-    <button
-      id="spotify-play-button"
-      type="button"
-      style="
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        width:1.8em;
-        height:1.8em;
-        margin:0 0.35em;
-        padding:0;
-        border:0;
-        border-radius:50%;
-        background:transparent;
-        color:inherit;
-        font:inherit;
-        line-height:1;
-        cursor:pointer;
-        vertical-align:-0.22em;
-      "
-      aria-label="Spotify şarkıyı oynat"
-      title="Oynat"
-    >▶</button>
-
-    ${data.artists} -
-    <a
-      class="no-favicon"
-      href="${data.trackLink}"
-      target="_blank"
-      rel="noopener noreferrer"
-    >${data.name}</a>
-    |
-    <span id="progress-time">0:00</span>/${data.duration}
-  `;
-
-  ensurePlayButton();
-
-  if (playback.isPlaying) {
-    setPlayButton('pause');
-  } else {
-    setPlayButton('play');
+  if (playback.allowed) {
+    initializeSpotifyPlayer();
   }
-}
+};
 
-function render() {
-  if (!state.trackData) return;
+function bindSpotifyInvite() {
+  const box = document.getElementById('spotify-invite');
+  const yes = document.getElementById('spotify-yes');
+  const no = document.getElementById('spotify-no');
 
-  const timeEl = document.getElementById('progress-time');
+  if (!box || !yes || !no) return;
 
-  if (timeEl) {
-    timeEl.textContent = formatTime(state.progressMs);
-  }
+  yes.addEventListener('click', () => {
+    box.remove();
+    playback.allowed = true;
 
-  if (!state.lyricsData) return;
+    if (playback.sdkReady) {
+      initializeSpotifyPlayer();
 
-  if (state.lyricsData.error) {
-    const front = document.getElementById('front');
-
-    if (front) {
-      front.textContent = state.lyricsData.error;
+      if (playback.player) {
+        playback.player.activateElement().catch(() => {});
+      }
     }
-  } else {
-    triggerCubeAnimation(
-      getCurrentLyric(state.lyricsData.lines, state.progressMs) || '...'
-    );
-  }
+  });
+
+  no.addEventListener('click', () => {
+    box.remove();
+    playback.allowed = false;
+  });
 }
 
 function parseSyncedLyrics(synced) {
@@ -224,9 +169,7 @@ async function fetchLyrics({
   album
 }) {
   if (type === 'podcast') {
-    return {
-      error: 'podcast liriklerini okuyamam.'
-    };
+    return { error: 'podcast liriklerini okuyamam.' };
   }
 
   const params = new URLSearchParams({
@@ -289,11 +232,42 @@ function triggerCubeAnimation(newText) {
 
   setTimeout(() => {
     cube.classList.remove('animate', 'show-next');
-
     front.textContent = newText;
     state.currentLyricText = newText;
     state.pendingLyricText = null;
   }, 600);
+}
+
+function renderTrackInfo(data) {
+  document.getElementById('now-playing').innerHTML =
+    `<img src="https://open.spotifycdn.com/cdn/images/error-page-logo.24aca703.svg" style="width:0.9em;height:0.9em;object-fit:contain;vertical-align:-0.12em"> ${data.artists} - <a class="no-favicon" href="${data.trackLink}" target="_blank" rel="noopener noreferrer">${data.name}</a> | <span id="progress-time">0:00</span>/${data.duration}`;
+}
+
+function render() {
+  if (!state.trackData) return;
+
+  const timeEl = document.getElementById('progress-time');
+
+  if (timeEl) {
+    timeEl.textContent = formatTime(state.progressMs);
+  }
+
+  if (!state.lyricsData) return;
+
+  if (state.lyricsData.error) {
+    const front = document.getElementById('front');
+
+    if (front) {
+      front.textContent = state.lyricsData.error;
+    }
+  } else {
+    triggerCubeAnimation(
+      getCurrentLyric(
+        state.lyricsData.lines,
+        state.progressMs
+      ) || '...'
+    );
+  }
 }
 
 function tick() {
@@ -332,14 +306,17 @@ async function applyPayload(data) {
       isPlaying: false
     });
 
-    const nowPlaying = document.getElementById('now-playing');
+    const nowPlaying =
+      document.getElementById('now-playing');
 
     if (nowPlaying) {
       nowPlaying.textContent =
-        data?.error || 'bir şeyler ters gitti.';
+        data?.error ||
+        'bir şeyler ters gitti.';
     }
 
-    const front = document.getElementById('front');
+    const front =
+      document.getElementById('front');
 
     if (front) {
       front.textContent = '';
@@ -360,6 +337,7 @@ async function applyPayload(data) {
     parseTimeToSeconds(data.duration) * 1000;
 
   state.trackData = data;
+  state.progressMs = serverMs;
 
   if (data.trackLink !== state.lastTrackLink) {
     const token = ++state.lyricsToken;
@@ -368,17 +346,20 @@ async function applyPayload(data) {
       lastTrackLink: data.trackLink,
       lyricsData: null,
       currentLyricText: '',
-      pendingLyricText: null,
-      progressMs: serverMs
+      pendingLyricText: null
     });
 
     renderTrackInfo(data);
 
-    const front = document.getElementById('front');
-    const bottom = document.getElementById('bottom');
+    const front =
+      document.getElementById('front');
+
+    const bottom =
+      document.getElementById('bottom');
 
     if (front) {
-      front.textContent = 'yükleniyor...';
+      front.textContent =
+        'yükleniyor...';
     }
 
     if (bottom) {
@@ -386,32 +367,27 @@ async function applyPayload(data) {
     }
 
     try {
-      const lyrics = await fetchLyrics(data);
+      const lyrics =
+        await fetchLyrics(data);
 
-      if (token === state.lyricsToken) {
+      if (
+        token === state.lyricsToken
+      ) {
         state.lyricsData = lyrics;
       }
     } catch {
-      if (token === state.lyricsToken) {
+      if (
+        token === state.lyricsToken
+      ) {
         state.lyricsData = {
-          error: 'sözleri getiremedim.'
+          error:
+            'sözleri getiremedim.'
         };
       }
     }
-  } else if (
-    Math.abs(serverMs - state.progressMs) >
-    SYNC_TOLERANCE_MS
-  ) {
-    state.progressMs = serverMs;
   }
 
   render();
-
-  if (playback.player && !playback.transferInProgress) {
-    setPlayButton(
-      playback.isPlaying ? 'pause' : 'play'
-    );
-  }
 }
 
 async function pollTrack() {
@@ -421,7 +397,9 @@ async function pollTrack() {
     );
   } catch {
     const nowPlaying =
-      document.getElementById('now-playing');
+      document.getElementById(
+        'now-playing'
+      );
 
     if (nowPlaying) {
       nowPlaying.textContent =
@@ -430,362 +408,7 @@ async function pollTrack() {
   }
 }
 
-function initializeSpotifyPlayer() {
-  if (
-    playback.initialized ||
-    !window.Spotify
-  ) {
-    return playback.readyPromise;
-  }
-
-  playback.initialized = true;
-
-  playback.readyPromise = new Promise(
-    (resolve, reject) => {
-      playback.readyResolve = resolve;
-      playback.readyReject = reject;
-
-      const player = new window.Spotify.Player({
-        name: 'akakadir.art',
-        volume: 0.85,
-
-        getOAuthToken: async (callback) => {
-          try {
-            const token =
-              await getSpotifyAccessToken();
-
-            callback(token);
-          } catch (error) {
-            console.error(
-              'Spotify token error:',
-              error
-            );
-
-            callback('');
-          }
-        }
-      });
-
-      playback.player = player;
-
-      player.addListener(
-        'ready',
-        ({ device_id }) => {
-          playback.deviceId = device_id;
-
-          if (playback.readyResolve) {
-            playback.readyResolve(device_id);
-          }
-
-          playback.readyResolve = null;
-          playback.readyReject = null;
-
-          setPlayButton(
-            playback.isPlaying ? 'pause' : 'play'
-          );
-        }
-      );
-
-      player.addListener(
-        'not_ready',
-        ({ device_id }) => {
-          if (
-            playback.deviceId === device_id
-          ) {
-            playback.deviceId = null;
-          }
-        }
-      );
-
-      player.addListener(
-        'player_state_changed',
-        (sdkState) => {
-          if (!sdkState) return;
-
-          playback.isPlaying =
-            !sdkState.paused;
-
-          setPlayButton(
-            playback.isPlaying
-              ? 'pause'
-              : 'play'
-          );
-        }
-      );
-
-      player.addListener(
-        'initialization_error',
-        ({ message }) => {
-          console.error(
-            'Spotify initialization error:',
-            message
-          );
-
-          if (playback.readyReject) {
-            playback.readyReject(
-              new Error(message)
-            );
-          }
-
-          playback.readyResolve = null;
-          playback.readyReject = null;
-        }
-      );
-
-      player.addListener(
-        'authentication_error',
-        ({ message }) => {
-          console.error(
-            'Spotify authentication error:',
-            message
-          );
-
-          if (playback.readyReject) {
-            playback.readyReject(
-              new Error(message)
-            );
-          }
-
-          playback.readyResolve = null;
-          playback.readyReject = null;
-        }
-      );
-
-      player.addListener(
-        'account_error',
-        ({ message }) => {
-          console.error(
-            'Spotify account error:',
-            message
-          );
-
-          if (playback.readyReject) {
-            playback.readyReject(
-              new Error(message)
-            );
-          }
-
-          playback.readyResolve = null;
-          playback.readyReject = null;
-        }
-      );
-
-      player.addListener(
-        'playback_error',
-        ({ message }) => {
-          console.error(
-            'Spotify playback error:',
-            message
-          );
-        }
-      );
-
-      player.connect().then((success) => {
-        if (!success) {
-          const error =
-            new Error(
-              'Spotify player bağlanamadı.'
-            );
-
-          if (playback.readyReject) {
-            playback.readyReject(error);
-          }
-
-          playback.readyResolve = null;
-          playback.readyReject = null;
-        }
-      });
-    }
-  );
-
-  return playback.readyPromise;
-}
-
-window.onSpotifyWebPlaybackSDKReady = () => {
-  initializeSpotifyPlayer();
-};
-
-async function waitForPlayerState(timeoutMs = 5000) {
-  const startedAt = performance.now();
-
-  while (
-    performance.now() - startedAt <
-    timeoutMs
-  ) {
-    const currentState =
-      await playback.player.getCurrentState();
-
-    if (currentState) {
-      return currentState;
-    }
-
-    await wait(250);
-  }
-
-  return null;
-}
-
-async function transferPlaybackToBrowser() {
-  if (!playback.deviceId) {
-    throw new Error(
-      'Spotify browser cihazı hazır değil.'
-    );
-  }
-
-  const token =
-    await getSpotifyAccessToken();
-
-  const response = await fetch(
-    'https://api.spotify.com/v1/me/player',
-    {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        device_ids: [
-          playback.deviceId
-        ],
-        play: false
-      })
-    }
-  );
-
-  if (!response.ok) {
-    let errorData = null;
-
-    try {
-      errorData = await response.json();
-    } catch {
-      errorData = null;
-    }
-
-    throw new Error(
-      errorData?.error?.message ||
-      `Spotify playback transfer başarısız: HTTP ${response.status}`
-    );
-  }
-}
-
-async function startCurrentTrack() {
-  if (!state.trackData) {
-    throw new Error(
-      'Şu anda oynatılabilecek bir Spotify şarkısı yok.'
-    );
-  }
-
-  if (
-    !playback.player ||
-    !playback.deviceId
-  ) {
-    await initializeSpotifyPlayer();
-  }
-
-  /*
-   * Kullanıcı tıklaması sırasında çağırıyoruz.
-   * Browser autoplay politikasını aşmak için gerekli.
-   */
-  await playback.player.activateElement();
-
-  playback.transferInProgress = true;
-  setPlayButton('loading', true);
-
-  try {
-    await transferPlaybackToBrowser();
-
-    const sdkState =
-      await waitForPlayerState(5000);
-
-    if (!sdkState) {
-      throw new Error(
-        'Spotify şarkı durumu browser playerına gelmedi.'
-      );
-    }
-
-    let positionMs = Math.max(
-      0,
-      Math.floor(state.progressMs || 0)
-    );
-
-    if (state.durationMs) {
-      positionMs = Math.min(
-        positionMs,
-        Math.max(0, state.durationMs - 500)
-      );
-    }
-
-    await playback.player.seek(positionMs);
-    await playback.player.resume();
-
-    playback.isPlaying = true;
-
-    setPlayButton('pause');
-  } finally {
-    playback.transferInProgress = false;
-
-    setPlayButton(
-      playback.isPlaying
-        ? 'pause'
-        : 'play'
-    );
-  }
-}
-
-async function toggleSpotifyPlayback() {
-  ensurePlayButton();
-
-  if (playback.transferInProgress) {
-    return;
-  }
-
-  const button = getPlayButton();
-
-  if (button) {
-    button.disabled = true;
-  }
-
-  try {
-    if (!playback.player) {
-      setPlayButton('loading', true);
-
-      await initializeSpotifyPlayer();
-
-      await wait(100);
-    }
-
-    if (playback.isPlaying) {
-      await playback.player.pause();
-
-      playback.isPlaying = false;
-      setPlayButton('play');
-
-      return;
-    }
-
-    await startCurrentTrack();
-  } catch (error) {
-    console.error(
-      'Spotify playback error:',
-      error
-    );
-
-    setPlayButton('play');
-
-    if (button) {
-      button.title =
-        error?.message ||
-        'Spotify oynatılamadı.';
-    }
-  } finally {
-    const currentButton =
-      getPlayButton();
-
-    if (currentButton) {
-      currentButton.disabled = false;
-    }
-  }
-}
+bindSpotifyInvite();
 
 state.lastTickAt = performance.now();
 
