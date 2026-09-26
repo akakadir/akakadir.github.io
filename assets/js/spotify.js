@@ -17,23 +17,14 @@ const state = {
   pollTimer: null
 };
 
-const playerState = {
-  player: null,
-  deviceId: null,
-  ready: false
+const player = {
+  sdkReady: false,
+  instance: null
 };
 
-function fetchJSON(url) {
-  return fetch(url, { cache: 'no-store' }).then(async (response) => {
-    if (response.status === 204) return null;
-
-    let data = null;
-
-    try {
-      data = await response.json();
-    } catch {
-      data = null;
-    }
+const fetchJSON = (url) =>
+  fetch(url, { cache: 'no-store' }).then(async (response) => {
+    const data = await response.json();
 
     if (!response.ok) {
       throw new Error(
@@ -45,19 +36,14 @@ function fetchJSON(url) {
 
     return data;
   });
-}
 
-function parseTimeToSeconds(value) {
-  return value
-    .split(':')
-    .map(Number)
-    .reduce((minutes, seconds) => minutes * 60 + seconds);
-}
+const parseTimeToSeconds = (time) =>
+  time.split(':').map(Number).reduce((m, s) => m * 60 + s);
 
-function formatTime(ms) {
+const formatTime = (ms) => {
   const total = Math.max(0, Math.floor(ms / 1000));
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-}
+};
 
 function parseSyncedLyrics(synced) {
   return [...synced.matchAll(/\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g)]
@@ -72,14 +58,14 @@ function parseSyncedLyrics(synced) {
 }
 
 function getCurrentLyric(lines, currentMs) {
-  let lyric = null;
+  let current = null;
 
   for (const line of lines) {
     if (line.time > currentMs) break;
-    lyric = line.text;
+    current = line.text;
   }
 
-  return lyric;
+  return current;
 }
 
 async function fetchLyrics(data) {
@@ -114,10 +100,7 @@ async function fetchLyrics(data) {
 function ensureCube() {
   const lyrics = document.getElementById('lyrics');
 
-  if (
-    lyrics &&
-    !document.getElementById('cube')
-  ) {
+  if (lyrics && !document.getElementById('cube')) {
     lyrics.innerHTML = `
       <div class="cube" id="cube">
         <div class="side-front" id="front"></div>
@@ -159,40 +142,8 @@ function renderTrackInfo(data) {
 
   if (!container) return;
 
-  container.textContent = '';
-
-  const logo = document.createElement('img');
-  logo.src =
-    'https://open.spotifycdn.com/cdn/images/error-page-logo.24aca703.svg';
-  logo.alt = 'Spotify';
-  logo.style.cssText =
-    'width:0.9em;height:0.9em;object-fit:contain;vertical-align:-0.12em';
-
-  const artist = document.createTextNode(
-    ` ${data.artists} - `
-  );
-
-  const link = document.createElement('a');
-  link.className = 'no-favicon';
-  link.href = data.trackLink || '#';
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  link.textContent = data.name;
-
-  const separator = document.createTextNode(' | ');
-
-  const progress = document.createElement('span');
-  progress.id = 'progress-time';
-  progress.textContent = '0:00';
-
-  container.append(
-    logo,
-    artist,
-    link,
-    separator,
-    progress,
-    document.createTextNode(`/${data.duration}`)
-  );
+  container.innerHTML =
+    `<img src="https://open.spotifycdn.com/cdn/images/error-page-logo.24aca703.svg" style="width:0.9em;height:0.9em;object-fit:contain;vertical-align:-0.12em"> ${data.artists} - <a class="no-favicon" href="${data.trackLink}" target="_blank" rel="noopener noreferrer">${data.name}</a> | <span id="progress-time">${formatTime(state.progressMs)}</span>/${data.duration}`;
 }
 
 function render() {
@@ -229,10 +180,7 @@ function tick() {
 
   state.lastTickAt = now;
 
-  if (
-    state.isPlaying &&
-    state.trackData
-  ) {
+  if (state.isPlaying && state.trackData) {
     state.progressMs += delta;
 
     if (
@@ -261,17 +209,14 @@ async function applyPayload(data) {
       isPlaying: false
     });
 
-    const nowPlaying =
-      document.getElementById('now-playing');
+    const nowPlaying = document.getElementById('now-playing');
 
     if (nowPlaying) {
       nowPlaying.textContent =
-        data?.error ||
-        'bir şeyler ters gitti.';
+        data?.error || 'bir şeyler ters gitti.';
     }
 
-    const front =
-      document.getElementById('front');
+    const front = document.getElementById('front');
 
     if (front) {
       front.textContent = '';
@@ -280,41 +225,32 @@ async function applyPayload(data) {
     return;
   }
 
-  const progressMs =
+  state.progressMs =
     data.progressMs ??
     parseTimeToSeconds(data.progress) * 1000;
 
-  state.progressMs = progressMs;
   state.durationMs =
     data.durationMs ||
     parseTimeToSeconds(data.duration) * 1000;
-  state.isPlaying =
-    Boolean(data.isPlaying);
+
+  state.isPlaying = Boolean(data.isPlaying);
   state.trackData = data;
 
-  if (
-    data.trackLink !== state.lastTrackLink
-  ) {
-    const token =
-      ++state.lyricsToken;
+  if (data.trackLink !== state.lastTrackLink) {
+    const token = ++state.lyricsToken;
 
-    state.lastTrackLink =
-      data.trackLink;
+    state.lastTrackLink = data.trackLink;
     state.lyricsData = null;
     state.currentLyricText = '';
     state.pendingLyricText = null;
 
     renderTrackInfo(data);
 
-    const front =
-      document.getElementById('front');
-
-    const bottom =
-      document.getElementById('bottom');
+    const front = document.getElementById('front');
+    const bottom = document.getElementById('bottom');
 
     if (front) {
-      front.textContent =
-        'yükleniyor...';
+      front.textContent = 'yükleniyor...';
     }
 
     if (bottom) {
@@ -322,22 +258,15 @@ async function applyPayload(data) {
     }
 
     try {
-      const lyrics =
-        await fetchLyrics(data);
+      const lyrics = await fetchLyrics(data);
 
-      if (
-        token === state.lyricsToken
-      ) {
-        state.lyricsData =
-          lyrics;
+      if (token === state.lyricsToken) {
+        state.lyricsData = lyrics;
       }
     } catch {
-      if (
-        token === state.lyricsToken
-      ) {
+      if (token === state.lyricsToken) {
         state.lyricsData = {
-          error:
-            'sözleri getiremedim.'
+          error: 'sözleri getiremedim.'
         };
       }
     }
@@ -346,199 +275,115 @@ async function applyPayload(data) {
   render();
 }
 
-async function pollTrack() {
-  if (
-    document.visibilityState === 'hidden'
-  ) {
-    return;
-  }
-
-  try {
-    const data =
-      await fetchJSON(POLL_URL);
-
-    await applyPayload(data);
-  } catch {
-    const nowPlaying =
-      document.getElementById(
-        'now-playing'
-      );
-
-    if (nowPlaying) {
-      nowPlaying.textContent =
-        'bir şeyler ters gitti.';
-    }
-  } finally {
-    schedulePoll(
-      state.isPlaying
-        ? ACTIVE_POLL_MS
-        : IDLE_POLL_MS
-    );
-  }
-}
-
 function schedulePoll(delay) {
   clearTimeout(state.pollTimer);
+  state.pollTimer = setTimeout(pollTrack, delay);
+}
 
-  state.pollTimer =
-    setTimeout(
-      pollTrack,
-      delay
-    );
+async function pollTrack() {
+  if (document.visibilityState === 'hidden') return;
+
+  try {
+    await applyPayload(await fetchJSON(POLL_URL));
+  } catch {
+    const nowPlaying = document.getElementById('now-playing');
+
+    if (nowPlaying) {
+      nowPlaying.textContent = 'bir şeyler ters gitti.';
+    }
+  }
+
+  schedulePoll(
+    state.isPlaying
+      ? ACTIVE_POLL_MS
+      : IDLE_POLL_MS
+  );
 }
 
 async function getSpotifyAccessToken() {
-  const data =
-    await fetchJSON(TOKEN_URL);
+  const data = await fetchJSON(TOKEN_URL);
 
   if (!data?.access_token) {
-    throw new Error(
-      'Spotify access token alınamadı.'
-    );
+    throw new Error('Spotify access token alınamadı.');
   }
 
   return data.access_token;
 }
 
 function initSpotifyPlayer() {
-  if (
-    !window.Spotify ||
-    playerState.player
-  ) {
-    return;
-  }
+  if (!player.sdkReady || player.instance) return;
 
-  const player =
-    new window.Spotify.Player({
-      name: 'akakadir.art',
-      volume: 1,
-      getOAuthToken: async (callback) => {
-        try {
-          callback(
-            await getSpotifyAccessToken()
-          );
-        } catch {
-          callback('');
-        }
-      }
-    });
-
-  playerState.player =
-    player;
-
-  player.addListener(
-    'ready',
-    ({ device_id }) => {
-      playerState.deviceId =
-        device_id;
-      playerState.ready = true;
-    }
-  );
-
-  player.addListener(
-    'not_ready',
-    ({ device_id }) => {
-      if (
-        playerState.deviceId ===
-        device_id
-      ) {
-        playerState.deviceId =
-          null;
-        playerState.ready =
-          false;
+  player.instance = new window.Spotify.Player({
+    name: 'akakadir.art',
+    volume: 1,
+    getOAuthToken: async (callback) => {
+      try {
+        callback(await getSpotifyAccessToken());
+      } catch {
+        callback('');
       }
     }
-  );
+  });
 
-  player.addListener(
-    'player_state_changed',
-    (playbackState) => {
-      if (!playbackState) return;
+  player.instance.addListener('ready', ({ device_id }) => {
+    console.log('akakadir.art:', device_id);
+  });
 
-      state.isPlaying =
-        !playbackState.paused;
+  player.instance.addListener('not_ready', () => {});
 
-      if (playbackState.track_window?.current_track) {
-        schedulePoll(0);
-      }
-    }
-  );
+  player.instance.addListener('initialization_error', ({ message }) => {
+    console.error(message);
+  });
 
-  player.addListener(
-    'initialization_error',
-    ({ message }) => {
-      console.error(message);
-    }
-  );
+  player.instance.addListener('authentication_error', ({ message }) => {
+    console.error(message);
+  });
 
-  player.addListener(
-    'authentication_error',
-    ({ message }) => {
-      console.error(message);
-    }
-  );
+  player.instance.addListener('account_error', ({ message }) => {
+    console.error(message);
+  });
 
-  player.addListener(
-    'account_error',
-    ({ message }) => {
-      console.error(message);
-    }
-  );
+  player.instance.addListener('playback_error', ({ message }) => {
+    console.error(message);
+  });
 
-  player.addListener(
-    'playback_error',
-    ({ message }) => {
-      console.error(message);
-    }
-  );
-
-  player.connect();
+  player.instance.connect();
 }
 
 window.onSpotifyWebPlaybackSDKReady = () => {
-  initSpotifyPlayer();
+  player.sdkReady = true;
 };
 
-document.addEventListener(
-  'pointerdown',
-  () => {
-    if (!playerState.player) return;
+function setupSpotifyInvite() {
+  const invite = document.getElementById('spotify-invite');
+  const yes = document.getElementById('spotify-yes');
+  const no = document.getElementById('spotify-no');
 
-    playerState.player
-      .activateElement()
-      .catch(() => {});
-  },
-  {
-    once: true,
-    passive: true
-  }
-);
+  if (!invite || !yes || !no) return;
 
-document.addEventListener(
-  'visibilitychange',
-  () => {
-    clearTimeout(state.pollTimer);
+  yes.addEventListener('click', () => {
+    invite.remove();
+    initSpotifyPlayer();
+    player.instance?.activateElement().catch(() => {});
+  });
 
-    if (
-      document.visibilityState ===
-      'visible'
-    ) {
-      state.lastTickAt =
-        performance.now();
-
-      pollTrack();
-    }
-  }
-);
+  no.addEventListener('click', () => {
+    invite.remove();
+  });
+}
 
 ensureCube();
+setupSpotifyInvite();
 
-state.lastTickAt =
-  performance.now();
+state.lastTickAt = performance.now();
 
 pollTrack();
 
-setInterval(
-  tick,
-  100
-);
+setInterval(tick, 100);
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+
+  state.lastTickAt = performance.now();
+  pollTrack();
+});
