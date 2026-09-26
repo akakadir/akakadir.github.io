@@ -1,7 +1,14 @@
-const state = { lastTrackLink: '', lyricsData: null, currentLyricText: '' };
+const state = { lastTrackLink: '', lyricsData: null, currentLyricText: '', base: null, baseAt: 0 };
 
 const parseTimeToSeconds = (t) => t.split(':').map(Number).reduce((m, s) => m * 60 + s);
 const fetchJSON = (url) => fetch(url).then((r) => r.json());
+
+function formatTime(ms) {
+  const safeMs = Math.max(0, ms);
+  const minutes = Math.floor(safeMs / 60000);
+  const seconds = Math.floor((safeMs % 60000) / 1000).toString().padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
 
 function getCurrentLyric(syncedLyrics, currentTime) {
   return [...syncedLyrics.matchAll(/\[(\d+):(\d+)\.\d+\](.*)/g)]
@@ -36,26 +43,50 @@ function triggerCubeAnimation(newText) {
   }, 600);
 }
 
-async function fetchTrackData() {
-  const nowPlayingEl = document.getElementById('now-playing');
-  try {
-    const data = await fetchJSON('https://akakadir.vercel.app/api/now-playing');
-    ensureCube(document.getElementById('lyrics'));
-    if (data.error) { nowPlayingEl.textContent = data.error; document.getElementById('front').textContent = ''; return; }
-    if (data.trackLink !== state.lastTrackLink) {
-      Object.assign(state, { lastTrackLink: data.trackLink, lyricsData: null, currentLyricText: '' });
-      document.getElementById('front').textContent = 'yükleniyor...';
-      document.getElementById('bottom').textContent = '';
-      state.lyricsData = await fetchLyrics(data);
-    }
-    nowPlayingEl.innerHTML = `🎧 ${data.artists} - <a href="${data.trackLink}" target="_blank">${data.name}</a> | ${data.progress}/${data.duration}`;
-    if (!state.lyricsData) return;
-    if (state.lyricsData.error) document.getElementById('front').textContent = state.lyricsData.error;
-    else triggerCubeAnimation(getCurrentLyric(state.lyricsData.syncedLyrics, parseTimeToSeconds(data.progress)) || '...');
-  } catch {
-    nowPlayingEl.textContent = 'bir şeyler ters gitti.';
+async function handleUpdate(data) {
+  state.base = data;
+  state.baseAt = Date.now();
+
+  ensureCube(document.getElementById('lyrics'));
+
+  if (data.error) {
+    document.getElementById('now-playing').textContent = data.error;
+    document.getElementById('front').textContent = '';
+    state.lastTrackLink = '';
+    state.lyricsData = null;
+    return;
+  }
+
+  if (data.trackLink !== state.lastTrackLink) {
+    state.lastTrackLink = data.trackLink;
+    state.lyricsData = null;
+    state.currentLyricText = '';
+    document.getElementById('front').textContent = 'yükleniyor...';
+    document.getElementById('bottom').textContent = '';
+    state.lyricsData = await fetchLyrics(data);
   }
 }
 
-fetchTrackData();
-setInterval(fetchTrackData, 1000);
+function renderTick() {
+  const { base } = state;
+  if (!base || base.error) return;
+
+  const elapsed = base.isPlaying ? Date.now() - state.baseAt : 0;
+  const progressMs = Math.min(base.progressMs + elapsed, base.durationMs || Number.MAX_SAFE_INTEGER);
+  const progress = formatTime(progressMs);
+
+  document.getElementById('now-playing').innerHTML =
+    `🎧 ${base.artists} - <a href="${base.trackLink}" target="_blank">${base.name}</a> | ${progress}/${base.duration}`;
+
+  if (!state.lyricsData) return;
+  if (state.lyricsData.error) document.getElementById('front').textContent = state.lyricsData.error;
+  else triggerCubeAnimation(getCurrentLyric(state.lyricsData.syncedLyrics, progressMs / 1000) || '...');
+}
+
+const source = new EventSource('https://akakadir.vercel.app/api/now-playing/stream');
+source.onmessage = (e) => handleUpdate(JSON.parse(e.data));
+source.onerror = () => {
+  document.getElementById('now-playing').textContent = 'bağlantı koptu, yeniden bağlanılıyor...';
+};
+
+setInterval(renderTick, 250);
