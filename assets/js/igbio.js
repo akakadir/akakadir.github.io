@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
 
       "error-callback": (error) => {
-        console.error("turnstile bi şeyler deniyor ama ucu bana da dokunuyor.", error);
+        console.error("turnstile bi şeyler deniyo ama ucu bana da dokunuyo", error);
       },
       "timeout-callback": () => {}
     });
