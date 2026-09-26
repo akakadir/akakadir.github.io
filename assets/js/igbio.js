@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
       bubble.style.display = "inline-block";
     } catch (error) {
       lastToken = "";
-      console.error("igbio: bio isteği başarısız", error);
+      console.error("sayfayı resetle kardesim, turnstile mala bağladı", error);
     } finally {
       requestRunning = false;
     }
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
 
       "error-callback": (error) => {
-        console.error("igbio: turnstile hatası", error);
+        console.error("turnstile bi şeyler deniyor ama ucu bana da dokunuyor.", error);
       },
       "timeout-callback": () => {}
     });
