@@ -161,12 +161,15 @@
   bottom: calc(100% + 2px);
   display: none;
   width: max-content;
+  max-width: min(21ch, calc(100vw - 24px));
   padding: 4px 8px;
   color: inherit;
   background: transparent;
   border: 1px solid #e9ecef;
   font: 11px/12px monospace;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
   }
 
   .bio-bubble span {
@@ -185,7 +188,7 @@
   text-align: center;
   }
 
-  @media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark) {
   .bio-bubble {
   border-color: #495057;
   }
