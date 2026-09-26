@@ -24,19 +24,11 @@ layout: default
 </header>
 <div data-nosnippet>
 {%- include menu_item.html collection=site.data.menu.entries -%}
-</div>
 {{- content -}}
+</div>
 <script type="module" src="{{ site.baseurl }}/{% ministamp assets/js/header.js assets/js/header.js %}"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="{{ site.baseurl }}/{% ministamp assets/js/spotify.js assets/js/spotify.js %}"></script>
-<script src="https://sdk.scdn.co/spotify-player.js"></script>
 <script src="{{ site.baseurl }}/{% ministamp assets/js/igbio.js assets/js/igbio.js %}"></script>
 <p align="center" id="now-playing"></p>
 <p align="center" id="lyrics"></p>
-<div id="spotify-invite" align="center">
-  <small>
-    beraber dinleyelim mi?<br>
-    <span id="spotify-yes" role="button" tabindex="0">evet</span> /
-    <span id="spotify-no" role="button" tabindex="0">hayır</span>
-  </small>
-</div>
