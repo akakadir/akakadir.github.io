@@ -1,6 +1,7 @@
 const POLL_URL = 'https://akakadir.vercel.app/api/now-playing';
 const TOKEN_URL = 'https://akakadir.vercel.app/api/spotify-token';
-const POLL_MS = 1000;
+const ACTIVE_POLL_MS = 1000;
+const IDLE_POLL_MS = 15000;
 
 const state = {
   lastTrackLink: '',
@@ -12,183 +13,98 @@ const state = {
   durationMs: 0,
   isPlaying: false,
   lastTickAt: performance.now(),
-  lyricsToken: 0
+  lyricsToken: 0,
+  pollTimer: null
 };
 
-const playback = {
+const playerState = {
   player: null,
   deviceId: null,
-  allowed: false,
-  sdkReady: false
+  ready: false
 };
 
-const fetchJSON = (url) =>
-  fetch(url, { cache: 'no-store' }).then(async (r) => {
-    const data = await r.json();
+function fetchJSON(url) {
+  return fetch(url, { cache: 'no-store' }).then(async (response) => {
+    if (response.status === 204) return null;
 
-    if (!r.ok) {
+    let data = null;
+
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok) {
       throw new Error(
         data?.error ||
         data?.spotify_error_description ||
-        `HTTP ${r.status}`
+        `HTTP ${response.status}`
       );
     }
 
     return data;
   });
+}
 
-const parseTimeToSeconds = (t) =>
-  t.split(':').map(Number).reduce((m, s) => m * 60 + s);
+function parseTimeToSeconds(value) {
+  return value
+    .split(':')
+    .map(Number)
+    .reduce((minutes, seconds) => minutes * 60 + seconds);
+}
 
-const formatTime = (ms) => {
+function formatTime(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-};
-
-async function getSpotifyAccessToken() {
-  const data = await fetchJSON(TOKEN_URL);
-
-  if (!data?.access_token) {
-    throw new Error('access tokenle aramda bi mevzu var galiba.');
-  }
-
-  return data.access_token;
-}
-
-function initializeSpotifyPlayer() {
-  if (!playback.allowed || !playback.sdkReady || playback.player) return;
-
-  playback.player = new window.Spotify.Player({
-    name: 'akakadir.art',
-    volume: 0.85,
-    getOAuthToken: async (callback) => {
-      try {
-        callback(await getSpotifyAccessToken());
-      } catch {
-        callback('');
-      }
-    }
-  });
-
-  playback.player.addListener('ready', ({ device_id }) => {
-    playback.deviceId = device_id;
-  });
-
-  playback.player.addListener('not_ready', ({ device_id }) => {
-    if (playback.deviceId === device_id) {
-      playback.deviceId = null;
-    }
-  });
-
-  playback.player.addListener('initialization_error', ({ message }) => {
-    console.error(message);
-  });
-
-  playback.player.addListener('authentication_error', ({ message }) => {
-    console.error(message);
-  });
-
-  playback.player.addListener('account_error', ({ message }) => {
-    console.error(message);
-  });
-
-  playback.player.addListener('playback_error', ({ message }) => {
-    console.error(message);
-  });
-
-  playback.player.connect().then((success) => {
-    if (!success) {
-      playback.player = null;
-    }
-  });
-}
-
-window.onSpotifyWebPlaybackSDKReady = () => {
-  playback.sdkReady = true;
-
-  if (playback.allowed) {
-    initializeSpotifyPlayer();
-  }
-};
-
-function bindSpotifyInvite() {
-  const box = document.getElementById('spotify-invite');
-  const yes = document.getElementById('spotify-yes');
-  const no = document.getElementById('spotify-no');
-
-  if (!box || !yes || !no) return;
-
-  yes.addEventListener('click', () => {
-    box.remove();
-    playback.allowed = true;
-
-    if (playback.sdkReady) {
-      initializeSpotifyPlayer();
-
-      if (playback.player) {
-        playback.player.activateElement().catch(() => {});
-      }
-    }
-  });
-
-  no.addEventListener('click', () => {
-    box.remove();
-    playback.allowed = false;
-  });
 }
 
 function parseSyncedLyrics(synced) {
   return [...synced.matchAll(/\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g)]
-    .map(([, m, s, frac, text]) => ({
+    .map(([, minutes, seconds, fraction, text]) => ({
       time:
-        Number(m) * 60000 +
-        Number(s) * 1000 +
-        (frac ? Number(`0.${frac}`) * 1000 : 0),
+        Number(minutes) * 60000 +
+        Number(seconds) * 1000 +
+        (fraction ? Number(`0.${fraction}`) * 1000 : 0),
       text: text.trim()
     }))
     .sort((a, b) => a.time - b.time);
 }
 
 function getCurrentLyric(lines, currentMs) {
-  let found = null;
+  let lyric = null;
 
   for (const line of lines) {
     if (line.time > currentMs) break;
-    found = line.text;
+    lyric = line.text;
   }
 
-  return found || null;
+  return lyric;
 }
 
-async function fetchLyrics({
-  type,
-  duration,
-  durationMs,
-  artists,
-  name,
-  album
-}) {
-  if (type === 'podcast') {
+async function fetchLyrics(data) {
+  if (data.type === 'podcast') {
     return { error: 'podcast liriklerini okuyamam.' };
   }
 
   const params = new URLSearchParams({
-    artist_name: artists,
-    track_name: name,
-    album_name: album,
+    artist_name: data.artists,
+    track_name: data.name,
+    album_name: data.album,
     duration: Math.round(
-      (durationMs || parseTimeToSeconds(duration) * 1000) / 1000
+      (data.durationMs ||
+        parseTimeToSeconds(data.duration) * 1000) / 1000
     )
   });
 
-  const { syncedLyrics } = await fetchJSON(
+  const result = await fetchJSON(
     `https://lrclib.net/api/get?${params}`
   );
 
-  return syncedLyrics
+  return result?.syncedLyrics
     ? {
-        lines: parseSyncedLyrics(syncedLyrics),
-        type: 'synced'
+        type: 'synced',
+        lines: parseSyncedLyrics(result.syncedLyrics)
       }
     : {
         error: 'bu şarkı sözleri, henüz eş zamanlı değil.'
@@ -196,13 +112,13 @@ async function fetchLyrics({
 }
 
 function ensureCube() {
-  const lyricsDiv = document.getElementById('lyrics');
+  const lyrics = document.getElementById('lyrics');
 
   if (
-    lyricsDiv &&
+    lyrics &&
     !document.getElementById('cube')
   ) {
-    lyricsDiv.innerHTML = `
+    lyrics.innerHTML = `
       <div class="cube" id="cube">
         <div class="side-front" id="front"></div>
         <div class="side-bottom" id="bottom"></div>
@@ -211,10 +127,10 @@ function ensureCube() {
   }
 }
 
-function triggerCubeAnimation(newText) {
+function triggerCubeAnimation(text) {
   if (
-    state.currentLyricText === newText ||
-    state.pendingLyricText === newText
+    state.currentLyricText === text ||
+    state.pendingLyricText === text
   ) {
     return;
   }
@@ -223,51 +139,88 @@ function triggerCubeAnimation(newText) {
   const front = document.getElementById('front');
   const bottom = document.getElementById('bottom');
 
-  if (!cube) return;
+  if (!cube || !front || !bottom) return;
 
-  state.pendingLyricText = newText;
-  bottom.textContent = newText;
+  state.pendingLyricText = text;
+  bottom.textContent = text;
 
   cube.classList.add('animate', 'show-next');
 
   setTimeout(() => {
     cube.classList.remove('animate', 'show-next');
-    front.textContent = newText;
-    state.currentLyricText = newText;
+    front.textContent = text;
+    state.currentLyricText = text;
     state.pendingLyricText = null;
   }, 600);
 }
 
 function renderTrackInfo(data) {
-  document.getElementById('now-playing').innerHTML =
-    `<img src="https://open.spotifycdn.com/cdn/images/error-page-logo.24aca703.svg" style="width:0.9em;height:0.9em;object-fit:contain;vertical-align:-0.12em"> ${data.artists} - <a class="no-favicon" href="${data.trackLink}" target="_blank" rel="noopener noreferrer">${data.name}</a> | <span id="progress-time">0:00</span>/${data.duration}`;
+  const container = document.getElementById('now-playing');
+
+  if (!container) return;
+
+  container.textContent = '';
+
+  const logo = document.createElement('img');
+  logo.src =
+    'https://open.spotifycdn.com/cdn/images/error-page-logo.24aca703.svg';
+  logo.alt = 'Spotify';
+  logo.style.cssText =
+    'width:0.9em;height:0.9em;object-fit:contain;vertical-align:-0.12em';
+
+  const artist = document.createTextNode(
+    ` ${data.artists} - `
+  );
+
+  const link = document.createElement('a');
+  link.className = 'no-favicon';
+  link.href = data.trackLink || '#';
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = data.name;
+
+  const separator = document.createTextNode(' | ');
+
+  const progress = document.createElement('span');
+  progress.id = 'progress-time';
+  progress.textContent = '0:00';
+
+  container.append(
+    logo,
+    artist,
+    link,
+    separator,
+    progress,
+    document.createTextNode(`/${data.duration}`)
+  );
 }
 
 function render() {
   if (!state.trackData) return;
 
-  const timeEl = document.getElementById('progress-time');
+  const progress = document.getElementById('progress-time');
 
-  if (timeEl) {
-    timeEl.textContent = formatTime(state.progressMs);
+  if (progress) {
+    progress.textContent = formatTime(state.progressMs);
   }
 
   if (!state.lyricsData) return;
 
-  if (state.lyricsData.error) {
-    const front = document.getElementById('front');
+  const front = document.getElementById('front');
 
-    if (front) {
-      front.textContent = state.lyricsData.error;
-    }
-  } else {
-    triggerCubeAnimation(
-      getCurrentLyric(
-        state.lyricsData.lines,
-        state.progressMs
-      ) || '...'
-    );
+  if (!front) return;
+
+  if (state.lyricsData.error) {
+    front.textContent = state.lyricsData.error;
+    return;
   }
+
+  triggerCubeAnimation(
+    getCurrentLyric(
+      state.lyricsData.lines,
+      state.progressMs
+    ) || '...'
+  );
 }
 
 function tick() {
@@ -284,7 +237,7 @@ function tick() {
 
     if (
       state.durationMs &&
-      state.progressMs > state.durationMs
+      state.progressMs >= state.durationMs
     ) {
       state.progressMs = state.durationMs;
     }
@@ -303,6 +256,8 @@ async function applyPayload(data) {
       lyricsData: null,
       currentLyricText: '',
       pendingLyricText: null,
+      progressMs: 0,
+      durationMs: 0,
       isPlaying: false
     });
 
@@ -325,29 +280,29 @@ async function applyPayload(data) {
     return;
   }
 
-  const serverMs =
+  const progressMs =
     data.progressMs ??
     parseTimeToSeconds(data.progress) * 1000;
 
-  state.isPlaying =
-    data.isPlaying ?? true;
-
+  state.progressMs = progressMs;
   state.durationMs =
     data.durationMs ||
     parseTimeToSeconds(data.duration) * 1000;
-
+  state.isPlaying =
+    Boolean(data.isPlaying);
   state.trackData = data;
-  state.progressMs = serverMs;
 
-  if (data.trackLink !== state.lastTrackLink) {
-    const token = ++state.lyricsToken;
+  if (
+    data.trackLink !== state.lastTrackLink
+  ) {
+    const token =
+      ++state.lyricsToken;
 
-    Object.assign(state, {
-      lastTrackLink: data.trackLink,
-      lyricsData: null,
-      currentLyricText: '',
-      pendingLyricText: null
-    });
+    state.lastTrackLink =
+      data.trackLink;
+    state.lyricsData = null;
+    state.currentLyricText = '';
+    state.pendingLyricText = null;
 
     renderTrackInfo(data);
 
@@ -373,7 +328,8 @@ async function applyPayload(data) {
       if (
         token === state.lyricsToken
       ) {
-        state.lyricsData = lyrics;
+        state.lyricsData =
+          lyrics;
       }
     } catch {
       if (
@@ -391,10 +347,17 @@ async function applyPayload(data) {
 }
 
 async function pollTrack() {
+  if (
+    document.visibilityState === 'hidden'
+  ) {
+    return;
+  }
+
   try {
-    await applyPayload(
-      await fetchJSON(POLL_URL)
-    );
+    const data =
+      await fetchJSON(POLL_URL);
+
+    await applyPayload(data);
   } catch {
     const nowPlaying =
       document.getElementById(
@@ -405,33 +368,177 @@ async function pollTrack() {
       nowPlaying.textContent =
         'bir şeyler ters gitti.';
     }
+  } finally {
+    schedulePoll(
+      state.isPlaying
+        ? ACTIVE_POLL_MS
+        : IDLE_POLL_MS
+    );
   }
 }
 
-bindSpotifyInvite();
+function schedulePoll(delay) {
+  clearTimeout(state.pollTimer);
 
-state.lastTickAt = performance.now();
+  state.pollTimer =
+    setTimeout(
+      pollTrack,
+      delay
+    );
+}
 
-pollTrack();
+async function getSpotifyAccessToken() {
+  const data =
+    await fetchJSON(TOKEN_URL);
 
-setInterval(
-  pollTrack,
-  POLL_MS
-);
+  if (!data?.access_token) {
+    throw new Error(
+      'Spotify access token alınamadı.'
+    );
+  }
 
-setInterval(
-  tick,
-  100
+  return data.access_token;
+}
+
+function initSpotifyPlayer() {
+  if (
+    !window.Spotify ||
+    playerState.player
+  ) {
+    return;
+  }
+
+  const player =
+    new window.Spotify.Player({
+      name: 'akakadir.art',
+      volume: 1,
+      getOAuthToken: async (callback) => {
+        try {
+          callback(
+            await getSpotifyAccessToken()
+          );
+        } catch {
+          callback('');
+        }
+      }
+    });
+
+  playerState.player =
+    player;
+
+  player.addListener(
+    'ready',
+    ({ device_id }) => {
+      playerState.deviceId =
+        device_id;
+      playerState.ready = true;
+    }
+  );
+
+  player.addListener(
+    'not_ready',
+    ({ device_id }) => {
+      if (
+        playerState.deviceId ===
+        device_id
+      ) {
+        playerState.deviceId =
+          null;
+        playerState.ready =
+          false;
+      }
+    }
+  );
+
+  player.addListener(
+    'player_state_changed',
+    (playbackState) => {
+      if (!playbackState) return;
+
+      state.isPlaying =
+        !playbackState.paused;
+
+      if (playbackState.track_window?.current_track) {
+        schedulePoll(0);
+      }
+    }
+  );
+
+  player.addListener(
+    'initialization_error',
+    ({ message }) => {
+      console.error(message);
+    }
+  );
+
+  player.addListener(
+    'authentication_error',
+    ({ message }) => {
+      console.error(message);
+    }
+  );
+
+  player.addListener(
+    'account_error',
+    ({ message }) => {
+      console.error(message);
+    }
+  );
+
+  player.addListener(
+    'playback_error',
+    ({ message }) => {
+      console.error(message);
+    }
+  );
+
+  player.connect();
+}
+
+window.onSpotifyWebPlaybackSDKReady = () => {
+  initSpotifyPlayer();
+};
+
+document.addEventListener(
+  'pointerdown',
+  () => {
+    if (!playerState.player) return;
+
+    playerState.player
+      .activateElement()
+      .catch(() => {});
+  },
+  {
+    once: true,
+    passive: true
+  }
 );
 
 document.addEventListener(
   'visibilitychange',
   () => {
-    if (document.hidden) return;
+    clearTimeout(state.pollTimer);
 
-    state.lastTickAt =
-      performance.now();
+    if (
+      document.visibilityState ===
+      'visible'
+    ) {
+      state.lastTickAt =
+        performance.now();
 
-    pollTrack();
+      pollTrack();
+    }
   }
+);
+
+ensureCube();
+
+state.lastTickAt =
+  performance.now();
+
+pollTrack();
+
+setInterval(
+  tick,
+  100
 );
