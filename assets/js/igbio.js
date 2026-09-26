@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
       bubble.style.display = "inline-block";
     } catch (error) {
       lastToken = "";
-      console.error("sayfayı resetle kardesim, turnstile mala bağladı", error);
+      console.error("kendi yazdığım api arazi oldu galiba", error);
     } finally {
       requestRunning = false;
     }
