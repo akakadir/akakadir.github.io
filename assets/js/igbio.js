@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       if (!response.ok) {
+        lastToken = "";
         return;
       }
 
@@ -41,8 +42,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       text.textContent = bio;
       bubble.style.display = "inline-block";
-    } catch {
-      return;
+    } catch (error) {
+      lastToken = "";
+      console.error("igbio: bio isteği başarısız", error);
     } finally {
       requestRunning = false;
     }
@@ -65,7 +67,9 @@ document.addEventListener("DOMContentLoaded", () => {
         turnstile.execute(widget);
       },
 
-      "error-callback": () => {},
+      "error-callback": (error) => {
+        console.error("igbio: turnstile hatası", error);
+      },
       "timeout-callback": () => {}
     });
 
