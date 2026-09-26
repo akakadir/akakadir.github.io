@@ -336,21 +336,33 @@ function initSpotifyPlayer() {
     }
   });
 
-  player.instance.addListener('initialization_error', ({ message }) => {
-    console.error('Spotify:', message);
-  });
+  player.instance.addListener(
+    'initialization_error',
+    ({ message }) => {
+      console.error('Spotify:', message);
+    }
+  );
 
-  player.instance.addListener('authentication_error', ({ message }) => {
-    console.error('Spotify:', message);
-  });
+  player.instance.addListener(
+    'authentication_error',
+    ({ message }) => {
+      console.error('Spotify:', message);
+    }
+  );
 
-  player.instance.addListener('account_error', ({ message }) => {
-    console.error('Spotify:', message);
-  });
+  player.instance.addListener(
+    'account_error',
+    ({ message }) => {
+      console.error('Spotify:', message);
+    }
+  );
 
-  player.instance.addListener('playback_error', ({ message }) => {
-    console.error('Spotify:', message);
-  });
+  player.instance.addListener(
+    'playback_error',
+    ({ message }) => {
+      console.error('Spotify:', message);
+    }
+  );
 
   player.instance.connect();
 }
@@ -379,18 +391,20 @@ function setupSpotifyInvite() {
 
 window.onSpotifyWebPlaybackSDKReady = () => {};
 
-ensureCube();
-setupSpotifyInvite();
-
-state.lastTickAt = performance.now();
-
-pollTrack();
-
-setInterval(tick, 100);
-
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState !== 'visible') return;
+document.addEventListener('DOMContentLoaded', () => {
+  ensureCube();
+  setupSpotifyInvite();
 
   state.lastTickAt = performance.now();
+
   pollTrack();
+
+  setInterval(tick, 100);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+
+    state.lastTickAt = performance.now();
+    pollTrack();
+  });
 });
