@@ -46,7 +46,10 @@ const parseTimeToSeconds = (value) =>
     .reduce((a, b) => a * 60 + b, 0);
 
 const formatTime = (ms) => {
-  const total = Math.max(0, Math.floor(ms / 1000));
+  const total = Math.max(
+    0,
+    Math.floor(ms / 1000)
+  );
 
   return `${Math.floor(total / 60)}:${String(
     total % 60
@@ -74,7 +77,10 @@ function getSpotifyProgressMs() {
     );
   }
 
-  return Math.max(0, progress);
+  return Math.max(
+    0,
+    progress
+  );
 }
 
 function injectStyles() {
@@ -227,7 +233,9 @@ function parseSyncedLyrics(synced) {
           Number(minutes) * 60000 +
           Number(seconds) * 1000 +
           (fraction
-            ? Number(`0.${fraction}`) * 1000
+            ? Number(
+                `0.${fraction}`
+              ) * 1000
             : 0),
         text: text.trim()
       })
@@ -245,7 +253,10 @@ function getCurrentLyric(
   let found = null;
 
   for (const line of lines) {
-    if (line.time > currentMs) {
+    if (
+      line.time >
+      currentMs
+    ) {
       break;
     }
 
@@ -316,7 +327,9 @@ async function fetchLyrics({
     const data =
       await response.json();
 
-    if (!data?.syncedLyrics) {
+    if (
+      !data?.syncedLyrics
+    ) {
       return {
         error:
           'bu şarkı sözleri, henüz eşzamanlı değil.'
@@ -372,22 +385,32 @@ function ensureLyricsCube() {
   syncMusicStyles();
 }
 
-function triggerLyricAnimation(text) {
+function triggerLyricAnimation(
+  text
+) {
   if (
-    state.currentLyricText === text ||
-    state.pendingLyricText === text
+    state.currentLyricText ===
+      text ||
+    state.pendingLyricText ===
+      text
   ) {
     return;
   }
 
   const cube =
-    document.getElementById('cube');
+    document.getElementById(
+      'cube'
+    );
 
   const front =
-    document.getElementById('front');
+    document.getElementById(
+      'front'
+    );
 
   const bottom =
-    document.getElementById('bottom');
+    document.getElementById(
+      'bottom'
+    );
 
   if (
     !cube ||
@@ -504,6 +527,9 @@ function createMusicPrompt() {
         return;
       }
 
+      const startProgressMs =
+        getSpotifyProgressMs();
+
       const button =
         prompt.querySelector(
           '[data-action="yes"]'
@@ -530,8 +556,6 @@ function createMusicPrompt() {
         button?.classList.remove(
           'disabled'
         );
-
-        return;
       }
 
       state.musicChoice =
@@ -539,7 +563,9 @@ function createMusicPrompt() {
 
       prompt.remove();
 
-      startYouTube();
+      startYouTube(
+        startProgressMs
+      );
     }
   );
 }
@@ -608,7 +634,9 @@ function setSpotifyClock(
     performance.now();
 }
 
-function renderTrackInfo(data) {
+function renderTrackInfo(
+  data
+) {
   const el =
     document.getElementById(
       'now-playing'
@@ -780,7 +808,9 @@ function loadYouTubeAPI() {
   return state.youtube.apiPromise;
 }
 
-function handleYouTubeStateChange(event) {
+function handleYouTubeStateChange(
+  event
+) {
   if (
     event.data ===
     YT.PlayerState.ENDED
@@ -887,7 +917,9 @@ async function ensureYouTubePlayer() {
   );
 }
 
-function startYouTube() {
+function startYouTube(
+  startProgressMs
+) {
   const player =
     state.youtube.player;
 
@@ -909,7 +941,8 @@ function startYouTube() {
   const startSeconds =
     Math.max(
       0,
-      getSpotifyProgressMs() / 1000
+      Number(startProgressMs || 0) /
+        1000
     );
 
   state.youtube.videoId =
@@ -926,7 +959,9 @@ function startYouTube() {
 }
 
 function stopYouTube() {
-  if (!state.youtube.player) {
+  if (
+    !state.youtube.player
+  ) {
     return;
   }
 
@@ -961,7 +996,9 @@ async function updateMusicState(
     state.musicChoice === 'yes' &&
     !previousPlaying
   ) {
-    startYouTube();
+    startYouTube(
+      getSpotifyProgressMs()
+    );
   }
 }
 
@@ -1099,7 +1136,9 @@ async function applyPayload(
         '';
     }
 
-    if (!state.isPlaying) {
+    if (
+      !state.isPlaying
+    ) {
       removeMusicPrompt();
     } else if (
       state.musicChoice === null
@@ -1109,7 +1148,9 @@ async function applyPayload(
       state.musicChoice === 'yes' &&
       data.videoId
     ) {
-      startYouTube();
+      startYouTube(
+        getSpotifyProgressMs()
+      );
     }
 
     const token =
@@ -1211,7 +1252,10 @@ async function pollTrack(
 
 injectStyles();
 ensureLyricsCube();
-ensureYouTubePlayer().catch(() => {});
+ensureYouTubePlayer().catch(
+  () => {}
+);
+
 pollTrack(true);
 
 setInterval(
