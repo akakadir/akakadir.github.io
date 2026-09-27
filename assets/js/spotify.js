@@ -1,751 +1,180 @@
 const POLL_URL = 'https://akakadir.vercel.app/api/now-playing';
 const POLL_MS = 5000;
+const SYNC_TOLERANCE_MS = 2500;
 
 const state = {
-  key: '',
-  track: null,
-  lyrics: null,
-  lyric: '',
-  lyricPending: '',
-  progress: 0,
-  duration: 0,
-  playing: false,
-  anchor: 0,
-  anchorTime: 0,
-  lyricToken: 0,
-  lyricAbort: null,
-  choice: null,
-  promptShown: false,
-  pollBusy: false,
-  pollAgain: false,
-
-  yt: {
-    player: null,
-    ready: false,
-    cued: '',
-    api: null,
-    playingTrack: ''
-  }
+  lastTrackLink: '',
+  lyricsData: null,
+  currentLyricText: '',
+  pendingLyricText: null,
+  trackData: null,
+  progressMs: 0,
+  durationMs: 0,
+  isPlaying: false,
+  lastTickAt: performance.now(),
+  lyricsToken: 0
 };
 
-const fetchJSON = async url => {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(r.status);
-  return r.json();
+const fetchJSON = (url) => fetch(url).then((r) => r.json());
+const parseTimeToSeconds = (t) => t.split(':').map(Number).reduce((m, s) => m * 60 + s);
+
+const formatTime = (ms) => {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 };
 
-const sec = v =>
-  String(v || '0:00')
-    .split(':')
-    .map(Number)
-    .reduce((a, b) => a * 60 + b, 0);
-
-const clock = ms => {
-  const t = Math.max(0, Math.floor(ms / 1000));
-  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-};
-
-const progress = () => {
-  if (!state.playing || !state.anchorTime) return state.progress;
-
-  const p =
-    state.anchor +
-    performance.now() -
-    state.anchorTime;
-
-  return state.duration
-    ? Math.min(p, state.duration)
-    : p;
-};
-
-const trackKey = data =>
-  [
-    data.trackLink,
-    data.videoId,
-    data.name,
-    data.artists
-  ]
-    .filter(Boolean)
-    .join('|');
-
-function injectStyles() {
-  if (document.getElementById('spotify-widget-styles')) return;
-
-  const s = document.createElement('style');
-  s.id = 'spotify-widget-styles';
-
-  s.textContent = `
-    .music-consent{display:block;width:100%;margin-top:14px;text-align:center}
-    .music-question{display:block;width:100%}
-    .music-options{display:block;width:100%;margin-top:4px;text-align:center}
-    .music-option{cursor:pointer}
-    .music-option.disabled{pointer-events:none;opacity:.6}
-    .youtube-background-player{
-      position:fixed;
-      width:200px;
-      height:200px;
-      right:0;
-      bottom:0;
-      opacity:.001;
-      pointer-events:none;
-      overflow:hidden;
-      z-index:-1
-    }
-  `;
-
-  document.head.appendChild(s);
-}
-
-function syncStyles() {
-  const front = document.getElementById('front');
-  if (!front) return;
-
-  let s = document.getElementById('spotify-widget-lyrics-style');
-
-  if (!s) {
-    s = document.createElement('style');
-    s.id = 'spotify-widget-lyrics-style';
-    document.head.appendChild(s);
-  }
-
-  const c = getComputedStyle(front);
-  const props = [
-    'font-family',
-    'font-style',
-    'font-weight',
-    'font-variant',
-    'letter-spacing',
-    'line-height',
-    'text-transform',
-    'text-decoration',
-    'text-shadow',
-    'color',
-    'opacity',
-    'word-spacing',
-    'white-space'
-  ];
-
-  const css = props
-    .map(p => `${p}:${c.getPropertyValue(p)};`)
-    .join('');
-
-  const size = parseFloat(c.fontSize);
-
-  s.textContent = `
-    .music-consent,.music-question,.music-options,.music-option{
-      ${css}
-      ${Number.isFinite(size) ? `font-size:${size * .75}px;` : ''}
-    }
-  `;
-}
-
-function ensureLyrics() {
-  const el = document.getElementById('lyrics');
-  if (!el) return;
-
-  if (!document.getElementById('cube')) {
-    el.innerHTML = `
-      <div class="cube" id="cube">
-        <div class="side-front" id="front"></div>
-        <div class="side-bottom" id="bottom"></div>
-      </div>
-    `;
-  }
-
-  syncStyles();
-}
-
-function parseLyrics(text) {
-  return [...text.matchAll(
-    /\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g
-  )]
-    .map(([, m, s, f, t]) => ({
-      time:
-        +m * 60000 +
-        +s * 1000 +
-        (f ? +`0.${f}` * 1000 : 0),
-      text: t.trim()
+function parseSyncedLyrics(synced) {
+  return [...synced.matchAll(/\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g)]
+    .map(([, m, s, frac, text]) => ({
+      time: Number(m) * 60000 + Number(s) * 1000 + (frac ? Number(`0.${frac}`) * 1000 : 0),
+      text: text.trim()
     }))
     .sort((a, b) => a.time - b.time);
 }
 
-function currentLyric(lines, ms) {
-  let text = null;
-
+function getCurrentLyric(lines, currentMs) {
+  let found = null;
   for (const line of lines) {
-    if (line.time > ms) break;
-    text = line.text;
+    if (line.time > currentMs) break;
+    found = line.text;
   }
-
-  return text;
+  return found || null;
 }
 
-async function getLyrics(data) {
-  if (data.type === 'podcast') {
-    return { error: 'podcast liriklerini okuyamam.' };
-  }
-
-  state.lyricAbort?.abort();
-
-  const controller = new AbortController();
-  state.lyricAbort = controller;
-
+async function fetchLyrics({ type, duration, durationMs, artists, name, album }) {
+  if (type === 'podcast') return { error: 'podcast liriklerini okuyamam.' };
   const params = new URLSearchParams({
-    artist_name: data.artists || '',
-    track_name: data.name || '',
-    album_name: data.album || '',
-    duration: Math.round(
-      (data.durationMs ||
-        sec(data.duration) * 1000) / 1000
-    )
+    artist_name: artists,
+    track_name: name,
+    album_name: album,
+    duration: Math.round((durationMs || parseTimeToSeconds(duration) * 1000) / 1000)
   });
-
-  try {
-    const r = await fetch(
-      `https://lrclib.net/api/get?${params}`,
-      { signal: controller.signal }
-    );
-
-    if (!r.ok) {
-      return {
-        error:
-          'bu şarkı sözleri, henüz eşzamanlı değil.'
-      };
-    }
-
-    const d = await r.json();
-
-    return d?.syncedLyrics
-      ? { lines: parseLyrics(d.syncedLyrics) }
-      : {
-          error:
-            'bu şarkı sözleri, henüz eşzamanlı değil.'
-        };
-  } catch (e) {
-    return e.name === 'AbortError'
-      ? null
-      : {
-          error:
-            'bu şarkı sözleri, henüz eşzamanlı değil.'
-        };
-  }
+  const { syncedLyrics } = await fetchJSON(`https://lrclib.net/api/get?${params}`);
+  return syncedLyrics
+    ? { lines: parseSyncedLyrics(syncedLyrics), type: 'synced' }
+    : { error: 'bu şarkı sözleri, henüz eş zamanlı değil.' };
 }
 
-function animate(text) {
-  if (
-    !text ||
-    state.lyric === text ||
-    state.lyricPending === text
-  ) {
-    return;
-  }
+function ensureCube() {
+  const lyricsDiv = document.getElementById('lyrics');
+  if (lyricsDiv && !document.getElementById('cube'))
+    lyricsDiv.innerHTML = `<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>`;
+}
 
+function triggerCubeAnimation(newText) {
+  if (state.currentLyricText === newText || state.pendingLyricText === newText) return;
   const cube = document.getElementById('cube');
   const front = document.getElementById('front');
   const bottom = document.getElementById('bottom');
-
   if (!cube || !front || !bottom) return;
-
-  state.lyricPending = text;
-  bottom.textContent = text;
+  state.pendingLyricText = newText;
+  bottom.textContent = newText;
   cube.classList.add('animate', 'show-next');
-
   setTimeout(() => {
     cube.classList.remove('animate', 'show-next');
-    front.textContent = text;
-    state.lyric = text;
-    state.lyricPending = '';
-    syncStyles();
+    front.textContent = newText;
+    state.currentLyricText = newText;
+    state.pendingLyricText = null;
   }, 600);
 }
 
-function render() {
-  if (!state.track) return;
-
-  const t = document.getElementById('progress-time');
-  if (t) t.textContent = clock(progress());
-
-  if (!state.lyrics) return;
-
-  const front = document.getElementById('front');
-  if (!front) return;
-
-  if (state.lyrics.error) {
-    front.textContent = state.lyrics.error;
-    return;
-  }
-
-  animate(
-    currentLyric(
-      state.lyrics.lines,
-      progress()
-    ) || '...'
-  );
-}
-
-function renderTrack() {
+function renderTrackInfo(data) {
   const el = document.getElementById('now-playing');
-  if (!el || !state.track) return;
-
+  if (!el) return;
   el.innerHTML =
-    `🎧 ${state.track.artists} - ` +
-    `<a class="no-favicon" href="${state.track.trackLink}" target="_blank" rel="noopener noreferrer">${state.track.name}</a>` +
-    ` | <span id="progress-time">${clock(progress())}</span>/${state.track.duration}`;
+    `🎧 ${data.artists} - <a class="no-favicon" href="${data.trackLink}" target="_blank">${data.name}</a> | <span id="progress-time">${formatTime(data.progressMs ?? 0)}</span>/${data.duration}`;
 }
 
-function setClock(data, start, end) {
-  let p =
-    Number(
-      data.progressMs ??
-      sec(data.progress) * 1000
-    ) || 0;
+function render() {
+  if (!state.trackData) return;
+  const timeEl = document.getElementById('progress-time');
+  if (timeEl) timeEl.textContent = formatTime(state.progressMs);
+  if (!state.lyricsData) return;
+  const front = document.getElementById('front');
+  if (state.lyricsData.error) { if (front) front.textContent = state.lyricsData.error; }
+  else triggerCubeAnimation(getCurrentLyric(state.lyricsData.lines, state.progressMs) || '...');
+}
 
-  const server = Number(data.serverTime) || 0;
-
-  if (server) {
-    const age =
-      (start + end) / 2 -
-      server;
-
-    if (age > -1000 && age < 10000) {
-      p += Math.max(0, age);
-    }
+function tick() {
+  const now = performance.now();
+  const delta = now - state.lastTickAt;
+  state.lastTickAt = now;
+  if (state.isPlaying && state.trackData) {
+    state.progressMs += delta;
+    if (state.durationMs && state.progressMs > state.durationMs) state.progressMs = state.durationMs;
   }
-
-  if (data.durationMs) {
-    p = Math.min(p, Number(data.durationMs));
-  }
-
-  state.progress = Math.max(0, p);
-  state.anchor = state.progress;
-  state.anchorTime = performance.now();
+  render();
 }
 
-function promptRemove() {
-  document.getElementById('music-consent')?.remove();
-}
-
-function createPrompt() {
-  if (
-    state.choice !== null ||
-    state.promptShown
-  ) {
-    return;
-  }
-
-  const lyrics = document.getElementById('lyrics');
-  if (!lyrics) return;
-
-  const prompt = document.createElement('div');
-
-  prompt.id = 'music-consent';
-  prompt.className = 'music-consent';
-
-  prompt.innerHTML = `
-    <div class="music-question">beraber dinleyelim mi?</div>
-    <div class="music-options">
-      <span class="music-option" data-action="yes">olur</span>
-      <span> / </span>
-      <span class="music-option" data-action="no">yok ya</span>
-    </div>
-  `;
-
-  lyrics.insertAdjacentElement('afterend', prompt);
-  state.promptShown = true;
-
-  syncStyles();
-
-  prompt.addEventListener('click', async e => {
-    const action = e.target?.dataset?.action;
-    if (!action) return;
-
-    if (action === 'no') {
-      state.choice = 'no';
-      prompt.remove();
-      return;
-    }
-
-    if (!state.yt.ready) {
-      const button =
-        prompt.querySelector('[data-action="yes"]');
-
-      button?.classList.add('disabled');
-
-      try {
-        await ensureYT();
-      } catch {
-        button?.classList.remove('disabled');
-        return;
-      }
-
-      button?.classList.remove('disabled');
-      return;
-    }
-
-    const startMs = progress();
-
-    state.choice = 'yes';
-    prompt.remove();
-
-    startYT(startMs);
-  });
-}
-
-function ytContainer() {
-  let el = document.getElementById(
-    'youtube-background-player'
-  );
-
-  if (el) return el;
-
-  el = document.createElement('div');
-  el.id = 'youtube-background-player';
-  el.className = 'youtube-background-player';
-
-  document.body.appendChild(el);
-
-  return el;
-}
-
-function loadYT() {
-  if (window.YT?.Player) {
-    return Promise.resolve(window.YT);
-  }
-
-  if (state.yt.api) return state.yt.api;
-
-  state.yt.api = new Promise((resolve, reject) => {
-    const old = window.onYouTubeIframeAPIReady;
-
-    window.onYouTubeIframeAPIReady = () => {
-      try {
-        old?.();
-      } catch {}
-
-      resolve(window.YT);
-    };
-
-    if (
-      document.querySelector(
-        'script[src="https://www.youtube.com/iframe_api"]'
-      )
-    ) {
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://www.youtube.com/iframe_api';
-    script.async = true;
-    script.onerror = reject;
-
-    document.head.appendChild(script);
-  });
-
-  return state.yt.api;
-}
-
-async function ensureYT() {
-  if (state.yt.player && state.yt.ready) {
-    return state.yt.player;
-  }
-
-  await loadYT();
-
-  if (state.yt.player && state.yt.ready) {
-    return state.yt.player;
-  }
-
-  return new Promise((resolve, reject) => {
-    try {
-      state.yt.player = new YT.Player(
-        ytContainer(),
-        {
-          width: '200',
-          height: '200',
-
-          playerVars: {
-            autoplay: 0,
-            controls: 0,
-            disablekb: 1,
-            fs: 0,
-            iv_load_policy: 3,
-            playsinline: 1,
-            rel: 0,
-            origin: location.origin
-          },
-
-          events: {
-            onReady: e => {
-              state.yt.ready = true;
-
-              try {
-                const iframe = e.target.getIframe();
-                iframe.setAttribute('playsinline', '1');
-                iframe.setAttribute('allow', 'autoplay');
-              } catch {}
-
-              if (state.track?.videoId) {
-                cueYT(state.track.videoId);
-              }
-
-              resolve(e.target);
-            },
-
-            onStateChange: e => {
-              if (
-                e.data === YT.PlayerState.ENDED
-              ) {
-                poll(true);
-              }
-            }
-          }
-        }
-      );
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
-
-function cueYT(videoId) {
-  const player = state.yt.player;
-  const id = String(videoId || '').trim();
-
-  if (
-    !player ||
-    !state.yt.ready ||
-    !id ||
-    state.yt.cued === id
-  ) {
-    return;
-  }
-
-  try {
-    player.cueVideoById({
-      videoId: id,
-      startSeconds: 0
-    });
-
-    state.yt.cued = id;
-  } catch {}
-}
-
-function startYT(startMs) {
-  const player = state.yt.player;
-  const id =
-    String(state.track?.videoId || '').trim();
-
-  if (
-    !player ||
-    !state.yt.ready ||
-    !id ||
-    !state.playing
-  ) {
-    return;
-  }
-
-  const startedAt = performance.now();
-
-  state.yt.playingTrack = id;
-
-  try {
-    if (state.yt.cued !== id) {
-      player.loadVideoById({
-        videoId: id,
-        startSeconds: startMs / 1000
-      });
-      state.yt.cued = id;
-      return;
-    }
-
-    player.seekTo(
-      (
-        startMs +
-        performance.now() -
-        startedAt
-      ) / 1000,
-      true
-    );
-
-    player.playVideo();
-  } catch {}
-}
-
-function switchYT() {
-  if (!state.playing || !state.track?.videoId) {
-    stopYT();
-    return;
-  }
-
-  cueYT(state.track.videoId);
-
-  if (state.choice === 'yes') {
-    startYT(progress());
-  }
-}
-
-function stopYT() {
-  state.yt.playingTrack = '';
-
-  try {
-    state.yt.player?.pauseVideo();
-  } catch {}
-}
-
-async function apply(data, start, end) {
-  ensureLyrics();
+async function applyPayload(data) {
+  ensureCube();
 
   if (!data || data.error) {
-    state.track = null;
-    state.key = '';
-    state.lyrics = null;
-    state.playing = false;
-
-    promptRemove();
-    stopYT();
-
-    const el =
-      document.getElementById('now-playing');
-
-    if (el) {
-      el.textContent =
-        data?.error ||
-        'bir şeyler ters gitti.';
-    }
-
-    return;
-  }
-
-  const nextKey = trackKey(data);
-  const changed = nextKey !== state.key;
-  const wasPlaying = state.playing;
-
-  state.track = data;
-  state.playing = !!data.isPlaying;
-  state.duration =
-    Number(data.durationMs) ||
-    sec(data.duration) * 1000;
-
-  setClock(data, start, end);
-
-  if (changed) {
-    state.key = nextKey;
-    state.lyricToken++;
-    state.lyricAbort?.abort();
-
-    state.lyrics = null;
-    state.lyric = '';
-    state.lyricPending = '';
-
-    stopYT();
-    state.yt.cued = '';
-
-    renderTrack();
-
-    const front = document.getElementById('front');
-    if (front) front.textContent = 'yükleniyor...';
-
-    cueYT(data.videoId);
-
-    if (!state.playing) {
-      promptRemove();
-    } else if (state.choice === null) {
-      createPrompt();
-    } else if (state.choice === 'yes') {
-      startYT(progress());
-    }
-
-    const token = state.lyricToken;
-
-    getLyrics(data).then(lyrics => {
-      if (
-        token !== state.lyricToken ||
-        !lyrics
-      ) {
-        return;
-      }
-
-      state.lyrics = lyrics;
-      render();
+    Object.assign(state, {
+      trackData: null,
+      lastTrackLink: '',
+      lyricsData: null,
+      currentLyricText: '',
+      pendingLyricText: null,
+      isPlaying: false
     });
-
+    const el = document.getElementById('now-playing');
+    if (el) el.textContent = data?.error || 'bir şeyler ters gitti.';
+    const front = document.getElementById('front');
+    if (front) front.textContent = '';
     return;
   }
 
-  if (!state.playing) {
-    promptRemove();
-    stopYT();
-  } else {
-    if (
-      state.choice === null &&
-      !state.promptShown
-    ) {
-      createPrompt();
-    }
+  const serverMs = data.progressMs ?? parseTimeToSeconds(data.progress) * 1000;
+  state.isPlaying = data.isPlaying ?? true;
+  state.durationMs = data.durationMs || parseTimeToSeconds(data.duration) * 1000;
+  state.trackData = data;
 
-    if (
-      state.choice === 'yes' &&
-      !wasPlaying
-    ) {
-      startYT(progress());
+  if (data.trackLink !== state.lastTrackLink) {
+    const token = ++state.lyricsToken;
+    Object.assign(state, {
+      lastTrackLink: data.trackLink,
+      lyricsData: null,
+      currentLyricText: '',
+      pendingLyricText: null,
+      progressMs: serverMs
+    });
+    state.lastTickAt = performance.now();
+    renderTrackInfo(data);
+    const front = document.getElementById('front');
+    const bottom = document.getElementById('bottom');
+    if (front) front.textContent = 'yükleniyor...';
+    if (bottom) bottom.textContent = '';
+    try {
+      const lyrics = await fetchLyrics(data);
+      if (token === state.lyricsToken) state.lyricsData = lyrics;
+    } catch {
+      if (token === state.lyricsToken) state.lyricsData = { error: 'sözleri getiremedim.' };
     }
+  } else if (Math.abs(serverMs - state.progressMs) > SYNC_TOLERANCE_MS) {
+    state.progressMs = serverMs;
+    state.lastTickAt = performance.now();
   }
 
   render();
 }
 
-async function poll(force = false) {
-  if (state.pollBusy) {
-    state.pollAgain = true;
-    return;
-  }
-
-  state.pollBusy = true;
-
-  const start = Date.now();
-
+async function pollTrack() {
   try {
-    await apply(
-      await fetchJSON(POLL_URL),
-      start,
-      Date.now()
-    );
+    await applyPayload(await fetchJSON(POLL_URL));
   } catch {
-    const el =
-      document.getElementById('now-playing');
-
-    if (el) {
-      el.textContent =
-        'bir şeyler ters gitti.';
-    }
+    const el = document.getElementById('now-playing');
+    if (el) el.textContent = 'bir şeyler ters gitti.';
   }
-
-  state.pollBusy = false;
-
-  if (state.pollAgain) {
-    state.pollAgain = false;
-    poll(true);
-    return;
-  }
-
-  setTimeout(
-    () => poll(false),
-    force ? 250 : POLL_MS
-  );
 }
 
-injectStyles();
-ensureLyrics();
-ensureYT().catch(() => {});
-poll(true);
+state.lastTickAt = performance.now();
+pollTrack();
+setInterval(pollTrack, POLL_MS);
+setInterval(tick, 100);
 
-setInterval(render, 100);
-
-document.addEventListener(
-  'visibilitychange',
-  () => {
-    if (!document.hidden) {
-      poll(true);
-    }
-  }
-);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  state.lastTickAt = performance.now();
+  pollTrack();
+});
