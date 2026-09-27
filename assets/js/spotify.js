@@ -2,75 +2,77 @@ const POLL_URL = 'https://akakadir.vercel.app/api/now-playing';
 const POLL_MS = 5000;
 
 const state = {
-  lastTrackLink: '',
-  trackData: null,
-  lyricsData: null,
-  currentLyricText: '',
-  pendingLyricText: null,
-  progressMs: 0,
-  durationMs: 0,
-  isPlaying: false,
-  progressAnchorMs: 0,
-  progressAnchorPerformance: 0,
-  lyricsToken: 0,
-  lyricsAbort: null,
+  track: null,
+  lastTrack: '',
+  progress: 0,
+  duration: 0,
+  playing: false,
+  anchor: 0,
+  anchorTime: 0,
 
-  musicChoice: null,
-  musicPromptShown: false,
+  lyrics: null,
+  lyric: '',
+  lyricPending: '',
+  lyricToken: 0,
+  lyricAbort: null,
 
-  pollInFlight: false,
+  choice: null,
+  promptShown: false,
+
+  pollBusy: false,
   pollAgain: false,
 
-  youtube: {
+  yt: {
     player: null,
     ready: false,
+    api: null,
     videoId: '',
-    apiPromise: null,
-    calibrate: false
+    sync: null
   }
 };
 
-const fetchJSON = async (url, options = {}) => {
-  const response = await fetch(url, options);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.json();
+const fetchJSON = async url => {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
 };
 
-const parseTimeToSeconds = (value) =>
-  String(value || '0:00')
+const seconds = v =>
+  String(v || '0:00')
     .split(':')
     .map(Number)
     .reduce((a, b) => a * 60 + b, 0);
 
-const formatTime = (ms) => {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+const time = ms => {
+  const t = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
 };
 
-function progressNow() {
-  if (
-    !state.isPlaying ||
-    !state.progressAnchorPerformance
-  ) {
-    return state.progressMs;
+const progress = () => {
+  if (!state.playing || !state.anchorTime) {
+    return state.progress;
   }
 
-  let value =
-    state.progressAnchorMs +
+  const p =
+    state.anchor +
     performance.now() -
-    state.progressAnchorPerformance;
+    state.anchorTime;
 
-  return state.durationMs
-    ? Math.min(value, state.durationMs)
-    : value;
-}
+  return state.duration
+    ? Math.min(p, state.duration)
+    : p;
+};
 
-function injectStyles() {
-  if (document.getElementById('spotify-widget-styles')) return;
+function styles() {
+  if (document.getElementById('spotify-widget-styles')) {
+    return;
+  }
 
-  const style = document.createElement('style');
-  style.id = 'spotify-widget-styles';
-  style.textContent = `
+  const s = document.createElement('style');
+
+  s.id = 'spotify-widget-styles';
+
+  s.textContent = `
     .music-consent{display:block;width:100%;margin-top:14px;text-align:center}
     .music-question{display:block;width:100%}
     .music-options{display:block;width:100%;margin-top:4px;text-align:center}
@@ -89,24 +91,22 @@ function injectStyles() {
     }
   `;
 
-  document.head.appendChild(style);
+  document.head.appendChild(s);
 }
 
-function syncMusicStyles() {
+function lyricStyles() {
   const front = document.getElementById('front');
   if (!front) return;
 
-  let style = document.getElementById(
-    'spotify-widget-lyrics-style'
-  );
+  let s = document.getElementById('spotify-widget-lyrics-style');
 
-  if (!style) {
-    style = document.createElement('style');
-    style.id = 'spotify-widget-lyrics-style';
-    document.head.appendChild(style);
+  if (!s) {
+    s = document.createElement('style');
+    s.id = 'spotify-widget-lyrics-style';
+    document.head.appendChild(s);
   }
 
-  const computed = getComputedStyle(front);
+  const c = getComputedStyle(front);
   const props = [
     'font-family',
     'font-style',
@@ -124,103 +124,17 @@ function syncMusicStyles() {
   ];
 
   const css = props
-    .map(
-      (p) =>
-        `${p}:${computed.getPropertyValue(p)};`
-    )
+    .map(p => `${p}:${c.getPropertyValue(p)};`)
     .join('');
 
-  const size = parseFloat(computed.fontSize);
+  const size = parseFloat(c.fontSize);
 
-  style.textContent = `
-    .music-consent,
-    .music-question,
-    .music-options,
-    .music-option{
+  s.textContent = `
+    .music-consent,.music-question,.music-options,.music-option{
       ${css}
-      ${Number.isFinite(size) ? `font-size:${Math.max(1, size * .75)}px;` : ''}
+      ${Number.isFinite(size) ? `font-size:${size * .75}px;` : ''}
     }
   `;
-}
-
-function parseLyrics(text) {
-  return [...text.matchAll(
-    /\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g
-  )]
-    .map(([, m, s, f, text]) => ({
-      time:
-        +m * 60000 +
-        +s * 1000 +
-        (f ? +`0.${f}` * 1000 : 0),
-      text: text.trim()
-    }))
-    .sort((a, b) => a.time - b.time);
-}
-
-function currentLyric(lines, time) {
-  let result = null;
-
-  for (const line of lines) {
-    if (line.time > time) break;
-    result = line.text;
-  }
-
-  return result;
-}
-
-async function fetchLyrics(data) {
-  if (data.type === 'podcast') {
-    return { error: 'podcast liriklerini okuyamam.' };
-  }
-
-  state.lyricsAbort?.abort();
-
-  const controller = new AbortController();
-  state.lyricsAbort = controller;
-
-  const params = new URLSearchParams({
-    artist_name: data.artists || '',
-    track_name: data.name || '',
-    album_name: data.album || '',
-    duration: Math.round(
-      (data.durationMs ||
-        parseTimeToSeconds(data.duration) * 1000) / 1000
-    )
-  });
-
-  try {
-    const response = await fetch(
-      `https://lrclib.net/api/get?${params}`,
-      { signal: controller.signal }
-    );
-
-    if (!response.ok) {
-      return {
-        error:
-          'bu şarkı sözleri, henüz eşzamanlı değil.'
-      };
-    }
-
-    const result = await response.json();
-
-    if (!result?.syncedLyrics) {
-      return {
-        error:
-          'bu şarkı sözleri, henüz eşzamanlı değil.'
-      };
-    }
-
-    return {
-      lines: parseLyrics(result.syncedLyrics)
-    };
-  } catch (error) {
-    if (error.name === 'AbortError') return null;
-
-    return {
-      error:
-        'bu şarkı sözleri, henüz eşzamanlı değil.'
-    };
-  }
 }
 
 function ensureLyrics() {
@@ -236,13 +150,89 @@ function ensureLyrics() {
     `;
   }
 
-  syncMusicStyles();
+  lyricStyles();
 }
 
-function animateLyric(text) {
+function parseLyrics(text) {
+  return [...text.matchAll(
+    /\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g
+  )]
+    .map(([, m, s, f, t]) => ({
+      time:
+        +m * 60000 +
+        +s * 1000 +
+        (f ? +`0.${f}` * 1000 : 0),
+      text: t.trim()
+    }))
+    .sort((a, b) => a.time - b.time);
+}
+
+function currentLyric(lines, ms) {
+  let text = null;
+
+  for (const line of lines) {
+    if (line.time > ms) break;
+    text = line.text;
+  }
+
+  return text;
+}
+
+async function getLyrics(data) {
+  if (data.type === 'podcast') {
+    return { error: 'podcast liriklerini okuyamam.' };
+  }
+
+  state.lyricAbort?.abort();
+
+  const controller = new AbortController();
+  state.lyricAbort = controller;
+
+  const params = new URLSearchParams({
+    artist_name: data.artists || '',
+    track_name: data.name || '',
+    album_name: data.album || '',
+    duration: Math.round(
+      (data.durationMs ||
+        seconds(data.duration) * 1000) / 1000
+    )
+  });
+
+  try {
+    const r = await fetch(
+      `https://lrclib.net/api/get?${params}`,
+      { signal: controller.signal }
+    );
+
+    if (!r.ok) {
+      return {
+        error: 'bu şarkı sözleri, henüz eşzamanlı değil.'
+      };
+    }
+
+    const d = await r.json();
+
+    return d?.syncedLyrics
+      ? { lines: parseLyrics(d.syncedLyrics) }
+      : {
+          error:
+            'bu şarkı sözleri, henüz eşzamanlı değil.'
+        };
+  } catch (e) {
+    return e.name === 'AbortError'
+      ? null
+      : {
+          error:
+            'bu şarkı sözleri, henüz eşzamanlı değil.'
+        };
+  }
+}
+
+function animate(text) {
   if (
-    state.currentLyricText === text ||
-    state.pendingLyricText === text
+    !text ||
+    state.lyric === text ||
+    state.lyricPending === text
   ) {
     return;
   }
@@ -253,7 +243,7 @@ function animateLyric(text) {
 
   if (!cube || !front || !bottom) return;
 
-  state.pendingLyricText = text;
+  state.lyricPending = text;
   bottom.textContent = text;
 
   cube.classList.add('animate', 'show-next');
@@ -261,87 +251,82 @@ function animateLyric(text) {
   setTimeout(() => {
     cube.classList.remove('animate', 'show-next');
     front.textContent = text;
-    state.currentLyricText = text;
-    state.pendingLyricText = null;
-    syncMusicStyles();
+    state.lyric = text;
+    state.lyricPending = '';
+    lyricStyles();
   }, 600);
 }
 
 function render() {
-  if (!state.trackData) return;
+  if (!state.track) return;
 
-  const time = document.getElementById('progress-time');
+  const p = progress();
+  const t = document.getElementById('progress-time');
 
-  if (time) {
-    time.textContent = formatTime(progressNow());
+  if (t) {
+    t.textContent = time(p);
   }
 
-  if (!state.lyricsData) return;
+  if (!state.lyrics) return;
 
   const front = document.getElementById('front');
   if (!front) return;
 
-  if (state.lyricsData.error) {
-    front.textContent = state.lyricsData.error;
+  if (state.lyrics.error) {
+    front.textContent = state.lyrics.error;
     return;
   }
 
-  animateLyric(
+  animate(
     currentLyric(
-      state.lyricsData.lines,
-      progressNow()
+      state.lyrics.lines,
+      p
     ) || '...'
   );
 }
 
-function showTrack(data) {
+function renderTrack() {
   const el = document.getElementById('now-playing');
-  if (!el) return;
+  if (!el || !state.track) return;
 
   el.innerHTML =
-    `🎧 ${data.artists} - ` +
-    `<a class="no-favicon" href="${data.trackLink}" target="_blank" rel="noopener noreferrer">${data.name}</a>` +
-    ` | <span id="progress-time">${formatTime(progressNow())}</span>/${data.duration}`;
+    `🎧 ${state.track.artists} - ` +
+    `<a class="no-favicon" href="${state.track.trackLink}" target="_blank" rel="noopener noreferrer">${state.track.name}</a>` +
+    ` | <span id="progress-time">${time(progress())}</span>/${state.track.duration}`;
 }
 
 function setClock(data, start, end) {
-  let progress =
+  let p =
     Number(
       data.progressMs ??
-      parseTimeToSeconds(data.progress) * 1000
+      seconds(data.progress) * 1000
     ) || 0;
 
-  const serverTime = Number(data.serverTime) || 0;
+  const server = Number(data.serverTime) || 0;
 
-  if (serverTime) {
+  if (server) {
     const age =
-      (start + end) / 2 - serverTime;
+      (start + end) / 2 -
+      server;
 
     if (age > -1000 && age < 10000) {
-      progress += Math.max(0, age);
+      p += Math.max(0, age);
     }
   }
 
   if (data.durationMs) {
-    progress = Math.min(
-      progress,
-      Number(data.durationMs)
-    );
+    p = Math.min(p, Number(data.durationMs));
   }
 
-  state.progressMs = Math.max(0, progress);
-  state.progressAnchorMs = state.progressMs;
-  state.progressAnchorPerformance = performance.now();
-}
-
-function removePrompt() {
-  document.getElementById('music-consent')?.remove();
+  state.progress = Math.max(0, p);
+  state.anchor = state.progress;
+  state.anchorTime = performance.now();
 }
 
 function createPrompt() {
   if (
-    state.musicChoice !== null ||
-    state.musicPromptShown
+    state.choice !== null ||
+    state.promptShown
   ) {
     return;
   }
@@ -364,56 +349,35 @@ function createPrompt() {
   `;
 
   lyrics.insertAdjacentElement('afterend', prompt);
-  state.musicPromptShown = true;
+  state.promptShown = true;
 
-  syncMusicStyles();
+  lyricStyles();
 
-  prompt.addEventListener('click', async (event) => {
+  prompt.addEventListener('click', event => {
     const action = event.target?.dataset?.action;
     if (!action) return;
 
     if (action === 'no') {
-      state.musicChoice = 'no';
+      state.choice = 'no';
       prompt.remove();
       return;
     }
 
-    const clickedAt = performance.now();
-    const clickedProgress = progressNow();
-    const button = prompt.querySelector('[data-action="yes"]');
-
-    if (!state.youtube.player || !state.youtube.ready) {
-      button?.classList.add('disabled');
-
-      try {
-        await ensureYouTube();
-      } catch {
-        button?.classList.remove('disabled');
-        return;
-      }
-
-      button?.classList.remove('disabled');
-    }
-
-    if (
-      !state.isPlaying ||
-      !state.trackData?.videoId
-    ) {
+    if (!state.yt.ready) {
       return;
     }
 
-    state.musicChoice = 'yes';
+    const startMs = progress();
+    const startAt = performance.now();
+
+    state.choice = 'yes';
     prompt.remove();
 
-    const target =
-      clickedProgress +
-      (performance.now() - clickedAt);
-
-    playYouTube(target);
+    playYouTube(startMs, startAt);
   });
 }
 
-function createYouTubeContainer() {
+function ytContainer() {
   let el = document.getElementById(
     'youtube-background-player'
   );
@@ -429,73 +393,63 @@ function createYouTubeContainer() {
   return el;
 }
 
-function loadYouTubeAPI() {
+function loadYT() {
   if (window.YT?.Player) {
     return Promise.resolve(window.YT);
   }
 
-  if (state.youtube.apiPromise) {
-    return state.youtube.apiPromise;
+  if (state.yt.api) {
+    return state.yt.api;
   }
 
-  state.youtube.apiPromise = new Promise(
-    (resolve, reject) => {
-      const previous =
-        window.onYouTubeIframeAPIReady;
+  state.yt.api = new Promise((resolve, reject) => {
+    const old = window.onYouTubeIframeAPIReady;
 
-      window.onYouTubeIframeAPIReady = () => {
-        try {
-          previous?.();
-        } catch {}
+    window.onYouTubeIframeAPIReady = () => {
+      try {
+        old?.();
+      } catch {}
 
-        resolve(window.YT);
-      };
+      resolve(window.YT);
+    };
 
-      if (
-        document.querySelector(
-          'script[src="https://www.youtube.com/iframe_api"]'
-        )
-      ) {
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://www.youtube.com/iframe_api';
-      script.async = true;
-      script.onerror = reject;
-
-      document.head.appendChild(script);
+    if (
+      document.querySelector(
+        'script[src="https://www.youtube.com/iframe_api"]'
+      )
+    ) {
+      return;
     }
-  );
 
-  return state.youtube.apiPromise;
+    const script = document.createElement('script');
+    script.src = 'https://www.youtube.com/iframe_api';
+    script.async = true;
+    script.onerror = reject;
+
+    document.head.appendChild(script);
+  });
+
+  return state.yt.api;
 }
 
-async function ensureYouTube() {
-  if (
-    state.youtube.player &&
-    state.youtube.ready
-  ) {
-    return state.youtube.player;
+async function ensureYT() {
+  if (state.yt.player && state.yt.ready) {
+    return state.yt.player;
   }
 
-  await loadYouTubeAPI();
+  await loadYT();
 
-  if (
-    state.youtube.player &&
-    state.youtube.ready
-  ) {
-    return state.youtube.player;
+  if (state.yt.player && state.yt.ready) {
+    return state.yt.player;
   }
 
   return new Promise((resolve, reject) => {
     try {
-      state.youtube.player = new YT.Player(
-        createYouTubeContainer(),
+      state.yt.player = new YT.Player(
+        ytContainer(),
         {
           width: '200',
           height: '200',
-
           playerVars: {
             autoplay: 0,
             controls: 0,
@@ -506,109 +460,102 @@ async function ensureYouTube() {
             rel: 0,
             origin: location.origin
           },
-
           events: {
-            onReady: (event) => {
-              state.youtube.ready = true;
+            onReady: event => {
+              state.yt.ready = true;
 
               try {
-                const iframe =
-                  event.target.getIframe();
-
-                iframe.setAttribute(
-                  'playsinline',
-                  '1'
-                );
-
-                iframe.setAttribute(
-                  'allow',
-                  'autoplay'
-                );
+                const iframe = event.target.getIframe();
+                iframe.setAttribute('playsinline', '1');
+                iframe.setAttribute('allow', 'autoplay');
               } catch {}
 
               resolve(event.target);
             },
 
-            onStateChange: (event) => {
-              if (
-                event.data ===
-                YT.PlayerState.PLAYING
-              ) {
-                if (state.youtube.calibrate) {
-                  state.youtube.calibrate = false;
+            onStateChange: event => {
+              const s = state.yt.sync;
 
-                  try {
-                    event.target.seekTo(
-                      progressNow() / 1000,
-                      true
-                    );
-                  } catch {}
-                }
+              if (
+                event.data === YT.PlayerState.PLAYING &&
+                s
+              ) {
+                const target =
+                  s.ms +
+                  (performance.now() - s.at);
+
+                s.done = true;
+                state.yt.sync = null;
+
+                try {
+                  event.target.seekTo(
+                    target / 1000,
+                    true
+                  );
+                } catch {}
               }
 
               if (
-                event.data ===
-                YT.PlayerState.ENDED
+                event.data === YT.PlayerState.ENDED
               ) {
-                pollTrack(true);
+                poll(true);
               }
             }
           }
         }
       );
-    } catch (error) {
-      reject(error);
+    } catch (e) {
+      reject(e);
     }
   });
 }
 
-function playYouTube(startMs) {
-  const player = state.youtube.player;
+function playYouTube(ms, at) {
+  const player = state.yt.player;
   const videoId =
-    String(state.trackData?.videoId || '').trim();
+    String(state.track?.videoId || '').trim();
 
   if (
     !player ||
-    !state.youtube.ready ||
+    !state.yt.ready ||
     !videoId ||
-    !state.isPlaying
+    !state.playing
   ) {
     return;
   }
 
-  state.youtube.videoId = videoId;
-  state.youtube.calibrate = true;
+  state.yt.videoId = videoId;
+  state.yt.sync = { ms, at, done: false };
 
   try {
     player.loadVideoById({
       videoId,
-      startSeconds: Math.max(0, startMs) / 1000
+      startSeconds: ms / 1000
     });
   } catch {
-    state.youtube.calibrate = false;
+    state.yt.sync = null;
   }
 }
 
 function stopYouTube() {
-  state.youtube.calibrate = false;
+  state.yt.sync = null;
 
   try {
-    state.youtube.player?.pauseVideo();
+    state.yt.player?.pauseVideo();
   } catch {}
 }
 
-async function applyPayload(data, start, end) {
+async function apply(data, start, end) {
   ensureLyrics();
 
   if (!data || data.error) {
-    state.trackData = null;
-    state.lastTrackLink = '';
-    state.lyricsData = null;
-    state.currentLyricText = '';
-    state.pendingLyricText = null;
-    state.isPlaying = false;
+    state.track = null;
+    state.lastTrack = '';
+    state.lyrics = null;
+    state.lyric = '';
+    state.playing = false;
 
-    removePrompt();
+    document.getElementById('music-consent')?.remove();
     stopYouTube();
 
     const now = document.getElementById('now-playing');
@@ -618,147 +565,129 @@ async function applyPayload(data, start, end) {
         'bir şeyler ters gitti.';
     }
 
-    const front = document.getElementById('front');
-    if (front) front.textContent = '';
-
     return;
   }
 
-  const previousTrack =
-    state.lastTrackLink;
+  const oldTrack = state.lastTrack;
+  const oldPlaying = state.playing;
 
-  const previousPlaying =
-    state.isPlaying;
-
-  state.trackData = data;
-  state.isPlaying = Boolean(data.isPlaying);
-  state.durationMs =
+  state.track = data;
+  state.playing = !!data.isPlaying;
+  state.duration =
     Number(data.durationMs) ||
-    parseTimeToSeconds(data.duration) * 1000;
+    seconds(data.duration) * 1000;
 
   setClock(data, start, end);
 
-  if (data.trackLink !== previousTrack) {
-    state.lyricsToken++;
-    state.lyricsAbort?.abort();
+  if (data.trackLink !== oldTrack) {
+    state.lyricToken++;
+    state.lyricAbort?.abort();
 
-    state.lastTrackLink = data.trackLink;
-    state.lyricsData = null;
-    state.currentLyricText = '';
-    state.pendingLyricText = null;
+    state.lastTrack = data.trackLink;
+    state.lyrics = null;
+    state.lyric = '';
+    state.lyricPending = '';
 
     stopYouTube();
-    state.youtube.videoId = '';
+    state.yt.videoId = '';
 
-    showTrack(data);
+    renderTrack();
 
     const front = document.getElementById('front');
-    const bottom = document.getElementById('bottom');
-
     if (front) front.textContent = 'yükleniyor...';
-    if (bottom) bottom.textContent = '';
 
-    if (!state.isPlaying) {
-      removePrompt();
-    } else if (
-      state.musicChoice === null
-    ) {
+    if (!state.playing) {
+      document.getElementById('music-consent')?.remove();
+    } else if (state.choice === null) {
       createPrompt();
-    } else if (
-      state.musicChoice === 'yes' &&
-      data.videoId
-    ) {
-      playYouTube(progressNow());
+    } else if (state.choice === 'yes') {
+      playYouTube(progress(), performance.now());
     }
 
-    const token = state.lyricsToken;
+    const token = state.lyricToken;
 
-    fetchLyrics(data).then((lyrics) => {
+    getLyrics(data).then(lyrics => {
       if (
-        token !== state.lyricsToken ||
+        token !== state.lyricToken ||
         !lyrics
       ) {
         return;
       }
 
-      state.lyricsData = lyrics;
+      state.lyrics = lyrics;
       render();
     });
 
     return;
   }
 
-  if (!state.isPlaying) {
-    removePrompt();
+  if (!state.playing) {
+    document.getElementById('music-consent')?.remove();
     stopYouTube();
   } else {
     if (
-      state.musicChoice === null &&
-      !state.musicPromptShown
+      state.choice === null &&
+      !state.promptShown
     ) {
       createPrompt();
     }
 
     if (
-      state.musicChoice === 'yes' &&
-      !previousPlaying
+      state.choice === 'yes' &&
+      !oldPlaying
     ) {
-      playYouTube(progressNow());
+      playYouTube(
+        progress(),
+        performance.now()
+      );
     }
   }
 
   render();
 }
 
-async function pollTrack(force = false) {
-  if (state.pollInFlight) {
+async function poll(force = false) {
+  if (state.pollBusy) {
     state.pollAgain = true;
     return;
   }
 
-  state.pollInFlight = true;
+  state.pollBusy = true;
 
   const start = Date.now();
 
   try {
-    const data =
-      await fetchJSON(POLL_URL);
-
-    await applyPayload(
-      data,
+    await apply(
+      await fetchJSON(POLL_URL),
       start,
       Date.now()
     );
   } catch {
-    const now =
-      document.getElementById(
-        'now-playing'
-      );
-
-    if (now) {
-      now.textContent =
+    const el = document.getElementById('now-playing');
+    if (el) {
+      el.textContent =
         'bir şeyler ters gitti.';
     }
   }
 
-  state.pollInFlight = false;
+  state.pollBusy = false;
 
   if (state.pollAgain) {
     state.pollAgain = false;
-    pollTrack(true);
+    poll(true);
     return;
   }
 
   setTimeout(
-    () => pollTrack(false),
+    () => poll(false),
     force ? 250 : POLL_MS
   );
 }
 
-injectStyles();
+styles();
 ensureLyrics();
-ensureYouTube().catch(() => {});
-pollTrack(true);
+ensureYT().catch(() => {});
+poll(true);
 
 setInterval(render, 100);
 
@@ -766,7 +695,7 @@ document.addEventListener(
   'visibilitychange',
   () => {
     if (!document.hidden) {
-      pollTrack(true);
+      poll(true);
     }
   }
 );
