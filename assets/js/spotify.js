@@ -212,6 +212,37 @@ function renderLyrics() {
 
 const removePrompt = () => $('music-consent')?.remove();
 
+function removeStatus() {
+    $('music-status')?.remove();
+}
+
+function updateStatus() {
+    const el = $('music-status');
+    if (!el) return;
+    let txt = 'hazırlanıyor...';
+    const d = audio.duration;
+    if (isFinite(d) && d > 0 && audio.buffered.length) {
+        const p = Math.min(100, Math.round(audio.buffered.end(audio.buffered.length - 1) / d * 100));
+        txt += ` ${p}%`;
+    }
+    if (el.textContent !== txt) el.textContent = txt;
+}
+
+function showStatus() {
+    if (s.choice !== 'yes' || !s.playing || $('music-status')) return;
+    const el = Object.assign(document.createElement('div'), { id: 'music-status' });
+    el.style.textAlign = 'center';
+    const host = $('lyrics');
+    host ? host.after(el) : document.body.append(el);
+    updateStatus();
+}
+
+audio.addEventListener('loadstart', showStatus);
+audio.addEventListener('progress', updateStatus);
+audio.addEventListener('loadedmetadata', updateStatus);
+audio.addEventListener('durationchange', updateStatus);
+audio.addEventListener('playing', removeStatus);
+
 function showPrompt() {
     const host = $('lyrics');
     if (s.choice !== null || $('music-consent') || !s.playing || !host) return;
@@ -236,10 +267,12 @@ function showPrompt() {
         removePrompt();
 
         if (action === 'yes') {
+            showStatus();
             if (IOS) return startIOSAudio();
             return countdown();
         }
         cancelCountdown();
+        removeStatus();
         audio.pause();
     });
 }
@@ -351,6 +384,7 @@ function handleData(d, rtt = 0) {
     if (!d || d.error || d.type !== 'track') {
         Object.assign(s, { track: null, key: '', playing: false, lyrics: [], lyricIndex: -1, loadedId: '' });
         removePrompt();
+        removeStatus();
         cancelCountdown();
         audio.pause();
         if ($('now-playing')) $('now-playing').textContent = d?.error || '';
@@ -390,6 +424,7 @@ function handleData(d, rtt = 0) {
     if (!s.playing) {
         cancelCountdown();
         removePrompt();
+        removeStatus();
         return;
     }
 
@@ -426,6 +461,7 @@ setInterval(() => {
     const el = $('progress-time');
     if (el && s.track) el.textContent = fmt(getTruePosition());
     renderLyrics();
+    updateStatus();
     syncAudio();
 }, TICK_MS);
 
