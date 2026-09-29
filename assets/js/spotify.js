@@ -174,7 +174,11 @@ function showPrompt() {
         s.choice = action; 
         removePrompt(); 
 
-        if (action === 'yes') return countdown(); 
+        if (action === 'yes') {
+            audio.play().then(() => audio.pause()).catch(() => {});
+            return countdown(); 
+        }
+
         cancelCountdown(); 
         audio.pause(); 
     }); 
