@@ -4,16 +4,15 @@ const POLL_MS = 7000;
 const TICK_MS = 300;
 const OFFSET_MS = -100;
 
-// ---------- Platform ayarları ----------
 const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-const HARD_DRIFT    = IOS ? 2000 : 1000;  // bu kadar sapmada seek at (ms)
-const SEEK_COOLDOWN = IOS ? 6000 : 1500;  // iki seek arası minimum süre (ms)
-const SEEK_GRACE    = IOS ? 3000 : 800;   // seek sonrası drift'i yok say (ms)
-const SEEK_LEAD     = IOS ? 300 : 100;    // seek + oynatma gecikmesini telafi (ms)
-const CLOCK_SNAP    = 1500;               // saat bu kadar saparsa direkt atla (ms)
-const CLOCK_BLEND   = 0.3;                // küçük sapmalarda yumuşak düzeltme oranı
+const HARD_DRIFT = 2000;
+const SEEK_COOLDOWN = 6000;
+const SEEK_GRACE = 3000;
+const SEEK_LEAD = 300;
+const CLOCK_SNAP = 1500;
+const CLOCK_BLEND = 0.3;
 
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -23,9 +22,7 @@ const fmt = ms => {
     return `${(t / 60) | 0}:${String(t % 60).padStart(2, '0')}`;
 };
 
-// ---------- Ses elementi ----------
-const audio = new Audio();
-audio.preload = 'auto';
+const audio = Object.assign(new Audio(), { preload: 'auto' });
 audio.setAttribute('playsinline', '');
 
 const s = {
@@ -42,15 +39,8 @@ const s = {
     loadedId: ''
 };
 
-// Ses senkron durumu
-const ax = {
-    lastSeekAt: 0,
-    graceUntil: 0,
-    buffering: false,
-    retryAt: 0
-};
+const ax = { lastSeekAt: 0, graceUntil: 0, buffering: false, retryAt: 0 };
 
-// ---------- Saat ----------
 const clk = { pos: 0, at: 0, lastApiPos: -1 };
 
 const getTruePosition = () => {
@@ -59,39 +49,21 @@ const getTruePosition = () => {
     return Math.min(Math.max(0, p), s.duration || Infinity);
 };
 
-// API pozisyonunu saate yumuşak uygula (iOS'ta her sıçrama seek'e dönüşmesin)
 function syncClockWithAPI(apiPos) {
     if (apiPos === clk.lastApiPos) return;
     clk.lastApiPos = apiPos;
 
+    if (!IOS) {
+        clk.pos = apiPos;
+        clk.at = performance.now();
+        return;
+    }
+
     const expected = getTruePosition();
     const diff = apiPos - expected;
-
     clk.pos = Math.abs(diff) > CLOCK_SNAP ? apiPos : expected + diff * CLOCK_BLEND;
     clk.at = performance.now();
 }
-
-// ---------- Ses olayları ----------
-audio.addEventListener('waiting', () => { ax.buffering = true; });
-audio.addEventListener('stalled', () => { ax.buffering = true; });
-audio.addEventListener('playing', () => { ax.buffering = false; });
-audio.addEventListener('canplay', () => { ax.buffering = false; });
-
-audio.addEventListener('seeked', () => {
-    ax.graceUntil = performance.now() + SEEK_GRACE;
-});
-
-// iOS metadata gelmeden atanan currentTime'ı yok sayar: ilk konumlama burada
-audio.addEventListener('loadedmetadata', () => {
-    if (!(s.playing && s.choice === 'yes' && s.track?.videoId)) return;
-    seekTo(getTruePosition());
-});
-
-audio.addEventListener('error', () => {
-    // src'yi bir süre sonra yeniden dene
-    s.loadedId = '';
-    ax.retryAt = performance.now() + 3000;
-});
 
 function seekTo(ms) {
     try {
@@ -104,30 +76,35 @@ function seekTo(ms) {
 
 function loadSrc(id) {
     audio.src = `${AUDIO_API}?videoId=${encodeURIComponent(id)}`;
-    audio.load();
     s.loadedId = id;
     ax.lastSeekAt = 0;
     ax.graceUntil = 0;
     ax.buffering = true;
 }
 
-// Kullanıcı dokunuşu anında çağrılmalı: iOS bu elementi "kilitten çıkarır"
-function unlockAudio() {
+function startIOSAudio() {
     const id = s.track?.videoId;
     if (!id) return;
     if (s.loadedId !== id) loadSrc(id);
-
-    audio.muted = true;
-    const p = audio.play();
-    if (p && p.then) {
-        p.then(() => { audio.pause(); audio.muted = false; })
-         .catch(() => { audio.muted = false; });
-    } else {
-        audio.muted = false;
-    }
+    audio.play().catch(() => {});
 }
 
-// ---------- Arayüz ----------
+if (IOS) {
+    audio.addEventListener('waiting', () => { ax.buffering = true; });
+    audio.addEventListener('stalled', () => { ax.buffering = true; });
+    audio.addEventListener('playing', () => { ax.buffering = false; });
+    audio.addEventListener('canplay', () => { ax.buffering = false; });
+    audio.addEventListener('seeked', () => { ax.graceUntil = performance.now() + SEEK_GRACE; });
+    audio.addEventListener('loadedmetadata', () => {
+        if (!(s.playing && s.choice === 'yes' && s.track?.videoId)) return;
+        seekTo(getTruePosition());
+    });
+    audio.addEventListener('error', () => {
+        s.loadedId = '';
+        ax.retryAt = performance.now() + 3000;
+    });
+}
+
 function renderTrack() {
     const el = $('now-playing');
     if (!el || !s.track) return;
@@ -233,7 +210,6 @@ function renderLyrics() {
     if (i !== s.lyricIndex) showLyric(i);
 }
 
-// ---------- Onay ve geri sayım ----------
 const removePrompt = () => $('music-consent')?.remove();
 
 function showPrompt() {
@@ -260,7 +236,7 @@ function showPrompt() {
         removePrompt();
 
         if (action === 'yes') {
-            unlockAudio();          // dokunuşun içinde, iOS için şart
+            if (IOS) return startIOSAudio();
             return countdown();
         }
         cancelCountdown();
@@ -275,11 +251,13 @@ function cancelCountdown() {
 }
 
 async function countdown() {
+    if (IOS) return;
     if (!s.playing || s.choice !== 'yes' || !s.track?.videoId) return;
 
     cancelCountdown();
     const run = s.run;
     s.counting = true;
+    audio.pause();
 
     const el = Object.assign(document.createElement('div'), { id: 'music-countdown' });
     el.style.textAlign = 'center';
@@ -296,10 +274,45 @@ async function countdown() {
     s.counting = false;
 }
 
-// ---------- Ses senkronu ----------
-function syncAudio() {
-    const active = s.playing && s.choice === 'yes' && !!s.track?.videoId;
-    if (!active) {
+const wantAudio = () => s.playing && s.choice === 'yes' && !s.counting && !!s.track?.videoId;
+
+function syncAudioPC() {
+    if (!wantAudio()) {
+        if (!audio.paused) audio.pause();
+        return;
+    }
+
+    const id = s.track.videoId;
+    if (s.loadedId !== id) {
+        audio.src = `${AUDIO_API}?videoId=${encodeURIComponent(id)}`;
+        s.loadedId = id;
+    }
+
+    if (audio.readyState < 1 || audio.seeking) return;
+
+    const targetPos = getTruePosition();
+    const currentAudioPos = audio.currentTime * 1000;
+    const drift = targetPos - currentAudioPos;
+
+    if (audio.paused || Math.abs(drift) > 1000) {
+        audio.currentTime = Math.max(0, targetPos) / 1000;
+        audio.playbackRate = 1;
+        if (audio.paused) audio.play().catch(() => {});
+        return;
+    }
+
+    if (audio.readyState < 3) return;
+
+    if (Math.abs(drift) > 30) {
+        const correction = drift / 1000;
+        audio.playbackRate = Math.max(0.75, Math.min(1.25, 1 + correction));
+    } else {
+        audio.playbackRate = 1;
+    }
+}
+
+function syncAudioIOS() {
+    if (!wantAudio()) {
         if (!audio.paused) audio.pause();
         return;
     }
@@ -307,15 +320,9 @@ function syncAudio() {
     const now = performance.now();
     const id = s.track.videoId;
 
-    // Geri sayım sırasında da src'yi önden yükle
     if (s.loadedId !== id) {
         if (now < ax.retryAt) return;
         loadSrc(id);
-    }
-
-    if (s.counting) {
-        if (!audio.paused) audio.pause();
-        return;
     }
 
     if (audio.readyState < 1 || audio.seeking) return;
@@ -323,35 +330,21 @@ function syncAudio() {
     const target = getTruePosition();
     const drift = target - audio.currentTime * 1000;
 
-    // Duruyorsa: konumla ve başlat
     if (audio.paused) {
         if (Math.abs(drift) > 400) seekTo(target);
         audio.play().catch(() => {});
         return;
     }
 
-    // Tamponlama / seek sonrası / veri yetersiz: hiçbir şeye dokunma
     if (ax.buffering || audio.readyState < 3 || now < ax.graceUntil) return;
 
-    const abs = Math.abs(drift);
-
-    // Sadece büyük sapmada, cooldown ile seek
-    if (abs > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
+    if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
         seekTo(target);
-        return;
-    }
-
-    // playbackRate ince ayarı sadece masaüstünde; iOS'ta hiç dokunma
-    if (!IOS) {
-        if (abs > 60) {
-            audio.playbackRate = Math.max(0.97, Math.min(1.03, 1 + drift / 20000));
-        } else if (audio.playbackRate !== 1) {
-            audio.playbackRate = 1;
-        }
     }
 }
 
-// ---------- Veri ----------
+const syncAudio = IOS ? syncAudioIOS : syncAudioPC;
+
 function handleData(d, rtt = 0) {
     ensureLyrics();
 
@@ -371,9 +364,8 @@ function handleData(d, rtt = 0) {
     s.playing = !!d.isPlaying;
     s.duration = Number(d.durationMs) || toSec(d.duration) * 1000;
 
-    // İstek gecikmesinin yarısını ekle: yanıt geldiğinde pozisyon o kadar ilerlemiştir
     let rawApiPos = Number(d.progressMs ?? toSec(d.progress) * 1000) || 0;
-    rawApiPos = Math.max(0, rawApiPos - OFFSET_MS + (s.playing ? rtt / 2 : 0));
+    rawApiPos = Math.max(0, rawApiPos - OFFSET_MS + (IOS && s.playing ? rtt / 2 : 0));
 
     if (changed || !s.playing) {
         clk.pos = rawApiPos;
@@ -419,9 +411,7 @@ async function poll() {
         const r = await fetch(`${POLL_URL}?t=${Date.now()}`, { cache: 'no-store', credentials: 'omit' });
         if (!r.ok) throw new Error(`API ${r.status}`);
         const data = await r.json();
-        const rtt = performance.now() - t0;
-
-        handleData(data, rtt);
+        handleData(data, performance.now() - t0);
     } catch (e) { }
 
     busy = false;
@@ -439,7 +429,6 @@ setInterval(() => {
     syncAudio();
 }, TICK_MS);
 
-// Arka plandan dönünce hemen yeniden senkronla (iOS zamanlayıcıları kısıyor)
 const resume = () => {
     if (document.hidden) return;
     ax.graceUntil = 0;
