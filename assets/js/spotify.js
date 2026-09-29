@@ -1,5 +1,5 @@
 const POLL_URL = 'https://akakadir.vercel.app/api/now-playing'; 
-const AUDIO_API = 'https://cokzahmetlibisi-9f4k7m2q0.tail1bde29.ts.net/audio/api/audio'; 
+const AUDIO_API = 'https://api.akakadir.art/api/audio'; 
 const POLL_MS = 7000; 
 const TICK_MS = 300; 
 const OFFSET_MS = -100; 
