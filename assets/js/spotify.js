@@ -32,12 +32,16 @@ const s = {
     duration: 0,
     lyrics: [],
     lyricIndex: -1,
+    currentLyric: '',
+    pendingLyric: null,
     lyricAbort: null,
     choice: null,
     run: 0,
     counting: false,
     loadedId: ''
 };
+
+let animTimer;
 
 const ax = { lastSeekAt: 0, graceUntil: 0, buffering: false, retryAt: 0 };
 
@@ -179,18 +183,38 @@ async function loadLyrics(d) {
     renderLyrics();
 }
 
-function showLyric(i) {
+function getCurrentLyric(lines, currentMs) {
+    let found = null;
+    for (const line of lines) {
+        if (line.time > currentMs) break;
+        found = line.text;
+    }
+    return found || null;
+}
+
+function resetLyricAnim() {
+    clearTimeout(animTimer);
+    s.currentLyric = '';
+    s.pendingLyric = null;
+    $('cube')?.classList.remove('animate', 'show-next');
+    if ($('bottom')) $('bottom').textContent = '';
+}
+
+function triggerCubeAnimation(newText) {
+    if (s.currentLyric === newText || s.pendingLyric === newText) return;
     const cube = $('cube'), front = $('front'), bottom = $('bottom');
     if (!cube || !front || !bottom) return;
 
-    front.textContent = s.lyrics[i]?.text || '';
-    bottom.textContent = s.lyrics[i + 1]?.text || '';
+    s.pendingLyric = newText;
+    bottom.textContent = newText;
+    cube.classList.add('animate', 'show-next');
 
-    cube.classList.remove('animate', 'show-next');
-    void cube.offsetWidth;
-    cube.classList.add('animate');
-
-    s.lyricIndex = i;
+    animTimer = setTimeout(() => {
+        cube.classList.remove('animate', 'show-next');
+        front.textContent = newText;
+        s.currentLyric = newText;
+        s.pendingLyric = null;
+    }, 600);
 }
 
 function renderLyrics() {
@@ -203,11 +227,7 @@ function renderLyrics() {
     }
     if (!s.lyrics.length) return;
 
-    const now = getTruePosition();
-    let i = s.lyrics.length - 1;
-    while (i > 0 && now < s.lyrics[i].time) i--;
-
-    if (i !== s.lyricIndex) showLyric(i);
+    triggerCubeAnimation(getCurrentLyric(s.lyrics, getTruePosition()) || '...');
 }
 
 const removePrompt = () => $('music-consent')?.remove();
@@ -387,6 +407,8 @@ function handleData(d, rtt = 0) {
         removeStatus();
         cancelCountdown();
         audio.pause();
+        resetLyricAnim();
+        if ($('front')) $('front').textContent = '';
         if ($('now-playing')) $('now-playing').textContent = d?.error || '';
         return;
     }
@@ -417,6 +439,7 @@ function handleData(d, rtt = 0) {
         ax.buffering = false;
         ax.retryAt = 0;
         cancelCountdown();
+        resetLyricAnim();
         if ($('front')) $('front').textContent = 'yükleniyor...';
         loadLyrics(d);
     }
