@@ -1,277 +1,380 @@
-const POLL_URL = 'https://akakadir.vercel.app/api/now-playing'; 
-const AUDIO_API = 'https://api.akakadir.art/api/audio'; 
-const POLL_MS = 7000; 
-const TICK_MS = 300; 
-const OFFSET_MS = -100; 
+const POLL_URL = 'https://akakadir.vercel.app/api/now-playing';
+const AUDIO_API = 'https://api.akakadir.art/api/audio';
+const POLL_MS = 7000;
+const TICK_MS = 300;
+const OFFSET_MS = -100;
 
-const $ = id => document.getElementById(id); 
-const sleep = ms => new Promise(r => setTimeout(r, ms)); 
-const toSec = v => String(v || '0:00').split(':').reduce((a, b) => a * 60 + Number(b), 0); 
-const fmt = ms => { 
-    const t = Math.max(0, (ms / 1000) | 0); 
-    return `${(t / 60) | 0}:${String(t % 60).padStart(2, '0')}`; 
-}; 
+// ---------- Platform ayarları ----------
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-const audio = Object.assign(new Audio(), { preload: 'auto' }); 
+const HARD_DRIFT    = IOS ? 2000 : 1000;  // bu kadar sapmada seek at (ms)
+const SEEK_COOLDOWN = IOS ? 6000 : 1500;  // iki seek arası minimum süre (ms)
+const SEEK_GRACE    = IOS ? 3000 : 800;   // seek sonrası drift'i yok say (ms)
+const SEEK_LEAD     = IOS ? 300 : 100;    // seek + oynatma gecikmesini telafi (ms)
+const CLOCK_SNAP    = 1500;               // saat bu kadar saparsa direkt atla (ms)
+const CLOCK_BLEND   = 0.3;                // küçük sapmalarda yumuşak düzeltme oranı
 
-const s = { 
-    track: null, 
-    key: '', 
-    playing: false, 
-    duration: 0, 
-    lyrics: [], 
-    lyricIndex: -1, 
-    lyricAbort: null, 
-    choice: null, 
-    run: 0, 
-    counting: false, 
-    loadedId: '' 
-}; 
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const toSec = v => String(v || '0:00').split(':').reduce((a, b) => a * 60 + Number(b), 0);
+const fmt = ms => {
+    const t = Math.max(0, (ms / 1000) | 0);
+    return `${(t / 60) | 0}:${String(t % 60).padStart(2, '0')}`;
+};
 
-const clk = { pos: 0, at: 0, lastApiPos: -1 }; 
+// ---------- Ses elementi ----------
+const audio = new Audio();
+audio.preload = 'auto';
+audio.setAttribute('playsinline', '');
 
-const getTruePosition = () => { 
+const s = {
+    track: null,
+    key: '',
+    playing: false,
+    duration: 0,
+    lyrics: [],
+    lyricIndex: -1,
+    lyricAbort: null,
+    choice: null,
+    run: 0,
+    counting: false,
+    loadedId: ''
+};
+
+// Ses senkron durumu
+const ax = {
+    lastSeekAt: 0,
+    graceUntil: 0,
+    buffering: false,
+    retryAt: 0
+};
+
+// ---------- Saat ----------
+const clk = { pos: 0, at: 0, lastApiPos: -1 };
+
+const getTruePosition = () => {
     if (!s.playing) return clk.pos;
-    const p = clk.pos + (performance.now() - clk.at); 
-    return Math.min(Math.max(0, p), s.duration || Infinity); 
-}; 
+    const p = clk.pos + (performance.now() - clk.at);
+    return Math.min(Math.max(0, p), s.duration || Infinity);
+};
 
+// API pozisyonunu saate yumuşak uygula (iOS'ta her sıçrama seek'e dönüşmesin)
 function syncClockWithAPI(apiPos) {
-    if (apiPos === clk.lastApiPos) return; 
-    
+    if (apiPos === clk.lastApiPos) return;
     clk.lastApiPos = apiPos;
-    clk.pos = apiPos; 
-    clk.at = performance.now(); 
+
+    const expected = getTruePosition();
+    const diff = apiPos - expected;
+
+    clk.pos = Math.abs(diff) > CLOCK_SNAP ? apiPos : expected + diff * CLOCK_BLEND;
+    clk.at = performance.now();
 }
 
-function renderTrack() { 
-    const el = $('now-playing'); 
-    if (!el || !s.track) return; 
+// ---------- Ses olayları ----------
+audio.addEventListener('waiting', () => { ax.buffering = true; });
+audio.addEventListener('stalled', () => { ax.buffering = true; });
+audio.addEventListener('playing', () => { ax.buffering = false; });
+audio.addEventListener('canplay', () => { ax.buffering = false; });
 
-    const { artists, name, trackLink, duration } = s.track; 
+audio.addEventListener('seeked', () => {
+    ax.graceUntil = performance.now() + SEEK_GRACE;
+});
 
-    const link = Object.assign(document.createElement('a'), { 
-        className: 'no-favicon', 
-        href: trackLink || '#', 
-        target: '_blank', 
-        rel: 'noopener noreferrer', 
-        textContent: name || 'Bilinmeyen şarkı' 
-    }); 
+// iOS metadata gelmeden atanan currentTime'ı yok sayar: ilk konumlama burada
+audio.addEventListener('loadedmetadata', () => {
+    if (!(s.playing && s.choice === 'yes' && s.track?.videoId)) return;
+    seekTo(getTruePosition());
+});
 
-    const time = Object.assign(document.createElement('span'), { 
-        id: 'progress-time', 
-        textContent: fmt(getTruePosition()) 
-    }); 
+audio.addEventListener('error', () => {
+    // src'yi bir süre sonra yeniden dene
+    s.loadedId = '';
+    ax.retryAt = performance.now() + 3000;
+});
 
-    el.replaceChildren( 
-        `🎧 ${artists || 'Bilinmeyen sanatçı'} - `, 
-        link, 
-        ' | ', 
-        time, 
-        `/${duration || fmt(s.duration)}` 
-    ); 
-} 
+function seekTo(ms) {
+    try {
+        audio.currentTime = Math.max(0, ms + SEEK_LEAD) / 1000;
+    } catch (e) { return; }
+    const now = performance.now();
+    ax.lastSeekAt = now;
+    ax.graceUntil = now + SEEK_GRACE;
+}
 
-function ensureLyrics() { 
-    const el = $('lyrics'); 
-    if (!el || $('cube')) return; 
-    el.innerHTML = ` 
-        <div class="cube" id="cube"> 
-            <div class="side-front" id="front"></div> 
-            <div class="side-bottom" id="bottom"></div> 
-        </div>`; 
-} 
+function loadSrc(id) {
+    audio.src = `${AUDIO_API}?videoId=${encodeURIComponent(id)}`;
+    audio.load();
+    s.loadedId = id;
+    ax.lastSeekAt = 0;
+    ax.graceUntil = 0;
+    ax.buffering = true;
+}
 
-const parseLyrics = text => 
-    [...text.matchAll(/\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g)] 
-        .map(([, m, sc, f, t]) => ({ 
-            time: m * 60000 + sc * 1000 + (f ? Number(`0.${f}`) * 1000 : 0), 
-            text: t.trim() 
-        })) 
-        .sort((a, b) => a.time - b.time); 
+// Kullanıcı dokunuşu anında çağrılmalı: iOS bu elementi "kilitten çıkarır"
+function unlockAudio() {
+    const id = s.track?.videoId;
+    if (!id) return;
+    if (s.loadedId !== id) loadSrc(id);
 
-async function loadLyrics(d) { 
-    s.lyricAbort?.abort(); 
-    const ctrl = (s.lyricAbort = new AbortController()); 
-    const key = s.key; 
+    audio.muted = true;
+    const p = audio.play();
+    if (p && p.then) {
+        p.then(() => { audio.pause(); audio.muted = false; })
+         .catch(() => { audio.muted = false; });
+    } else {
+        audio.muted = false;
+    }
+}
 
-    const params = new URLSearchParams({ 
-        artist_name: d.artists || '', 
-        track_name: d.name || '', 
-        album_name: d.album || '', 
-        duration: Math.round((Number(d.durationMs) || toSec(d.duration) * 1000) / 1000) 
-    }); 
+// ---------- Arayüz ----------
+function renderTrack() {
+    const el = $('now-playing');
+    if (!el || !s.track) return;
 
-    let lyrics; 
-    try { 
-        const r = await fetch(`https://lrclib.net/api/get?${params}`, { signal: ctrl.signal }); 
-        if (!r.ok) throw new Error(r.status); 
-        const { syncedLyrics } = await r.json(); 
-        lyrics = syncedLyrics ? parseLyrics(syncedLyrics) : { error: true }; 
-    } catch (e) { 
-        if (e.name === 'AbortError') return; 
-        lyrics = { error: true }; 
-    } 
+    const { artists, name, trackLink, duration } = s.track;
 
-    if (key !== s.key) return; 
-    s.lyrics = lyrics; 
-    renderLyrics(); 
-} 
+    const link = Object.assign(document.createElement('a'), {
+        className: 'no-favicon',
+        href: trackLink || '#',
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        textContent: name || 'Bilinmeyen şarkı'
+    });
 
-function showLyric(i) { 
-    const cube = $('cube'), front = $('front'), bottom =$('bottom'); 
-    if (!cube || !front || !bottom) return; 
+    const time = Object.assign(document.createElement('span'), {
+        id: 'progress-time',
+        textContent: fmt(getTruePosition())
+    });
 
-    front.textContent = s.lyrics[i]?.text || ''; 
-    bottom.textContent = s.lyrics[i + 1]?.text || ''; 
+    el.replaceChildren(
+        `🎧 ${artists || 'Bilinmeyen sanatçı'} - `,
+        link,
+        ' | ',
+        time,
+        `/${duration || fmt(s.duration)}`
+    );
+}
 
-    cube.classList.remove('animate', 'show-next'); 
-    void cube.offsetWidth; 
-    cube.classList.add('animate'); 
+function ensureLyrics() {
+    const el = $('lyrics');
+    if (!el || $('cube')) return;
+    el.innerHTML = `
+        <div class="cube" id="cube">
+            <div class="side-front" id="front"></div>
+            <div class="side-bottom" id="bottom"></div>
+        </div>`;
+}
 
-    s.lyricIndex = i; 
-} 
+const parseLyrics = text =>
+    [...text.matchAll(/\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g)]
+        .map(([, m, sc, f, t]) => ({
+            time: m * 60000 + sc * 1000 + (f ? Number(`0.${f}`) * 1000 : 0),
+            text: t.trim()
+        }))
+        .sort((a, b) => a.time - b.time);
 
-function renderLyrics() { 
-    const front = $('front'); 
-    if (!front || !s.track) return; 
+async function loadLyrics(d) {
+    s.lyricAbort?.abort();
+    const ctrl = (s.lyricAbort = new AbortController());
+    const key = s.key;
 
-    if (s.lyrics.error) { 
-        front.textContent = 'bu şarkı sözleri, henüz eşzamanlı değil.'; 
-        return; 
-    } 
-    if (!s.lyrics.length) return; 
+    const params = new URLSearchParams({
+        artist_name: d.artists || '',
+        track_name: d.name || '',
+        album_name: d.album || '',
+        duration: Math.round((Number(d.durationMs) || toSec(d.duration) * 1000) / 1000)
+    });
 
-    const now = getTruePosition(); 
-    let i = s.lyrics.length - 1; 
-    while (i > 0 && now < s.lyrics[i].time) i--; 
+    let lyrics;
+    try {
+        const r = await fetch(`https://lrclib.net/api/get?${params}`, { signal: ctrl.signal });
+        if (!r.ok) throw new Error(r.status);
+        const { syncedLyrics } = await r.json();
+        lyrics = syncedLyrics ? parseLyrics(syncedLyrics) : { error: true };
+    } catch (e) {
+        if (e.name === 'AbortError') return;
+        lyrics = { error: true };
+    }
 
-    if (i !== s.lyricIndex) showLyric(i); 
-} 
+    if (key !== s.key) return;
+    s.lyrics = lyrics;
+    renderLyrics();
+}
 
-const removePrompt = () => $('music-consent')?.remove(); 
+function showLyric(i) {
+    const cube = $('cube'), front = $('front'), bottom = $('bottom');
+    if (!cube || !front || !bottom) return;
 
-function showPrompt() { 
-    const host = $('lyrics'); 
-    if (s.choice !== null || $('music-consent') || !s.playing || !host) return; 
+    front.textContent = s.lyrics[i]?.text || '';
+    bottom.textContent = s.lyrics[i + 1]?.text || '';
 
-    const el = document.createElement('div'); 
-    el.id = 'music-consent'; 
-    el.style.textAlign = 'center'; 
-    el.innerHTML = ` 
-        <div>beraber dinleyelim mi?</div> 
-        <div> 
-            <span data-action="yes" style="cursor:pointer">olur</span> 
-            <span> / </span> 
-            <span data-action="no" style="cursor:pointer">yok ya</span> 
-        </div>`; 
-    host.after(el); 
+    cube.classList.remove('animate', 'show-next');
+    void cube.offsetWidth;
+    cube.classList.add('animate');
 
-    el.addEventListener('click', ({ target }) => { 
-        const action = target.dataset?.action; 
-        if (!action) return; 
+    s.lyricIndex = i;
+}
 
-        s.choice = action; 
-        removePrompt(); 
+function renderLyrics() {
+    const front = $('front');
+    if (!front || !s.track) return;
+
+    if (s.lyrics.error) {
+        front.textContent = 'bu şarkı sözleri, henüz eşzamanlı değil.';
+        return;
+    }
+    if (!s.lyrics.length) return;
+
+    const now = getTruePosition();
+    let i = s.lyrics.length - 1;
+    while (i > 0 && now < s.lyrics[i].time) i--;
+
+    if (i !== s.lyricIndex) showLyric(i);
+}
+
+// ---------- Onay ve geri sayım ----------
+const removePrompt = () => $('music-consent')?.remove();
+
+function showPrompt() {
+    const host = $('lyrics');
+    if (s.choice !== null || $('music-consent') || !s.playing || !host) return;
+
+    const el = document.createElement('div');
+    el.id = 'music-consent';
+    el.style.textAlign = 'center';
+    el.innerHTML = `
+        <div>beraber dinleyelim mi?</div>
+        <div>
+            <span data-action="yes" style="cursor:pointer">olur</span>
+            <span> / </span>
+            <span data-action="no" style="cursor:pointer">yok ya</span>
+        </div>`;
+    host.after(el);
+
+    el.addEventListener('click', ({ target }) => {
+        const action = target.dataset?.action;
+        if (!action) return;
+
+        s.choice = action;
+        removePrompt();
 
         if (action === 'yes') {
-            audio.play().then(() => audio.pause()).catch(() => {});
-            return countdown(); 
+            unlockAudio();          // dokunuşun içinde, iOS için şart
+            return countdown();
         }
+        cancelCountdown();
+        audio.pause();
+    });
+}
 
-        cancelCountdown(); 
-        audio.pause(); 
-    }); 
-} 
+function cancelCountdown() {
+    s.run++;
+    s.counting = false;
+    $('music-countdown')?.remove();
+}
 
-function cancelCountdown() { 
-    s.run++; 
-    s.counting = false; 
-    $('music-countdown')?.remove(); 
-} 
+async function countdown() {
+    if (!s.playing || s.choice !== 'yes' || !s.track?.videoId) return;
 
-async function countdown() { 
-    if (!s.playing || s.choice !== 'yes' || !s.track?.videoId) return; 
+    cancelCountdown();
+    const run = s.run;
+    s.counting = true;
 
-    cancelCountdown(); 
-    const run = s.run; 
-    s.counting = true; 
-    audio.pause(); 
+    const el = Object.assign(document.createElement('div'), { id: 'music-countdown' });
+    el.style.textAlign = 'center';
+    const host = $('lyrics');
+    host ? host.after(el) : document.body.append(el);
 
-    const el = Object.assign(document.createElement('div'), { id: 'music-countdown' }); 
-    el.style.textAlign = 'center'; 
-    const host = $('lyrics'); 
-    host ? host.after(el) : document.body.append(el); 
-
-    for (const n of [3, 2, 1]) { 
-        el.textContent = n; 
-        await sleep(1000); 
-        if (run !== s.run) return; 
-    } 
-
-    el.remove(); 
-    s.counting = false; 
-} 
-
-const wantAudio = () => s.playing && s.choice === 'yes' && !s.counting && !!s.track?.videoId; 
-
-function syncAudio() { 
-    if (!wantAudio()) { 
-        if (!audio.paused) audio.pause(); 
-        return; 
-    } 
-
-    const id = s.track.videoId; 
-    if (s.loadedId !== id) { 
-        audio.src = `${AUDIO_API}?videoId=${encodeURIComponent(id)}`; 
-        s.loadedId = id; 
-    } 
-
-    if (audio.readyState < 1 || audio.seeking) return; 
-
-    const targetPos = getTruePosition(); 
-    const currentAudioPos = audio.currentTime * 1000;
-    const drift = targetPos - currentAudioPos; 
-
-    if (audio.paused || Math.abs(drift) > 1000) { 
-        audio.currentTime = Math.max(0, targetPos) / 1000; 
-        audio.playbackRate = 1; 
-        if (audio.paused) audio.play().catch(() => {}); 
-        return; 
-    } 
-
-    if (audio.readyState < 3) return; 
-
-    if (Math.abs(drift) > 30) { 
-        const correction = drift / 1000; 
-        audio.playbackRate = Math.max(0.75, Math.min(1.25, 1 + correction)); 
-    } else {
-        audio.playbackRate = 1; 
+    for (const n of [3, 2, 1]) {
+        el.textContent = n;
+        await sleep(1000);
+        if (run !== s.run) return;
     }
-} 
 
-function handleData(d) { 
-    ensureLyrics(); 
+    el.remove();
+    s.counting = false;
+}
 
-    if (!d || d.error || d.type !== 'track') { 
-        Object.assign(s, { track: null, key: '', playing: false, lyrics: [], lyricIndex: -1, loadedId: '' }); 
-        removePrompt(); 
-        cancelCountdown(); 
-        audio.pause(); 
-        if ($('now-playing'))$('now-playing').textContent = d?.error || ''; 
-        return; 
-    } 
+// ---------- Ses senkronu ----------
+function syncAudio() {
+    const active = s.playing && s.choice === 'yes' && !!s.track?.videoId;
+    if (!active) {
+        if (!audio.paused) audio.pause();
+        return;
+    }
 
-    const key = [d.trackLink, d.videoId, d.name, d.artists].join('|'); 
-    const changed = key !== s.key; 
+    const now = performance.now();
+    const id = s.track.videoId;
 
-    s.track = d; 
-    s.playing = !!d.isPlaying; 
-    s.duration = Number(d.durationMs) || toSec(d.duration) * 1000; 
+    // Geri sayım sırasında da src'yi önden yükle
+    if (s.loadedId !== id) {
+        if (now < ax.retryAt) return;
+        loadSrc(id);
+    }
 
+    if (s.counting) {
+        if (!audio.paused) audio.pause();
+        return;
+    }
+
+    if (audio.readyState < 1 || audio.seeking) return;
+
+    const target = getTruePosition();
+    const drift = target - audio.currentTime * 1000;
+
+    // Duruyorsa: konumla ve başlat
+    if (audio.paused) {
+        if (Math.abs(drift) > 400) seekTo(target);
+        audio.play().catch(() => {});
+        return;
+    }
+
+    // Tamponlama / seek sonrası / veri yetersiz: hiçbir şeye dokunma
+    if (ax.buffering || audio.readyState < 3 || now < ax.graceUntil) return;
+
+    const abs = Math.abs(drift);
+
+    // Sadece büyük sapmada, cooldown ile seek
+    if (abs > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
+        seekTo(target);
+        return;
+    }
+
+    // playbackRate ince ayarı sadece masaüstünde; iOS'ta hiç dokunma
+    if (!IOS) {
+        if (abs > 60) {
+            audio.playbackRate = Math.max(0.97, Math.min(1.03, 1 + drift / 20000));
+        } else if (audio.playbackRate !== 1) {
+            audio.playbackRate = 1;
+        }
+    }
+}
+
+// ---------- Veri ----------
+function handleData(d, rtt = 0) {
+    ensureLyrics();
+
+    if (!d || d.error || d.type !== 'track') {
+        Object.assign(s, { track: null, key: '', playing: false, lyrics: [], lyricIndex: -1, loadedId: '' });
+        removePrompt();
+        cancelCountdown();
+        audio.pause();
+        if ($('now-playing')) $('now-playing').textContent = d?.error || '';
+        return;
+    }
+
+    const key = [d.trackLink, d.videoId, d.name, d.artists].join('|');
+    const changed = key !== s.key;
+
+    s.track = d;
+    s.playing = !!d.isPlaying;
+    s.duration = Number(d.durationMs) || toSec(d.duration) * 1000;
+
+    // İstek gecikmesinin yarısını ekle: yanıt geldiğinde pozisyon o kadar ilerlemiştir
     let rawApiPos = Number(d.progressMs ?? toSec(d.progress) * 1000) || 0;
-    rawApiPos = Math.max(0, rawApiPos - OFFSET_MS);
-    
+    rawApiPos = Math.max(0, rawApiPos - OFFSET_MS + (s.playing ? rtt / 2 : 0));
+
     if (changed || !s.playing) {
         clk.pos = rawApiPos;
         clk.at = performance.now();
@@ -280,56 +383,68 @@ function handleData(d) {
         syncClockWithAPI(rawApiPos);
     }
 
-    renderTrack(); 
+    renderTrack();
 
-    if (changed) { 
-        Object.assign(s, { key, lyrics: [], lyricIndex: -1, loadedId: '' }); 
-        audio.pause(); 
-        cancelCountdown(); 
-        if ($('front'))$('front').textContent = 'yükleniyor...'; 
-        loadLyrics(d); 
-    } 
+    if (changed) {
+        Object.assign(s, { key, lyrics: [], lyricIndex: -1, loadedId: '' });
+        audio.pause();
+        ax.buffering = false;
+        ax.retryAt = 0;
+        cancelCountdown();
+        if ($('front')) $('front').textContent = 'yükleniyor...';
+        loadLyrics(d);
+    }
 
-    if (!s.playing) { 
-        cancelCountdown(); 
-        removePrompt(); 
-        return; 
-    } 
+    if (!s.playing) {
+        cancelCountdown();
+        removePrompt();
+        return;
+    }
 
-    if (s.choice === null) showPrompt(); 
-    else if (s.choice === 'yes' && changed) countdown(); 
+    if (s.choice === null) showPrompt();
+    else if (s.choice === 'yes' && changed) countdown();
 
-    renderLyrics(); 
-} 
+    renderLyrics();
+}
 
-let busy = false; 
-let timer; 
+let busy = false;
+let timer;
 
-async function poll() { 
-    if (busy) return; 
-    busy = true; 
+async function poll() {
+    if (busy) return;
+    busy = true;
 
-    try { 
-        const r = await fetch(`${POLL_URL}?t=${Date.now()}`, { cache: 'no-store', credentials: 'omit' }); 
-        if (!r.ok) throw new Error(`API ${r.status}`); 
+    try {
+        const t0 = performance.now();
+        const r = await fetch(`${POLL_URL}?t=${Date.now()}`, { cache: 'no-store', credentials: 'omit' });
+        if (!r.ok) throw new Error(`API ${r.status}`);
         const data = await r.json();
-        
-        handleData(data); 
-    } catch (e) { } 
+        const rtt = performance.now() - t0;
 
-    busy = false; 
-    clearTimeout(timer); 
-    timer = setTimeout(poll, POLL_MS); 
-} 
+        handleData(data, rtt);
+    } catch (e) { }
 
-ensureLyrics(); 
-poll(); 
+    busy = false;
+    clearTimeout(timer);
+    timer = setTimeout(poll, POLL_MS);
+}
 
-setInterval(() => { 
-    const el = $('progress-time'); 
-    if (el && s.track) el.textContent = fmt(getTruePosition()); 
-    renderLyrics(); 
-    syncAudio(); 
-}, TICK_MS); 
+ensureLyrics();
+poll();
 
-document.addEventListener('visibilitychange', () => !document.hidden && poll());
+setInterval(() => {
+    const el = $('progress-time');
+    if (el && s.track) el.textContent = fmt(getTruePosition());
+    renderLyrics();
+    syncAudio();
+}, TICK_MS);
+
+// Arka plandan dönünce hemen yeniden senkronla (iOS zamanlayıcıları kısıyor)
+const resume = () => {
+    if (document.hidden) return;
+    ax.graceUntil = 0;
+    ax.lastSeekAt = 0;
+    poll();
+};
+document.addEventListener('visibilitychange', resume);
+window.addEventListener('pageshow', resume);
