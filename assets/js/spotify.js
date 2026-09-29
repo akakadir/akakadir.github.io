@@ -1,180 +1,331 @@
-const POLL_URL = 'https://akakadir.vercel.app/api/now-playing';
-const POLL_MS = 5000;
-const SYNC_TOLERANCE_MS = 2500;
+const POLL_URL = 'https://akakadir.vercel.app/api/now-playing'; 
+const AUDIO_API = 'https://cokzahmetlibisi-9f4k7m2q0.tail1bde29.ts.net/audio/api/audio'; 
+const POLL_MS = 7000; 
+const TICK_MS = 300; 
+const OFFSET_MS = -100; 
 
-const state = {
-  lastTrackLink: '',
-  lyricsData: null,
-  currentLyricText: '',
-  pendingLyricText: null,
-  trackData: null,
-  progressMs: 0,
-  durationMs: 0,
-  isPlaying: false,
-  lastTickAt: performance.now(),
-  lyricsToken: 0
-};
+const $ = id => document.getElementById(id); 
+const sleep = ms => new Promise(r => setTimeout(r, ms)); 
+const toSec = v => String(v || '0:00').split(':').reduce((a, b) => a * 60 + Number(b), 0); 
+const fmt = ms => { 
+    const t = Math.max(0, (ms / 1000) | 0); 
+    return `${(t / 60) | 0}:${String(t % 60).padStart(2, '0')}`; 
+}; 
 
-const fetchJSON = (url) => fetch(url).then((r) => r.json());
-const parseTimeToSeconds = (t) => t.split(':').map(Number).reduce((m, s) => m * 60 + s);
+const audio = Object.assign(new Audio(), { preload: 'auto' }); 
 
-const formatTime = (ms) => {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-};
+const s = { 
+    track: null, 
+    key: '', 
+    playing: false, 
+    duration: 0, 
+    lyrics: [], 
+    lyricIndex: -1, 
+    lyricAbort: null, 
+    choice: null, 
+    run: 0, 
+    counting: false, 
+    loadedId: '' 
+}; 
 
-function parseSyncedLyrics(synced) {
-  return [...synced.matchAll(/\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g)]
-    .map(([, m, s, frac, text]) => ({
-      time: Number(m) * 60000 + Number(s) * 1000 + (frac ? Number(`0.${frac}`) * 1000 : 0),
-      text: text.trim()
-    }))
-    .sort((a, b) => a.time - b.time);
+const clk = { pos: 0, at: 0, lastApiPos: -1 }; 
+
+const getTruePosition = () => { 
+    if (!s.playing) return clk.pos;
+    const p = clk.pos + (performance.now() - clk.at); 
+    return Math.min(Math.max(0, p), s.duration || Infinity); 
+}; 
+
+function syncClockWithAPI(apiPos) {
+    if (apiPos === clk.lastApiPos) return; 
+    
+    clk.lastApiPos = apiPos;
+    clk.pos = apiPos; 
+    clk.at = performance.now(); 
 }
 
-function getCurrentLyric(lines, currentMs) {
-  let found = null;
-  for (const line of lines) {
-    if (line.time > currentMs) break;
-    found = line.text;
-  }
-  return found || null;
-}
+function renderTrack() { 
+    const el = $('now-playing'); 
+    if (!el || !s.track) return; 
 
-async function fetchLyrics({ type, duration, durationMs, artists, name, album }) {
-  if (type === 'podcast') return { error: 'podcast liriklerini okuyamam.' };
-  const params = new URLSearchParams({
-    artist_name: artists,
-    track_name: name,
-    album_name: album,
-    duration: Math.round((durationMs || parseTimeToSeconds(duration) * 1000) / 1000)
-  });
-  const { syncedLyrics } = await fetchJSON(`https://lrclib.net/api/get?${params}`);
-  return syncedLyrics
-    ? { lines: parseSyncedLyrics(syncedLyrics), type: 'synced' }
-    : { error: 'bu şarkı sözleri, henüz eş zamanlı değil.' };
-}
+    const { artists, name, trackLink, duration } = s.track; 
 
-function ensureCube() {
-  const lyricsDiv = document.getElementById('lyrics');
-  if (lyricsDiv && !document.getElementById('cube'))
-    lyricsDiv.innerHTML = `<div class="cube" id="cube"><div class="side-front" id="front"></div><div class="side-bottom" id="bottom"></div></div>`;
-}
+    const link = Object.assign(document.createElement('a'), { 
+        className: 'no-favicon', 
+        href: trackLink || '#', 
+        target: '_blank', 
+        rel: 'noopener noreferrer', 
+        textContent: name || 'Bilinmeyen şarkı' 
+    }); 
 
-function triggerCubeAnimation(newText) {
-  if (state.currentLyricText === newText || state.pendingLyricText === newText) return;
-  const cube = document.getElementById('cube');
-  const front = document.getElementById('front');
-  const bottom = document.getElementById('bottom');
-  if (!cube || !front || !bottom) return;
-  state.pendingLyricText = newText;
-  bottom.textContent = newText;
-  cube.classList.add('animate', 'show-next');
-  setTimeout(() => {
-    cube.classList.remove('animate', 'show-next');
-    front.textContent = newText;
-    state.currentLyricText = newText;
-    state.pendingLyricText = null;
-  }, 600);
-}
+    const time = Object.assign(document.createElement('span'), { 
+        id: 'progress-time', 
+        textContent: fmt(getTruePosition()) 
+    }); 
 
-function renderTrackInfo(data) {
-  const el = document.getElementById('now-playing');
-  if (!el) return;
-  el.innerHTML =
-    `🎧 ${data.artists} - <a class="no-favicon" href="${data.trackLink}" target="_blank">${data.name}</a> | <span id="progress-time">${formatTime(data.progressMs ?? 0)}</span>/${data.duration}`;
-}
+    el.replaceChildren( 
+        `🎧 ${artists || 'Bilinmeyen sanatçı'} - `, 
+        link, 
+        ' | ', 
+        time, 
+        `/${duration || fmt(s.duration)}` 
+    ); 
+} 
 
-function render() {
-  if (!state.trackData) return;
-  const timeEl = document.getElementById('progress-time');
-  if (timeEl) timeEl.textContent = formatTime(state.progressMs);
-  if (!state.lyricsData) return;
-  const front = document.getElementById('front');
-  if (state.lyricsData.error) { if (front) front.textContent = state.lyricsData.error; }
-  else triggerCubeAnimation(getCurrentLyric(state.lyricsData.lines, state.progressMs) || '...');
-}
+function ensureLyrics() { 
+    const el = $('lyrics'); 
+    if (!el || $('cube')) return; 
+    el.innerHTML = ` 
+        <div class="cube" id="cube"> 
+            <div class="side-front" id="front"></div> 
+            <div class="side-bottom" id="bottom"></div> 
+        </div>`; 
+} 
 
-function tick() {
-  const now = performance.now();
-  const delta = now - state.lastTickAt;
-  state.lastTickAt = now;
-  if (state.isPlaying && state.trackData) {
-    state.progressMs += delta;
-    if (state.durationMs && state.progressMs > state.durationMs) state.progressMs = state.durationMs;
-  }
-  render();
-}
+const parseLyrics = text => 
+    [...text.matchAll(/\[(\d+):(\d+)(?:\.(\d+))?\](.*)/g)] 
+        .map(([, m, sc, f, t]) => ({ 
+            time: m * 60000 + sc * 1000 + (f ? Number(`0.${f}`) * 1000 : 0), 
+            text: t.trim() 
+        })) 
+        .sort((a, b) => a.time - b.time); 
 
-async function applyPayload(data) {
-  ensureCube();
+async function loadLyrics(d) { 
+    s.lyricAbort?.abort(); 
+    const ctrl = (s.lyricAbort = new AbortController()); 
+    const key = s.key; 
 
-  if (!data || data.error) {
-    Object.assign(state, {
-      trackData: null,
-      lastTrackLink: '',
-      lyricsData: null,
-      currentLyricText: '',
-      pendingLyricText: null,
-      isPlaying: false
-    });
-    const el = document.getElementById('now-playing');
-    if (el) el.textContent = data?.error || 'bir şeyler ters gitti.';
-    const front = document.getElementById('front');
-    if (front) front.textContent = '';
-    return;
-  }
+    const params = new URLSearchParams({ 
+        artist_name: d.artists || '', 
+        track_name: d.name || '', 
+        album_name: d.album || '', 
+        duration: Math.round((Number(d.durationMs) || toSec(d.duration) * 1000) / 1000) 
+    }); 
 
-  const serverMs = data.progressMs ?? parseTimeToSeconds(data.progress) * 1000;
-  state.isPlaying = data.isPlaying ?? true;
-  state.durationMs = data.durationMs || parseTimeToSeconds(data.duration) * 1000;
-  state.trackData = data;
+    let lyrics; 
+    try { 
+        const r = await fetch(`https://lrclib.net/api/get?${params}`, { signal: ctrl.signal }); 
+        if (!r.ok) throw new Error(r.status); 
+        const { syncedLyrics } = await r.json(); 
+        lyrics = syncedLyrics ? parseLyrics(syncedLyrics) : { error: true }; 
+    } catch (e) { 
+        if (e.name === 'AbortError') return; 
+        lyrics = { error: true }; 
+    } 
 
-  if (data.trackLink !== state.lastTrackLink) {
-    const token = ++state.lyricsToken;
-    Object.assign(state, {
-      lastTrackLink: data.trackLink,
-      lyricsData: null,
-      currentLyricText: '',
-      pendingLyricText: null,
-      progressMs: serverMs
-    });
-    state.lastTickAt = performance.now();
-    renderTrackInfo(data);
-    const front = document.getElementById('front');
-    const bottom = document.getElementById('bottom');
-    if (front) front.textContent = 'yükleniyor...';
-    if (bottom) bottom.textContent = '';
-    try {
-      const lyrics = await fetchLyrics(data);
-      if (token === state.lyricsToken) state.lyricsData = lyrics;
-    } catch {
-      if (token === state.lyricsToken) state.lyricsData = { error: 'sözleri getiremedim.' };
+    if (key !== s.key) return; 
+    s.lyrics = lyrics; 
+    renderLyrics(); 
+} 
+
+function showLyric(i) { 
+    const cube = $('cube'), front = $('front'), bottom =$('bottom'); 
+    if (!cube || !front || !bottom) return; 
+
+    front.textContent = s.lyrics[i]?.text || ''; 
+    bottom.textContent = s.lyrics[i + 1]?.text || ''; 
+
+    cube.classList.remove('animate', 'show-next'); 
+    void cube.offsetWidth; 
+    cube.classList.add('animate'); 
+
+    s.lyricIndex = i; 
+} 
+
+function renderLyrics() { 
+    const front = $('front'); 
+    if (!front || !s.track) return; 
+
+    if (s.lyrics.error) { 
+        front.textContent = 'bu şarkı sözleri, henüz eşzamanlı değil.'; 
+        return; 
+    } 
+    if (!s.lyrics.length) return; 
+
+    const now = getTruePosition(); 
+    let i = s.lyrics.length - 1; 
+    while (i > 0 && now < s.lyrics[i].time) i--; 
+
+    if (i !== s.lyricIndex) showLyric(i); 
+} 
+
+const removePrompt = () => $('music-consent')?.remove(); 
+
+function showPrompt() { 
+    const host = $('lyrics'); 
+    if (s.choice !== null || $('music-consent') || !s.playing || !host) return; 
+
+    const el = document.createElement('div'); 
+    el.id = 'music-consent'; 
+    el.style.textAlign = 'center'; 
+    el.innerHTML = ` 
+        <div>beraber dinleyelim mi?</div> 
+        <div> 
+            <span data-action="yes" style="cursor:pointer">olur</span> 
+            <span> / </span> 
+            <span data-action="no" style="cursor:pointer">yok ya</span> 
+        </div>`; 
+    host.after(el); 
+
+    el.addEventListener('click', ({ target }) => { 
+        const action = target.dataset?.action; 
+        if (!action) return; 
+
+        s.choice = action; 
+        removePrompt(); 
+
+        if (action === 'yes') return countdown(); 
+        cancelCountdown(); 
+        audio.pause(); 
+    }); 
+} 
+
+function cancelCountdown() { 
+    s.run++; 
+    s.counting = false; 
+    $('music-countdown')?.remove(); 
+} 
+
+async function countdown() { 
+    if (!s.playing || s.choice !== 'yes' || !s.track?.videoId) return; 
+
+    cancelCountdown(); 
+    const run = s.run; 
+    s.counting = true; 
+    audio.pause(); 
+
+    const el = Object.assign(document.createElement('div'), { id: 'music-countdown' }); 
+    el.style.textAlign = 'center'; 
+    const host = $('lyrics'); 
+    host ? host.after(el) : document.body.append(el); 
+
+    for (const n of [3, 2, 1]) { 
+        el.textContent = n; 
+        await sleep(1000); 
+        if (run !== s.run) return; 
+    } 
+
+    el.remove(); 
+    s.counting = false; 
+} 
+
+const wantAudio = () => s.playing && s.choice === 'yes' && !s.counting && !!s.track?.videoId; 
+
+function syncAudio() { 
+    if (!wantAudio()) { 
+        if (!audio.paused) audio.pause(); 
+        return; 
+    } 
+
+    const id = s.track.videoId; 
+    if (s.loadedId !== id) { 
+        audio.src = `${AUDIO_API}?videoId=${encodeURIComponent(id)}`; 
+        s.loadedId = id; 
+    } 
+
+    if (audio.readyState < 1 || audio.seeking) return; 
+
+    const targetPos = getTruePosition(); 
+    const currentAudioPos = audio.currentTime * 1000;
+    const drift = targetPos - currentAudioPos; 
+
+    if (audio.paused || Math.abs(drift) > 1000) { 
+        audio.currentTime = Math.max(0, targetPos) / 1000; 
+        audio.playbackRate = 1; 
+        if (audio.paused) audio.play().catch(() => {}); 
+        return; 
+    } 
+
+    if (audio.readyState < 3) return; 
+
+    if (Math.abs(drift) > 30) { 
+        const correction = drift / 1000; 
+        audio.playbackRate = Math.max(0.75, Math.min(1.25, 1 + correction)); 
+    } else {
+        audio.playbackRate = 1; 
     }
-  } else if (Math.abs(serverMs - state.progressMs) > SYNC_TOLERANCE_MS) {
-    state.progressMs = serverMs;
-    state.lastTickAt = performance.now();
-  }
+} 
 
-  render();
-}
+function handleData(d) { 
+    ensureLyrics(); 
 
-async function pollTrack() {
-  try {
-    await applyPayload(await fetchJSON(POLL_URL));
-  } catch {
-    const el = document.getElementById('now-playing');
-    if (el) el.textContent = 'bir şeyler ters gitti.';
-  }
-}
+    if (!d || d.error || d.type !== 'track') { 
+        Object.assign(s, { track: null, key: '', playing: false, lyrics: [], lyricIndex: -1, loadedId: '' }); 
+        removePrompt(); 
+        cancelCountdown(); 
+        audio.pause(); 
+        if ($('now-playing'))$('now-playing').textContent = d?.error || ''; 
+        return; 
+    } 
 
-state.lastTickAt = performance.now();
-pollTrack();
-setInterval(pollTrack, POLL_MS);
-setInterval(tick, 100);
+    const key = [d.trackLink, d.videoId, d.name, d.artists].join('|'); 
+    const changed = key !== s.key; 
 
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) return;
-  state.lastTickAt = performance.now();
-  pollTrack();
-});
+    s.track = d; 
+    s.playing = !!d.isPlaying; 
+    s.duration = Number(d.durationMs) || toSec(d.duration) * 1000; 
+
+    let rawApiPos = Number(d.progressMs ?? toSec(d.progress) * 1000) || 0;
+    rawApiPos = Math.max(0, rawApiPos - OFFSET_MS);
+    
+    if (changed || !s.playing) {
+        clk.pos = rawApiPos;
+        clk.at = performance.now();
+        clk.lastApiPos = rawApiPos;
+    } else {
+        syncClockWithAPI(rawApiPos);
+    }
+
+    renderTrack(); 
+
+    if (changed) { 
+        Object.assign(s, { key, lyrics: [], lyricIndex: -1, loadedId: '' }); 
+        audio.pause(); 
+        cancelCountdown(); 
+        if ($('front'))$('front').textContent = 'yükleniyor...'; 
+        loadLyrics(d); 
+    } 
+
+    if (!s.playing) { 
+        cancelCountdown(); 
+        removePrompt(); 
+        return; 
+    } 
+
+    if (s.choice === null) showPrompt(); 
+    else if (s.choice === 'yes' && changed) countdown(); 
+
+    renderLyrics(); 
+} 
+
+let busy = false; 
+let timer; 
+
+async function poll() { 
+    if (busy) return; 
+    busy = true; 
+
+    try { 
+        const r = await fetch(`${POLL_URL}?t=${Date.now()}`, { cache: 'no-store', credentials: 'omit' }); 
+        if (!r.ok) throw new Error(`API ${r.status}`); 
+        const data = await r.json();
+        
+        handleData(data); 
+    } catch (e) { } 
+
+    busy = false; 
+    clearTimeout(timer); 
+    timer = setTimeout(poll, POLL_MS); 
+} 
+
+ensureLyrics(); 
+poll(); 
+
+setInterval(() => { 
+    const el = $('progress-time'); 
+    if (el && s.track) el.textContent = fmt(getTruePosition()); 
+    renderLyrics(); 
+    syncAudio(); 
+}, TICK_MS); 
+
+document.addEventListener('visibilitychange', () => !document.hidden && poll());
