@@ -271,7 +271,6 @@ function updateStatus() {
     let pct = null;
 
     if (pr?.stage === 'downloading') pct = pr.percent;
-    else if (pr?.stage === 'ready') pct = bufferedPercent() ?? 100;
     else if (pr?.stage !== 'resolving') pct = bufferedPercent();
 
     const txt = pct === null || pct === undefined ? 'hazırlanıyor...' : `hazırlanıyor...${pct}%`;
