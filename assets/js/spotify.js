@@ -151,7 +151,7 @@ function renderTrack() {
         href: trackLink || '#',
         target: '_blank',
         rel: 'noopener noreferrer',
-        textContent: name || 'Bilinmeyen şarkı'
+        textContent: name || 'bilinmeyen şarkı'
     });
 
     const time = Object.assign(document.createElement('span'), {
@@ -160,7 +160,7 @@ function renderTrack() {
     });
 
     el.replaceChildren(
-        `🎧 ${artists || 'Bilinmeyen sanatçı'} - `,
+        `🎧 ${artists || 'bilinmeyen sanatçı'} - `,
         link,
         ' | ',
         time,
