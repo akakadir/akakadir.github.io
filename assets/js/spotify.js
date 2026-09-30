@@ -72,34 +72,6 @@ function syncClockWithAPI(apiPos) {
     clk.at = performance.now();
 }
 
-const DEBUG = location.search.includes('debug');
-const dbgLines = [];
-let dbgEl = null;
-let dbgT0 = performance.now();
-
-function dbg(msg) {
-    if (!DEBUG) return;
-    if (!dbgEl) {
-        dbgEl = document.createElement('pre');
-        dbgEl.style.cssText = 'position:fixed;left:0;right:0;bottom:0;max-height:45vh;overflow:hidden;margin:0;padding:4px;font:10px monospace;background:rgba(0,0,0,.8);color:#0f0;z-index:99999;pointer-events:none;white-space:pre-wrap';
-        document.body.append(dbgEl);
-    }
-    const sec = ((performance.now() - dbgT0) / 1000).toFixed(1);
-    dbgLines.push(`${sec}s ${msg}`);
-    if (dbgLines.length > 28) dbgLines.shift();
-    dbgEl.textContent = dbgLines.join('\n');
-}
-
-if (DEBUG) {
-    ['loadstart', 'loadedmetadata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'stalled', 'seeking', 'seeked', 'pause', 'error'].forEach(ev =>
-        audio.addEventListener(ev, () => {
-            const b = audio.buffered;
-            const end = b.length ? b.end(b.length - 1).toFixed(0) : 0;
-            dbg(`${ev} ct=${audio.currentTime.toFixed(1)} buf=${end} tgt=${(getTruePosition() / 1000).toFixed(1)}`);
-        })
-    );
-}
-
 function seekTo(ms) {
     try {
         audio.currentTime = Math.max(0, ms + ax.latency) / 1000;
@@ -108,7 +80,6 @@ function seekTo(ms) {
     ax.lastSeekAt = now;
     ax.graceUntil = now + SEEK_GRACE;
     ax.seekAt = now;
-    dbg(`SEEK hedef=${((ms + ax.latency) / 1000).toFixed(1)} gecikme=${Math.round(ax.latency)}ms`);
 }
 
 function loadSrc(id) {
@@ -399,8 +370,6 @@ function showPrompt() {
         removePrompt();
 
         if (action === 'yes') {
-            dbgT0 = performance.now();
-            dbg('TIKLANDI');
             showStatus();
             return startAudio();
         }
