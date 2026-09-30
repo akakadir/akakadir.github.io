@@ -7,10 +7,9 @@ const OFFSET_MS = -100;
 const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-const HARD_DRIFT = 2000;
+const HARD_DRIFT = 2500;
 const SEEK_COOLDOWN = 6000;
 const SEEK_GRACE = 3000;
-const SEEK_LEAD = 300;
 const CLOCK_SNAP = 1500;
 const CLOCK_BLEND = 0.3;
 
@@ -39,14 +38,15 @@ const s = {
     lyricAbort: null,
     choice: null,
     run: 0,
-    counting: false,
+    statusMax: 0,
+    statusAt: 0,
     loadedId: ''
 };
 
 let animTimer;
 let progTimer;
 
-const ax = { lastSeekAt: 0, graceUntil: 0, buffering: false, retryAt: 0 };
+const ax = { lastSeekAt: 0, graceUntil: 0, buffering: false, retryAt: 0, latency: 3000, seekAt: 0, baseCt: 0 };
 
 const clk = { pos: 0, at: 0, lastApiPos: -1 };
 
@@ -72,13 +72,43 @@ function syncClockWithAPI(apiPos) {
     clk.at = performance.now();
 }
 
+const DEBUG = location.search.includes('debug');
+const dbgLines = [];
+let dbgEl = null;
+let dbgT0 = performance.now();
+
+function dbg(msg) {
+    if (!DEBUG) return;
+    if (!dbgEl) {
+        dbgEl = document.createElement('pre');
+        dbgEl.style.cssText = 'position:fixed;left:0;right:0;bottom:0;max-height:45vh;overflow:hidden;margin:0;padding:4px;font:10px monospace;background:rgba(0,0,0,.8);color:#0f0;z-index:99999;pointer-events:none;white-space:pre-wrap';
+        document.body.append(dbgEl);
+    }
+    const sec = ((performance.now() - dbgT0) / 1000).toFixed(1);
+    dbgLines.push(`${sec}s ${msg}`);
+    if (dbgLines.length > 28) dbgLines.shift();
+    dbgEl.textContent = dbgLines.join('\n');
+}
+
+if (DEBUG) {
+    ['loadstart', 'loadedmetadata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'stalled', 'seeking', 'seeked', 'pause', 'error'].forEach(ev =>
+        audio.addEventListener(ev, () => {
+            const b = audio.buffered;
+            const end = b.length ? b.end(b.length - 1).toFixed(0) : 0;
+            dbg(`${ev} ct=${audio.currentTime.toFixed(1)} buf=${end} tgt=${(getTruePosition() / 1000).toFixed(1)}`);
+        })
+    );
+}
+
 function seekTo(ms) {
     try {
-        audio.currentTime = Math.max(0, ms + SEEK_LEAD) / 1000;
+        audio.currentTime = Math.max(0, ms + ax.latency) / 1000;
     } catch (e) { return; }
     const now = performance.now();
     ax.lastSeekAt = now;
     ax.graceUntil = now + SEEK_GRACE;
+    ax.seekAt = now;
+    dbg(`SEEK hedef=${((ms + ax.latency) / 1000).toFixed(1)} gecikme=${Math.round(ax.latency)}ms`);
 }
 
 function loadSrc(id) {
@@ -103,17 +133,24 @@ function prewarm(d) {
     }).catch(() => warmed.delete(id));
 }
 
-function startIOSAudio() {
+function startAudio() {
     const id = s.track?.videoId;
     if (!id) return;
     if (s.loadedId !== id) loadSrc(id);
-    audio.play().catch(() => {});
+    if (IOS) audio.play().catch(() => {});
 }
 
 if (IOS) {
     audio.addEventListener('waiting', () => { ax.buffering = true; });
     audio.addEventListener('stalled', () => { ax.buffering = true; });
-    audio.addEventListener('playing', () => { ax.buffering = false; });
+    audio.addEventListener('playing', () => {
+        ax.buffering = false;
+        if (ax.seekAt) {
+            const lat = performance.now() - ax.seekAt;
+            ax.latency = Math.min(8000, Math.max(300, ax.latency * 0.5 + lat * 0.5));
+            ax.seekAt = 0;
+        }
+    });
     audio.addEventListener('canplay', () => { ax.buffering = false; });
     audio.addEventListener('seeked', () => { ax.graceUntil = performance.now() + SEEK_GRACE; });
     audio.addEventListener('loadedmetadata', () => {
@@ -252,28 +289,48 @@ const removePrompt = () => $('music-consent')?.remove();
 function removeStatus() {
     clearTimeout(progTimer);
     s.prog = null;
+    s.statusMax = 0;
     $('music-status')?.remove();
 }
 
-function bufferedPercent() {
-    const d = audio.duration;
-    if (isFinite(d) && d > 0 && audio.buffered.length) {
-        return Math.min(100, Math.round(audio.buffered.end(audio.buffered.length - 1) / d * 100));
+function bufferedAhead() {
+    const b = audio.buffered;
+    const t = audio.currentTime;
+    for (let i = 0; i < b.length; i++) {
+        if (b.start(i) <= t + 0.5 && b.end(i) >= t) return b.end(i) - t;
     }
-    return null;
+    return 0;
+}
+
+function audioFlowing() {
+    return !audio.paused && !audio.seeking && audio.readyState >= 3 && audio.currentTime - ax.baseCt >= 1;
+}
+
+function statusPercent() {
+    const pr = s.prog && s.progId === s.track?.videoId ? s.prog : null;
+    const elapsed = (performance.now() - s.statusAt) / 1000;
+    const frac = Math.min(1, bufferedAhead() / 5);
+    let p;
+
+    if (pr?.stage === 'downloading' || pr?.stage === 'uploading') p = 10 + (pr.percent ?? 0) * 0.5;
+    else if (pr?.stage === 'ready') p = 60 + 40 * frac;
+    else p = Math.min(10, elapsed * 2.5);
+
+    if (frac > 0) p = Math.max(p, 60 + 40 * frac);
+    return p;
 }
 
 function updateStatus() {
     const el = $('music-status');
     if (!el) return;
 
-    const pr = s.prog && s.progId === s.track?.videoId ? s.prog : null;
-    let pct = null;
+    if (audioFlowing()) {
+        removeStatus();
+        return;
+    }
 
-    if (pr?.stage === 'downloading') pct = pr.percent;
-    else if (pr?.stage !== 'resolving') pct = bufferedPercent();
-
-    const txt = pct === null || pct === undefined ? 'hazırlanıyor...' : `hazırlanıyor...${pct}%`;
+    s.statusMax = Math.max(s.statusMax, statusPercent());
+    const txt = `hazırlanıyor...${Math.min(99, Math.floor(s.statusMax))}%`;
     if (el.textContent !== txt) el.textContent = txt;
 }
 
@@ -303,15 +360,20 @@ function showStatus() {
     el.style.textAlign = 'center';
     const host = $('lyrics');
     host ? host.after(el) : document.body.append(el);
+    s.statusAt = performance.now();
+    s.statusMax = 0;
     updateStatus();
     pollProgress();
 }
 
+['loadstart', 'seeking', 'waiting', 'stalled'].forEach(ev =>
+    audio.addEventListener(ev, () => { ax.baseCt = audio.currentTime; })
+);
 audio.addEventListener('loadstart', showStatus);
 audio.addEventListener('progress', updateStatus);
 audio.addEventListener('loadedmetadata', updateStatus);
 audio.addEventListener('durationchange', updateStatus);
-audio.addEventListener('playing', removeStatus);
+audio.addEventListener('timeupdate', updateStatus);
 
 function showPrompt() {
     const host = $('lyrics');
@@ -337,47 +399,17 @@ function showPrompt() {
         removePrompt();
 
         if (action === 'yes') {
+            dbgT0 = performance.now();
+            dbg('TIKLANDI');
             showStatus();
-            if (IOS) return startIOSAudio();
-            return countdown();
+            return startAudio();
         }
-        cancelCountdown();
         removeStatus();
         audio.pause();
     });
 }
 
-function cancelCountdown() {
-    s.run++;
-    s.counting = false;
-    $('music-countdown')?.remove();
-}
-
-async function countdown() {
-    if (IOS) return;
-    if (!s.playing || s.choice !== 'yes' || !s.track?.videoId) return;
-
-    cancelCountdown();
-    const run = s.run;
-    s.counting = true;
-    audio.pause();
-
-    const el = Object.assign(document.createElement('div'), { id: 'music-countdown' });
-    el.style.textAlign = 'center';
-    const host = $('lyrics');
-    host ? host.after(el) : document.body.append(el);
-
-    for (const n of [3, 2, 1]) {
-        el.textContent = n;
-        await sleep(1000);
-        if (run !== s.run) return;
-    }
-
-    el.remove();
-    s.counting = false;
-}
-
-const wantAudio = () => s.playing && s.choice === 'yes' && !s.counting && !!s.track?.videoId;
+const wantAudio = () => s.playing && s.choice === 'yes' && !!s.track?.videoId;
 
 function syncAudioPC() {
     if (!wantAudio()) {
@@ -455,7 +487,6 @@ function handleData(d, rtt = 0) {
         Object.assign(s, { track: null, key: '', playing: false, lyrics: [], lyricIndex: -1, loadedId: '' });
         removePrompt();
         removeStatus();
-        cancelCountdown();
         audio.pause();
         resetLyricAnim();
         if ($('front')) $('front').textContent = '';
@@ -486,9 +517,9 @@ function handleData(d, rtt = 0) {
     if (changed) {
         Object.assign(s, { key, lyrics: [], lyricIndex: -1, loadedId: '' });
         audio.pause();
+        removeStatus();
         ax.buffering = false;
         ax.retryAt = 0;
-        cancelCountdown();
         resetLyricAnim();
         if ($('front')) $('front').textContent = 'yükleniyor...';
         loadLyrics(d);
@@ -497,14 +528,12 @@ function handleData(d, rtt = 0) {
     if (s.playing) prewarm(d);
 
     if (!s.playing) {
-        cancelCountdown();
         removePrompt();
         removeStatus();
         return;
     }
 
     if (s.choice === null) showPrompt();
-    else if (s.choice === 'yes' && changed) countdown();
 
     renderLyrics();
 }
