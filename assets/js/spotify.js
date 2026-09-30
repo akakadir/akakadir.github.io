@@ -1,28 +1,19 @@
 const POLL_URL = 'https://akakadir.vercel.app/api/now-playing';
 const AUDIO_API = 'https://api.akakadir.art/api/audio';
 const POLL_MS = 7000;
-const TICK_MS = 250;
-const LEAD_MS = 100;
+const TICK_MS = 300;
+const OFFSET_MS = -100;
 
 const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-const CLOCK_N = 5;
-const CLOCK_Q = 0.7;
-const CLOCK_SNAP = 700;
-const CLOCK_CONFIRM = 400;
-const RTT_MAX = 3000;
+const DEBUG = /[?&]debug\b/.test(location.search);
 
-const DEAD_ON = 50;
-const DEAD_OFF = 20;
-const HARD_MS = 1200;
-const FRESH_MS = 500;
-const RATE_GAIN = 1 / 2500;
-const RATE_MAX = 0.08;
-const SEEK_COOLDOWN = 4000;
-const SETTLE_MIN = 0.6;
-const SETTLE_TIMEOUT = 10000;
-const L_MAX = 6000;
+const HARD_DRIFT = 1500;
+const SEEK_COOLDOWN = 6000;
+const SEEK_GRACE = 3000;
+const CLOCK_SNAP = 1500;
+const CLOCK_BLEND = 0.3;
 
 const $ = id => document.getElementById(id);
 const toSec = v => String(v || '0:00').split(':').reduce((a, b) => a * 60 + Number(b), 0);
@@ -31,16 +22,10 @@ const fmt = ms => {
     return `${(t / 60) | 0}:${String(t % 60).padStart(2, '0')}`;
 };
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-const median = arr => {
-    const a = [...arr].sort((x, y) => x - y), m = a.length >> 1;
-    return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
-};
-const quantile = (arr, q) => [...arr].sort((x, y) => x - y)[Math.round(q * (arr.length - 1))];
+const median3 = a => [...a].sort((x, y) => x - y)[1];
 
 const audio = Object.assign(new Audio(), { preload: 'auto' });
 audio.setAttribute('playsinline', '');
-audio.preservesPitch = true;
-audio.webkitPreservesPitch = true;
 
 const s = {
     track: null,
@@ -55,6 +40,7 @@ const s = {
     progId: '',
     lyricAbort: null,
     choice: null,
+    run: 0,
     statusMax: 0,
     statusAt: 0,
     loadedId: ''
@@ -63,94 +49,58 @@ const s = {
 let animTimer;
 let progTimer;
 
-const clk = {
-    ok: false, playing: false, pos: 0, off: 0, hist: [], pend: null, epoch: 0,
-    get() {
-        if (!this.ok) return 0;
-        const p = this.playing ? Date.now() + this.off : this.pos;
-        return clamp(p, 0, s.duration || Infinity);
-    },
-    hold(pos) {
-        Object.assign(this, { ok: true, playing: false, pos, hist: [], pend: null });
-        this.epoch++;
-    },
-    start(pos, at) {
-        Object.assign(this, { ok: true, playing: true, off: pos - at, pend: null });
-        this.hist = [this.off];
-        this.epoch++;
-    },
-    feed(pos, at) {
-        const o = pos - at;
-        if (Math.abs(o - this.off) > CLOCK_SNAP) {
-            if (this.pend !== null && Math.abs(o - this.pend) < CLOCK_CONFIRM) {
-                this.off = o; this.hist = [o]; this.pend = null; this.epoch++;
-            } else this.pend = o;
-            return;
-        }
-        this.pend = null;
-        this.hist.push(o);
-        if (this.hist.length > CLOCK_N) this.hist.shift();
-        this.off = quantile(this.hist, CLOCK_Q);
-    }
-};
-
-const getTruePosition = () => clk.get();
-
 const ax = {
-    phase: 'idle', phaseAt: 0, L: 0, seekCt: 0, seekEpoch: 0, learn: false, fresh: false,
-    tries: 0, lastSeekAt: 0, hist: [], retryAt: 0, baseCt: 0
+    lastSeekAt: 0, graceUntil: 0, buffering: false, retryAt: 0, latency: 1500, baseCt: 0,
+    learn: false, learnAt: 0, seekCt: 0, m: [], tries: 0
 };
 
-const LKEY = 'syncL';
-function loadL() {
+const clk = { pos: 0, at: 0, lastApiPos: -1 };
+
+const getTruePosition = () => {
+    if (!s.playing) return clk.pos;
+    const p = clk.pos + (performance.now() - clk.at);
+    return Math.min(Math.max(0, p), s.duration || Infinity);
+};
+
+function syncClockWithAPI(apiPos) {
+    if (apiPos === clk.lastApiPos) return;
+    clk.lastApiPos = apiPos;
+
+    if (!IOS) {
+        clk.pos = apiPos;
+        clk.at = performance.now();
+        return;
+    }
+
+    const expected = getTruePosition();
+    const diff = apiPos - expected;
+    clk.pos = Math.abs(diff) > CLOCK_SNAP ? apiPos : expected + diff * CLOCK_BLEND;
+    clk.at = performance.now();
+}
+
+function seekTo(ms) {
+    const t = Math.max(0, ms + ax.latency) / 1000;
     try {
-        const raw = localStorage.getItem(LKEY);
-        const v = Number(raw);
-        if (raw !== null && v >= 0 && v <= L_MAX) return v;
-    } catch (e) { }
-    return IOS ? 1200 : 150;
-}
-function saveL() { try { localStorage.setItem(LKEY, String(Math.round(ax.L))); } catch (e) { } }
-ax.L = loadL();
-
-function setPhase(p) { ax.phase = p; ax.phaseAt = Date.now(); }
-
-function canSeek(ms) {
-    const t = ms / 1000, r = audio.seekable;
-    for (let i = 0; i < r.length; i++) if (r.start(i) <= t + 0.25 && r.end(i) >= t - 0.25) return true;
-    return false;
-}
-
-function beginSettle(ct, learn) {
-    ax.seekCt = ct;
-    ax.learn = learn;
-    ax.seekEpoch = clk.epoch;
-    ax.hist = [];
-    setPhase('settle');
-}
-
-function seekAudio(ms) {
-    const dur = Number.isFinite(audio.duration) ? audio.duration * 1000 : Infinity;
-    const tgt = clamp(ms, 0, dur - 300);
-    if (!canSeek(tgt)) return false;
-    try { audio.currentTime = tgt / 1000; } catch (e) { return false; }
-    ax.lastSeekAt = Date.now();
-    beginSettle(tgt / 1000, true);
-    return true;
-}
-
-function setRate(r) {
-    if (Math.abs(audio.playbackRate - r) > 0.002) audio.playbackRate = r;
+        audio.currentTime = t;
+    } catch (e) { return; }
+    const now = performance.now();
+    ax.lastSeekAt = now;
+    ax.graceUntil = now + SEEK_GRACE;
+    ax.seekCt = t;
+    ax.learn = true;
+    ax.learnAt = now;
+    ax.m = [];
 }
 
 function loadSrc(id) {
     audio.src = `${AUDIO_API}?videoId=${encodeURIComponent(id)}`;
     s.loadedId = id;
-    ax.tries = 0;
-    ax.fresh = false;
-    ax.hist = [];
     ax.lastSeekAt = 0;
-    setPhase('align');
+    ax.graceUntil = 0;
+    ax.buffering = true;
+    ax.learn = false;
+    ax.tries = 0;
+    ax.m = [];
 }
 
 const warmed = new Set();
@@ -171,96 +121,23 @@ function startAudio() {
     const id = s.track?.videoId;
     if (!id) return;
     if (s.loadedId !== id) loadSrc(id);
-    audio.play().catch(() => { });
+    if (IOS) audio.play().catch(() => {});
 }
 
-audio.addEventListener('error', () => {
-    s.loadedId = '';
-    ax.retryAt = Date.now() + 3000;
-});
-audio.addEventListener('waiting', () => { ax.hist = []; });
-
-function align(now) {
-    const target = clk.get();
-    const want = target + ax.L;
-    const cur = audio.currentTime * 1000;
-    if (Math.abs(want - cur) < 250) return beginSettle(audio.currentTime, false);
-    if (seekAudio(want)) return;
-    if (target < 1500 || now - ax.phaseAt > 12000) beginSettle(audio.currentTime, false);
-}
-
-function settle(now) {
-    if (now - ax.phaseAt > SETTLE_TIMEOUT) return setPhase('align');
-    if (audio.readyState < 3 || audio.paused) return;
-    if (audio.currentTime - ax.seekCt < SETTLE_MIN) return;
-    setPhase('track');
-    ax.hist = [];
-}
-
-function track(now) {
-    if (audio.readyState < 3) { ax.hist = []; return; }
-
-    const target = clk.get();
-    ax.hist.push(target - audio.currentTime * 1000);
-    if (ax.hist.length > 5) ax.hist.shift();
-    if (ax.hist.length < 3) return;
-    const d = median(ax.hist);
-
-    if (ax.learn) {
-        ax.learn = false;
-        if (ax.seekEpoch === clk.epoch && Math.abs(d) < 4000) {
-            ax.L = clamp(ax.L + 0.7 * d, 0, L_MAX);
-            saveL();
-            ax.fresh = ax.tries++ < 3;
-        }
-    }
-
-    const thr = ax.fresh ? FRESH_MS : HARD_MS;
-    const cool = ax.fresh ? 0 : SEEK_COOLDOWN;
-    ax.fresh = false;
-
-    if (Math.abs(d) > thr && now - ax.lastSeekAt >= cool) {
-        if (seekAudio(target + ax.L)) { setRate(1); return; }
-    }
-
-    const dead = audio.playbackRate === 1 ? DEAD_ON : DEAD_OFF;
-    setRate(Math.abs(d) < dead ? 1 : 1 + clamp(d * RATE_GAIN, -RATE_MAX, RATE_MAX));
-}
-
-const wantAudio = () => s.playing && s.choice === 'yes' && !!s.track?.videoId;
-
-function syncAudio() {
-    if (!wantAudio()) {
-        if (!audio.paused) audio.pause();
-        if (ax.phase !== 'idle') setPhase('idle');
-        return;
-    }
-
-    const now = Date.now();
-    const id = s.track.videoId;
-
-    if (s.loadedId !== id) {
-        if (now < ax.retryAt) return;
-        loadSrc(id);
-        audio.play().catch(() => { });
-        return;
-    }
-
-    if (audio.readyState < 1) {
-        if (audio.paused) audio.play().catch(() => { });
-        return;
-    }
-
-    if (audio.paused) {
-        if (ax.phase !== 'settle') setPhase('align');
-        audio.play().catch(() => { });
-    }
-    if (audio.seeking) return;
-
-    if (ax.phase === 'idle') setPhase('align');
-    if (ax.phase === 'align') return align(now);
-    if (ax.phase === 'settle') return settle(now);
-    track(now);
+if (IOS) {
+    audio.addEventListener('waiting', () => { ax.buffering = true; });
+    audio.addEventListener('stalled', () => { ax.buffering = true; });
+    audio.addEventListener('playing', () => { ax.buffering = false; });
+    audio.addEventListener('canplay', () => { ax.buffering = false; });
+    audio.addEventListener('seeked', () => { ax.graceUntil = performance.now() + SEEK_GRACE; });
+    audio.addEventListener('loadedmetadata', () => {
+        if (!(s.playing && s.choice === 'yes' && s.track?.videoId)) return;
+        seekTo(getTruePosition());
+    });
+    audio.addEventListener('error', () => {
+        s.loadedId = '';
+        ax.retryAt = performance.now() + 3000;
+    });
 }
 
 function renderTrack() {
@@ -507,16 +384,119 @@ function showPrompt() {
     });
 }
 
-function handleData(d, t0 = Date.now(), t1 = t0) {
+const wantAudio = () => s.playing && s.choice === 'yes' && !!s.track?.videoId;
+
+function syncAudioPC() {
+    if (!wantAudio()) {
+        if (!audio.paused) audio.pause();
+        return;
+    }
+
+    const id = s.track.videoId;
+    if (s.loadedId !== id) {
+        audio.src = `${AUDIO_API}?videoId=${encodeURIComponent(id)}`;
+        s.loadedId = id;
+    }
+
+    if (audio.readyState < 1 || audio.seeking) return;
+
+    const targetPos = getTruePosition();
+    const currentAudioPos = audio.currentTime * 1000;
+    const drift = targetPos - currentAudioPos;
+
+    if (audio.paused || Math.abs(drift) > 1000) {
+        audio.currentTime = Math.max(0, targetPos) / 1000;
+        audio.playbackRate = 1;
+        if (audio.paused) audio.play().catch(() => {});
+        return;
+    }
+
+    if (audio.readyState < 3) return;
+
+    if (Math.abs(drift) > 30) {
+        const correction = drift / 1000;
+        audio.playbackRate = Math.max(0.75, Math.min(1.25, 1 + correction));
+    } else {
+        audio.playbackRate = 1;
+    }
+}
+
+function syncAudioIOS() {
+    if (!wantAudio()) {
+        if (!audio.paused) audio.pause();
+        return;
+    }
+
+    const now = performance.now();
+    const id = s.track.videoId;
+
+    if (s.loadedId !== id) {
+        if (now < ax.retryAt) return;
+        loadSrc(id);
+        audio.play().catch(() => {});
+        return;
+    }
+
+    if (audio.readyState < 1 || audio.seeking) return;
+
+    const target = getTruePosition();
+    const drift = target - audio.currentTime * 1000;
+
+    if (audio.paused) {
+        if (Math.abs(drift) > 400) seekTo(target);
+        audio.play().catch(() => {});
+        return;
+    }
+
+    if (ax.buffering && audio.readyState >= 3 && audio.currentTime > ax.baseCt + 0.3) ax.buffering = false;
+
+    if (ax.buffering || audio.readyState < 3 || now < ax.graceUntil) return;
+
+    if (ax.learn) {
+        if (now - ax.learnAt > 12000) { ax.learn = false; return; }
+        if (audio.currentTime - ax.seekCt < 0.6) return;
+        ax.m.push(drift);
+        if (ax.m.length < 3) return;
+        const d = median3(ax.m);
+        ax.learn = false;
+        ax.m = [];
+        if (Math.abs(d) < 4000) {
+            ax.latency = clamp(ax.latency + 0.7 * d, 300, 8000);
+            if (Math.abs(d) > 400 && ax.tries < 2) {
+                ax.tries++;
+                seekTo(target);
+            }
+        }
+        return;
+    }
+
+    if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
+        seekTo(target);
+    }
+}
+
+const syncAudio = IOS ? syncAudioIOS : syncAudioPC;
+
+function renderDebug() {
+    if (!DEBUG) return;
+    let el = $('sync-debug');
+    if (!el) {
+        el = Object.assign(document.createElement('div'), { id: 'sync-debug' });
+        el.style.cssText = 'position:fixed;left:6px;bottom:6px;font:11px monospace;background:#000c;color:#0f0;padding:3px 6px;z-index:99999;pointer-events:none';
+        document.body.append(el);
+    }
+    const d = getTruePosition() - audio.currentTime * 1000;
+    el.textContent = `${IOS ? 'ios' : 'pc'} d=${d | 0}ms L=${ax.latency | 0} try=${ax.tries} rs=${audio.readyState} ${audio.paused ? 'P' : '>'}${ax.learn ? ' learn' : ''}`;
+}
+
+function handleData(d, rtt = 0) {
     ensureLyrics();
 
     if (!d || d.error || d.type !== 'track') {
         Object.assign(s, { track: null, key: '', playing: false, lyrics: [], lyricIndex: -1, loadedId: '' });
-        clk.ok = false;
         removePrompt();
         removeStatus();
         audio.pause();
-        setPhase('idle');
         resetLyricAnim();
         if ($('front')) $('front').textContent = '';
         if ($('now-playing')) $('now-playing').textContent = d?.error || '';
@@ -530,15 +510,16 @@ function handleData(d, t0 = Date.now(), t1 = t0) {
     s.playing = !!d.isPlaying;
     s.duration = Number(d.durationMs) || toSec(d.duration) * 1000;
 
-    const tMid = (t0 + t1) / 2;
-    const rtt = t1 - t0;
-    const prog = Number(d.progressMs ?? toSec(d.progress) * 1000) || 0;
-    const age = s.playing ? Math.max(0, Number(d.ageMs) || 0) : 0;
-    const apiPos = Math.max(0, prog + age + LEAD_MS);
+    let rawApiPos = Number(d.progressMs ?? toSec(d.progress) * 1000) || 0;
+    rawApiPos = Math.max(0, rawApiPos - OFFSET_MS + (IOS && s.playing ? rtt / 2 : 0));
 
-    if (!s.playing) clk.hold(apiPos);
-    else if (changed || !clk.playing || !clk.ok) clk.start(apiPos, tMid);
-    else if (rtt <= RTT_MAX) clk.feed(apiPos, tMid);
+    if (changed || !s.playing) {
+        clk.pos = rawApiPos;
+        clk.at = performance.now();
+        clk.lastApiPos = rawApiPos;
+    } else {
+        syncClockWithAPI(rawApiPos);
+    }
 
     renderTrack();
 
@@ -546,8 +527,9 @@ function handleData(d, t0 = Date.now(), t1 = t0) {
         Object.assign(s, { key, lyrics: [], lyricIndex: -1, loadedId: '' });
         audio.pause();
         removeStatus();
+        ax.buffering = false;
         ax.retryAt = 0;
-        setPhase('idle');
+        ax.learn = false;
         resetLyricAnim();
         if ($('front')) $('front').textContent = 'yükleniyor...';
         loadLyrics(d);
@@ -574,17 +556,16 @@ async function poll() {
     busy = true;
 
     try {
-        const t0 = Date.now();
-        const r = await fetch(`${POLL_URL}?t=${t0}`, { cache: 'no-store', credentials: 'omit' });
+        const t0 = performance.now();
+        const r = await fetch(`${POLL_URL}?t=${Date.now()}`, { cache: 'no-store', credentials: 'omit' });
         if (!r.ok) throw new Error(`API ${r.status}`);
         const data = await r.json();
-        handleData(data, t0, Date.now());
+        handleData(data, performance.now() - t0);
     } catch (e) { }
 
     busy = false;
     clearTimeout(timer);
-    const fast = clk.pend !== null || (clk.ok && clk.playing && clk.hist.length < 3);
-    timer = setTimeout(poll, fast ? 1200 : POLL_MS);
+    timer = setTimeout(poll, POLL_MS);
 }
 
 ensureLyrics();
@@ -596,12 +577,13 @@ setInterval(() => {
     renderLyrics();
     updateStatus();
     syncAudio();
+    renderDebug();
 }, TICK_MS);
 
 const resume = () => {
     if (document.hidden) return;
-    ax.hist = [];
-    ax.retryAt = 0;
+    ax.graceUntil = 0;
+    ax.lastSeekAt = 0;
     poll();
 };
 document.addEventListener('visibilitychange', resume);
