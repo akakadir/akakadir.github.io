@@ -482,7 +482,7 @@ function renderDebug() {
     let el = $('sync-debug');
     if (!el) {
         el = Object.assign(document.createElement('div'), { id: 'sync-debug' });
-        el.style.cssText = 'position:fixed;left:6px;bottom:6px;font:11px monospace;pointer-events:none';
+        el.style.cssText = 'position:fixed;right:6px;bottom:6px;font:11px monospace;pointer-events:none';
         document.body.append(el);
     }
     const d = getTruePosition() - audio.currentTime * 1000;
