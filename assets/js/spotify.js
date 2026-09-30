@@ -34,6 +34,8 @@ const s = {
     lyricIndex: -1,
     currentLyric: '',
     pendingLyric: null,
+    prog: null,
+    progId: '',
     lyricAbort: null,
     choice: null,
     run: 0,
@@ -42,6 +44,7 @@ const s = {
 };
 
 let animTimer;
+let progTimer;
 
 const ax = { lastSeekAt: 0, graceUntil: 0, buffering: false, retryAt: 0 };
 
@@ -84,6 +87,20 @@ function loadSrc(id) {
     ax.lastSeekAt = 0;
     ax.graceUntil = 0;
     ax.buffering = true;
+}
+
+const warmed = new Set();
+
+function prewarm(d) {
+    const id = d?.videoId;
+    if (!id || warmed.has(id) || s.choice === 'no') return;
+    warmed.add(id);
+    fetch(`${AUDIO_API}?videoId=${encodeURIComponent(id)}`, {
+        mode: 'no-cors',
+        cache: 'no-store',
+        credentials: 'omit',
+        headers: { Range: 'bytes=0-1' }
+    }).catch(() => warmed.delete(id));
 }
 
 function startIOSAudio() {
@@ -233,19 +250,52 @@ function renderLyrics() {
 const removePrompt = () => $('music-consent')?.remove();
 
 function removeStatus() {
+    clearTimeout(progTimer);
+    s.prog = null;
     $('music-status')?.remove();
+}
+
+function bufferedPercent() {
+    const d = audio.duration;
+    if (isFinite(d) && d > 0 && audio.buffered.length) {
+        return Math.min(100, Math.round(audio.buffered.end(audio.buffered.length - 1) / d * 100));
+    }
+    return null;
 }
 
 function updateStatus() {
     const el = $('music-status');
     if (!el) return;
-    let txt = 'hazırlanıyor...';
-    const d = audio.duration;
-    if (isFinite(d) && d > 0 && audio.buffered.length) {
-        const p = Math.min(100, Math.round(audio.buffered.end(audio.buffered.length - 1) / d * 100));
-        txt += ` ${p}%`;
-    }
+
+    const pr = s.prog && s.progId === s.track?.videoId ? s.prog : null;
+    let pct = null;
+
+    if (pr?.stage === 'downloading') pct = pr.percent;
+    else if (pr?.stage === 'ready') pct = bufferedPercent() ?? 100;
+    else if (pr?.stage !== 'resolving') pct = bufferedPercent();
+
+    const txt = pct === null || pct === undefined ? 'hazırlanıyor...' : `hazırlanıyor...${pct}%`;
     if (el.textContent !== txt) el.textContent = txt;
+}
+
+async function pollProgress() {
+    clearTimeout(progTimer);
+    const id = s.track?.videoId;
+    if (!$('music-status') || !id) return;
+
+    try {
+        const r = await fetch(`${AUDIO_API}/progress?videoId=${encodeURIComponent(id)}`, {
+            cache: 'no-store',
+            credentials: 'omit'
+        });
+        if (r.ok) {
+            s.prog = await r.json();
+            s.progId = id;
+            updateStatus();
+        }
+    } catch (e) { }
+
+    progTimer = setTimeout(pollProgress, 700);
 }
 
 function showStatus() {
@@ -255,6 +305,7 @@ function showStatus() {
     const host = $('lyrics');
     host ? host.after(el) : document.body.append(el);
     updateStatus();
+    pollProgress();
 }
 
 audio.addEventListener('loadstart', showStatus);
@@ -443,6 +494,8 @@ function handleData(d, rtt = 0) {
         if ($('front')) $('front').textContent = 'yükleniyor...';
         loadLyrics(d);
     }
+
+    if (s.playing) prewarm(d);
 
     if (!s.playing) {
         cancelCountdown();
