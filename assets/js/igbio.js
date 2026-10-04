@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const response = await fetch(
-        "https://igscraper.k4dir-semih.workers.dev/api/scraper?username=kadirsakgz",
+        "https://api.akakadir.art/api/scraper?username=kadirsakgz",
         {
           cache: "no-store",
           headers: {
