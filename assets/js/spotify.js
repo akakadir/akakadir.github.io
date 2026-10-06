@@ -486,11 +486,11 @@ function updateStatus() {
     s.statusRank = Math.max(s.statusRank, STAGE_RANK[pr?.stage] ?? 0);
 
     setText(el, [
-        `hazırlanıyor..${pct}%`,
-        `çözümleniyor..${pct}%`,
-        'sunucu todo..(1/2)',
-        'sunucu todo..(2/2)',
-        'hazır'
+        `hazırlık..${pct}%`,
+        `çözümleme..${pct}%`,
+        'ıvır zıvır..(1/2)',
+        'ıvır zıvır..(2/2)',
+        'bitti.'
     ][s.statusRank]);
 }
 
