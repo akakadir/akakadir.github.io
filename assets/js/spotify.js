@@ -15,20 +15,20 @@ const ENGINE = IOS
             : 'blink';
 const DEBUG = /[?&]debug\b/.test(location.search);
 
-const POLL_MS = 7000;
-const TICK_MS = 300;
-const LEAD_MS = 100;
-const FETCH_TIMEOUT = 6000;
-const MAX_POLL_FAILS = 3;
+const POLL_MS = 5000;
+const TICK_MS = 50;
+const LEAD_MS = 50;
+const FETCH_TIMEOUT = 5000;
+const MAX_POLL_FAILS = 5;
 
-const HARD_DRIFT = IOS ? 1500 : 400;
-const SEEK_COOLDOWN = 6000;
-const SEEK_GRACE = 3000;
+const HARD_DRIFT = IOS ? 500 : 500;
+const SEEK_COOLDOWN = 5000;
+const SEEK_GRACE = 1000;
 const CLOCK_SNAP = 500;
-const CLOCK_BLEND = 0.3;
+const CLOCK_BLEND = 0.5;
 
-const LOAD_TIMEOUT = 60000;
-const MAX_AUDIO_FAILS = 3;
+const LOAD_TIMEOUT = 50000;
+const MAX_AUDIO_FAILS = 5;
 
 const STAGE_RANK = { resolving: 1, downloading: 2, uploading: 3, ready: 4 };
 
