@@ -25,7 +25,6 @@ const RATE_MAX = 0.06;
 
 const LOAD_TIMEOUT = 60000;
 const MAX_AUDIO_FAILS = 3;
-const PREWARM = true;
 
 const domCache = new Map();
 const $ = id => {
@@ -273,30 +272,6 @@ function syncAudio() {
     trimRate(drift);
 }
 
-const warmed = new Set();
-
-function prewarm(d) {
-    const id = d?.videoId;
-    if (!PREWARM || !id || warmed.has(id)) return;
-    if (s.choice !== null || s.serverOk === false || ax.fails) return;
-
-    warmed.add(id);
-    if (warmed.size > 32) warmed.delete(warmed.values().next().value);
-
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 15000);
-    fetch(audioUrl(id), {
-        mode: 'no-cors',
-        cache: 'no-store',
-        credentials: 'omit',
-        headers: { Range: 'bytes=0-' },
-        signal: ctrl.signal
-    })
-        .then(() => ctrl.abort())
-        .catch(() => warmed.delete(id))
-        .finally(() => clearTimeout(timer));
-}
-
 async function probeServer(id) {
     if (s.probing) return;
     s.probing = true;
@@ -535,6 +510,7 @@ async function pollProgress() {
         if (r.ok) {
             s.prog = await r.json();
             s.progId = id;
+            if (ax.loadAt && /^(resolving|downloading|uploading)$/.test(s.prog.stage)) ax.loadAt = performance.now();
             updateStatus();
         } else delay = 2000;
     } catch (e) {
@@ -608,7 +584,7 @@ function renderDebug() {
     const d = getTruePosition() - audio.currentTime * 1000;
     el.textContent =
         `${IOS ? 'ios' : 'pc'} d=${d | 0}ms L=${ax.latency | 0} r=${audio.playbackRate.toFixed(2)} ` +
-        `try=${ax.tries} fail=${ax.fails}${ax.dead ? '!' : ''} rs=${audio.readyState} ` +
+        `ok=${s.serverOk} try=${ax.tries} fail=${ax.fails}${ax.dead ? '!' : ''} rs=${audio.readyState} ` +
         `${audio.paused ? 'P' : '>'}${ax.learn ? ' learn' : ''}${s.stale ? ' stale' : ''}`;
 }
 
@@ -682,8 +658,6 @@ function handleData(d, rtt = 0) {
         syncAudio();
         return;
     }
-
-    prewarm(d);
 
     if (s.choice === null) {
         if (!d.videoId) removePrompt();
