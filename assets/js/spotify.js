@@ -21,10 +21,10 @@ const LEAD_MS = 100;
 const FETCH_TIMEOUT = 6000;
 const MAX_POLL_FAILS = 3;
 
-const HARD_DRIFT = IOS ? 1500 : 30;
+const HARD_DRIFT = IOS ? 1500 : 400;
 const SEEK_COOLDOWN = 6000;
 const SEEK_GRACE = 3000;
-const CLOCK_SNAP = 1500;
+const CLOCK_SNAP = 700;
 const CLOCK_BLEND = 0.3;
 
 const LOAD_TIMEOUT = 60000;
