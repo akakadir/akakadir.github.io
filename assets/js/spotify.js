@@ -3,8 +3,16 @@
 const POLL_URL = 'https://akakadir.vercel.app/api/now-playing';
 const AUDIO_API = 'https://api.akakadir.art/api/audio';
 
-const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+const UA = navigator.userAgent;
+const IOS = /iP(hone|ad|od)/.test(UA) ||
             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const ENGINE = IOS
+    ? 'webkit-ios'
+    : /Firefox\//.test(UA)
+        ? 'gecko'
+        : /Safari\//.test(UA) && !/Chrome|Chromium|Edg\//.test(UA)
+            ? 'webkit'
+            : 'blink';
 const DEBUG = /[?&]debug\b/.test(location.search);
 
 const POLL_MS = 7000;
@@ -53,7 +61,7 @@ function fetchT(url, opts = {}, ms = FETCH_TIMEOUT) {
     return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(timer));
 }
 
-const LAT_KEY = `sync.latency.${IOS ? 'ios' : 'pc'}`;
+const LAT_KEY = `sync.latency.${ENGINE}`;
 function loadLatency() {
     try {
         const v = Number(localStorage.getItem(LAT_KEY));
@@ -572,8 +580,9 @@ function renderDebug() {
     }
     const d = getTruePosition() - audio.currentTime * 1000;
     el.textContent =
-        `${IOS ? 'ios' : 'pc'} d=${d | 0}ms L=${ax.latency | 0} ` +
-        `try=${ax.tries} fail=${ax.fails}${ax.dead ? '!' : ''} rs=${audio.readyState} ` +
+        `${ENGINE} d=${d | 0}ms ` +
+        (IOS ? `L=${ax.latency | 0} try=${ax.tries} ` : '') +
+        `fail=${ax.fails}${ax.dead ? '!' : ''} rs=${audio.readyState} ` +
         `${audio.paused ? 'P' : '>'}${ax.learn ? ' learn' : ''}${s.stale ? ' stale' : ''}`;
 }
 
@@ -609,12 +618,9 @@ function handleData(d, rtt = 0) {
     s.playing = !!d.isPlaying;
     s.duration = Number(d.durationMs) || toSec(d.duration) * 1000;
 
-    const fetchedAt = Number(d.fetchedAt);
-    const serverNow = Number(d.serverNow);
-    const age = fetchedAt && serverNow ? Math.max(0, serverNow - fetchedAt) : 0;
     const raw = Number(d.progressMs ?? toSec(d.progress) * 1000) || 0;
-    const apiPos = Math.max(0, raw + LEAD_MS + (s.playing ? age + rtt / 2 : 0));
-    const stamp = `${raw}|${d.fetchedAt ?? ''}`;
+    const apiPos = Math.max(0, raw + LEAD_MS + (IOS && s.playing ? rtt / 2 : 0));
+    const stamp = String(raw);
 
     if (changed || !s.playing || !wasLive) {
         clk.pos = apiPos;
