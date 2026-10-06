@@ -13,18 +13,16 @@ const LEAD_MS = 100;
 const FETCH_TIMEOUT = 6000;
 const MAX_POLL_FAILS = 3;
 
-const HARD_DRIFT = IOS ? 1500 : 1000;
+const HARD_DRIFT = IOS ? 1500 : 350;
 const SEEK_COOLDOWN = 6000;
 const SEEK_GRACE = 3000;
 const CLOCK_SNAP = 1500;
 const CLOCK_BLEND = 0.3;
 
-const RATE_ENTER = 120;
-const RATE_EXIT = 50;
-const RATE_MAX = 0.06;
-
 const LOAD_TIMEOUT = 60000;
 const MAX_AUDIO_FAILS = 3;
+
+const STAGE_RANK = { resolving: 1, downloading: 2, uploading: 3, ready: 4 };
 
 const domCache = new Map();
 const $ = id => {
@@ -84,9 +82,8 @@ const s = {
     prog: null,
     progId: '',
     choice: null,
-    serverOk: null,
-    probing: false,
     statusMax: 0,
+    statusRank: 0,
     statusAt: 0,
     loadedId: ''
 };
@@ -112,6 +109,13 @@ const getTruePosition = () => {
 function syncClock(apiPos, stamp) {
     if (stamp === clk.lastStamp) return;
     clk.lastStamp = stamp;
+
+    if (!IOS) {
+        clk.pos = apiPos;
+        clk.at = performance.now();
+        return;
+    }
+
     const expected = getTruePosition();
     const diff = apiPos - expected;
     clk.pos = Math.abs(diff) > CLOCK_SNAP ? apiPos : expected + diff * CLOCK_BLEND;
@@ -119,7 +123,7 @@ function syncClock(apiPos, stamp) {
 }
 
 function seekTo(ms) {
-    const t = Math.max(0, ms + ax.latency) / 1000;
+    const t = Math.max(0, ms + (IOS ? ax.latency : 0)) / 1000;
     try {
         audio.currentTime = t;
     } catch (e) { return; }
@@ -128,7 +132,7 @@ function seekTo(ms) {
     ax.lastSeekAt = now;
     ax.graceUntil = now + SEEK_GRACE;
     ax.seekCt = t;
-    ax.learn = true;
+    ax.learn = IOS;
     ax.learnAt = now;
     ax.m = [];
 }
@@ -139,6 +143,7 @@ function loadSrc(id) {
     s.loadedId = id;
     s.statusAt = performance.now();
     s.statusMax = 0;
+    s.statusRank = 0;
     Object.assign(ax, {
         lastSeekAt: 0, graceUntil: 0, buffering: true, learn: false, tries: 0, m: [],
         loadAt: performance.now()
@@ -200,15 +205,6 @@ function audioFlowing() {
     return !audio.paused && !audio.seeking && audio.readyState >= 3 && audio.currentTime - ax.baseCt >= 1;
 }
 
-function trimRate(drift) {
-    if (IOS) return;
-    const a = Math.abs(drift);
-    let r = audio.playbackRate;
-    if (a < RATE_EXIT) r = 1;
-    else if (a > RATE_ENTER) r = 1 + clamp(drift / 4000, -RATE_MAX, RATE_MAX);
-    if (r !== audio.playbackRate) audio.playbackRate = r;
-}
-
 function syncAudio() {
     if (!wantAudio()) {
         if (!audio.paused) audio.pause();
@@ -266,25 +262,7 @@ function syncAudio() {
 
     if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
         seekTo(target);
-        return;
     }
-
-    trimRate(drift);
-}
-
-async function probeServer(id) {
-    if (s.probing) return;
-    s.probing = true;
-    const key = s.key;
-    let ok = false;
-    try {
-        const r = await fetchT(progressUrl(id), { cache: 'no-store', credentials: 'omit' }, 4000);
-        ok = r.status < 500;
-    } catch (e) { }
-    s.probing = false;
-    if (key !== s.key) return;
-    s.serverOk = ok;
-    if (ok) showPrompt();
 }
 
 function renderTrack() {
@@ -454,6 +432,7 @@ function removeStatus() {
     clearTimeout(progTimer);
     s.prog = null;
     s.statusMax = 0;
+    s.statusRank = 0;
     $('music-status')?.remove();
 }
 
@@ -494,7 +473,17 @@ function updateStatus() {
     }
 
     s.statusMax = Math.max(s.statusMax, statusPercent());
-    setText(el, `hazırlanıyor...${Math.min(99, Math.floor(s.statusMax))}%`);
+    const pct = Math.min(99, Math.floor(s.statusMax));
+    const pr = s.prog && s.progId === s.track?.videoId ? s.prog : null;
+    s.statusRank = Math.max(s.statusRank, STAGE_RANK[pr?.stage] ?? 0);
+
+    setText(el, [
+        `hazırlanıyor..${pct}%`,
+        `çözümleniyor..${pct}%`,
+        'sunucu todo..(1/2)',
+        'sunucu todo..(2/2)',
+        'hazır'
+    ][s.statusRank]);
 }
 
 async function pollProgress() {
@@ -530,6 +519,7 @@ function showStatus() {
         host ? host.after(el) : document.body.append(el);
         s.statusAt = performance.now();
         s.statusMax = 0;
+        s.statusRank = 0;
     }
     updateStatus();
     pollProgress();
@@ -537,8 +527,7 @@ function showStatus() {
 
 function showPrompt() {
     const host = $('lyrics');
-    if (!host || !s.playing || s.choice === 'yes' || $('music-consent')) return;
-    if (s.choice === null && (!s.serverOk || !s.track?.videoId)) return;
+    if (!host || !s.playing || !s.track?.videoId || s.choice === 'yes' || $('music-consent')) return;
 
     const btn = 'background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer';
     const el = document.createElement('div');
@@ -584,14 +573,14 @@ function renderDebug() {
     const d = getTruePosition() - audio.currentTime * 1000;
     el.textContent =
         `${IOS ? 'ios' : 'pc'} d=${d | 0}ms L=${ax.latency | 0} r=${audio.playbackRate.toFixed(2)} ` +
-        `ok=${s.serverOk} try=${ax.tries} fail=${ax.fails}${ax.dead ? '!' : ''} rs=${audio.readyState} ` +
+        `try=${ax.tries} fail=${ax.fails}${ax.dead ? '!' : ''} rs=${audio.readyState} ` +
         `${audio.paused ? 'P' : '>'}${ax.learn ? ' learn' : ''}${s.stale ? ' stale' : ''}`;
 }
 
 function clearTrack(d) {
     s.lyricAbort?.abort();
     Object.assign(s, {
-        track: null, key: '', playing: false, stale: false, lyrics: [], loadedId: '', serverOk: null
+        track: null, key: '', playing: false, stale: false, lyrics: [], loadedId: ''
     });
     removePrompt();
     removeStatus();
@@ -636,7 +625,7 @@ function handleData(d, rtt = 0) {
     }
 
     if (changed) {
-        Object.assign(s, { key, lyrics: [], loadedId: '', serverOk: null });
+        Object.assign(s, { key, lyrics: [], loadedId: '' });
         audio.pause();
         removeStatus();
         resetAudioFailures();
@@ -659,13 +648,8 @@ function handleData(d, rtt = 0) {
         return;
     }
 
-    if (s.choice === null) {
-        if (!d.videoId) removePrompt();
-        else if (s.serverOk) showPrompt();
-        else probeServer(d.videoId);
-    } else {
-        showPrompt();
-    }
+    if (!d.videoId) removePrompt();
+    else showPrompt();
 
     renderLyrics();
     syncAudio();
@@ -693,7 +677,7 @@ async function poll() {
 
     try {
         const t0 = performance.now();
-        const r = await fetch(POLL_URL, { cache: 'no-store', credentials: 'omit', signal: ctrl.signal });
+        const r = await fetch(`${POLL_URL}?t=${Date.now()}`, { cache: 'no-store', credentials: 'omit', signal: ctrl.signal });
         if (!r.ok) throw new Error(`API ${r.status}`);
         data = await r.json();
         rtt = performance.now() - t0;
