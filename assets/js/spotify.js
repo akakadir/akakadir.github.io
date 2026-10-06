@@ -13,7 +13,7 @@ const LEAD_MS = 100;
 const FETCH_TIMEOUT = 6000;
 const MAX_POLL_FAILS = 3;
 
-const HARD_DRIFT = IOS ? 1500 : 350;
+const HARD_DRIFT = 1500;
 const SEEK_COOLDOWN = 6000;
 const SEEK_GRACE = 3000;
 const CLOCK_SNAP = 1500;
@@ -59,7 +59,7 @@ function loadLatency() {
         const v = Number(localStorage.getItem(LAT_KEY));
         if (v >= 100 && v <= 8000) return v;
     } catch (e) { }
-    return IOS ? 1500 : 400;
+    return 1500;
 }
 function saveLatency() {
     try { localStorage.setItem(LAT_KEY, String(ax.latency | 0)); } catch (e) { }
@@ -109,13 +109,6 @@ const getTruePosition = () => {
 function syncClock(apiPos, stamp) {
     if (stamp === clk.lastStamp) return;
     clk.lastStamp = stamp;
-
-    if (!IOS) {
-        clk.pos = apiPos;
-        clk.at = performance.now();
-        return;
-    }
-
     const expected = getTruePosition();
     const diff = apiPos - expected;
     clk.pos = Math.abs(diff) > CLOCK_SNAP ? apiPos : expected + diff * CLOCK_BLEND;
@@ -123,7 +116,7 @@ function syncClock(apiPos, stamp) {
 }
 
 function seekTo(ms) {
-    const t = Math.max(0, ms + (IOS ? ax.latency : 0)) / 1000;
+    const t = Math.max(0, ms + ax.latency) / 1000;
     try {
         audio.currentTime = t;
     } catch (e) { return; }
@@ -132,7 +125,7 @@ function seekTo(ms) {
     ax.lastSeekAt = now;
     ax.graceUntil = now + SEEK_GRACE;
     ax.seekCt = t;
-    ax.learn = IOS;
+    ax.learn = true;
     ax.learnAt = now;
     ax.m = [];
 }
@@ -572,7 +565,7 @@ function renderDebug() {
     }
     const d = getTruePosition() - audio.currentTime * 1000;
     el.textContent =
-        `${IOS ? 'ios' : 'pc'} d=${d | 0}ms L=${ax.latency | 0} r=${audio.playbackRate.toFixed(2)} ` +
+        `${IOS ? 'ios' : 'pc'} d=${d | 0}ms L=${ax.latency | 0} ` +
         `try=${ax.tries} fail=${ax.fails}${ax.dead ? '!' : ''} rs=${audio.readyState} ` +
         `${audio.paused ? 'P' : '>'}${ax.learn ? ' learn' : ''}${s.stale ? ' stale' : ''}`;
 }
