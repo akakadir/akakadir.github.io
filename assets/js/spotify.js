@@ -15,20 +15,20 @@ const ENGINE = IOS
             : 'blink';
 const DEBUG = /[?&]debug\b/.test(location.search);
 
-const POLL_MS = 5000;
-const TICK_MS = 50;
-const LEAD_MS = 50;
-const FETCH_TIMEOUT = 5000;
-const MAX_POLL_FAILS = 5;
+const POLL_MS = 7000;
+const TICK_MS = 300;
+const LEAD_MS = 100;
+const FETCH_TIMEOUT = 6000;
+const MAX_POLL_FAILS = 3;
 
-const HARD_DRIFT = IOS ? 500 : 500;
-const SEEK_COOLDOWN = 5000;
-const SEEK_GRACE = 1000;
-const CLOCK_SNAP = 500;
-const CLOCK_BLEND = 0.5;
+const HARD_DRIFT = IOS ? 1500 : 400;
+const SEEK_COOLDOWN = 6000;
+const SEEK_GRACE = 3000;
+const CLOCK_SNAP = 1500;
+const CLOCK_BLEND = 0.3;
 
-const LOAD_TIMEOUT = 50000;
-const MAX_AUDIO_FAILS = 5;
+const LOAD_TIMEOUT = 60000;
+const MAX_AUDIO_FAILS = 3;
 
 const STAGE_RANK = { resolving: 1, downloading: 2, uploading: 3, ready: 4 };
 
@@ -67,7 +67,7 @@ function loadLatency() {
         const v = Number(localStorage.getItem(LAT_KEY));
         if (v >= 100 && v <= 8000) return v;
     } catch (e) { }
-    return IOS ? 1500 : 300;
+    return 1500;
 }
 function saveLatency() {
     try { localStorage.setItem(LAT_KEY, String(ax.latency | 0)); } catch (e) { }
@@ -131,7 +131,7 @@ function syncClock(apiPos, stamp) {
 }
 
 function seekTo(ms) {
-    const t = Math.max(0, ms + ax.latency) / 1000;
+    const t = Math.max(0, ms + (IOS ? ax.latency : 0)) / 1000;
     try {
         audio.currentTime = t;
     } catch (e) { return; }
@@ -140,7 +140,7 @@ function seekTo(ms) {
     ax.lastSeekAt = now;
     ax.graceUntil = now + SEEK_GRACE;
     ax.seekCt = t;
-    ax.learn = true;
+    ax.learn = IOS;
     ax.learnAt = now;
     ax.m = [];
 }
@@ -580,7 +580,8 @@ function renderDebug() {
     }
     const d = getTruePosition() - audio.currentTime * 1000;
     el.textContent =
-        `${ENGINE} d=${d | 0}ms L=${ax.latency | 0} try=${ax.tries} ` +
+        `${ENGINE} d=${d | 0}ms ` +
+        (IOS ? `L=${ax.latency | 0} try=${ax.tries} ` : '') +
         `fail=${ax.fails}${ax.dead ? '!' : ''} rs=${audio.readyState} ` +
         `${audio.paused ? 'P' : '>'}${ax.learn ? ' learn' : ''}${s.stale ? ' stale' : ''}`;
 }
