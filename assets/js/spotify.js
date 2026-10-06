@@ -67,7 +67,7 @@ function loadLatency() {
         const v = Number(localStorage.getItem(LAT_KEY));
         if (v >= 100 && v <= 8000) return v;
     } catch (e) { }
-    return 1500;
+    return IOS ? 1500 : 300;
 }
 function saveLatency() {
     try { localStorage.setItem(LAT_KEY, String(ax.latency | 0)); } catch (e) { }
@@ -131,7 +131,7 @@ function syncClock(apiPos, stamp) {
 }
 
 function seekTo(ms) {
-    const t = Math.max(0, ms + (IOS ? ax.latency : 0)) / 1000;
+    const t = Math.max(0, ms + ax.latency) / 1000;
     try {
         audio.currentTime = t;
     } catch (e) { return; }
@@ -140,7 +140,7 @@ function seekTo(ms) {
     ax.lastSeekAt = now;
     ax.graceUntil = now + SEEK_GRACE;
     ax.seekCt = t;
-    ax.learn = IOS;
+    ax.learn = true;
     ax.learnAt = now;
     ax.m = [];
 }
@@ -580,8 +580,7 @@ function renderDebug() {
     }
     const d = getTruePosition() - audio.currentTime * 1000;
     el.textContent =
-        `${ENGINE} d=${d | 0}ms ` +
-        (IOS ? `L=${ax.latency | 0} try=${ax.tries} ` : '') +
+        `${ENGINE} d=${d | 0}ms L=${ax.latency | 0} try=${ax.tries} ` +
         `fail=${ax.fails}${ax.dead ? '!' : ''} rs=${audio.readyState} ` +
         `${audio.paused ? 'P' : '>'}${ax.learn ? ' learn' : ''}${s.stale ? ' stale' : ''}`;
 }
