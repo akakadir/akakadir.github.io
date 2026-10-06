@@ -13,7 +13,7 @@ const LEAD_MS = 100;
 const FETCH_TIMEOUT = 6000;
 const MAX_POLL_FAILS = 3;
 
-const HARD_DRIFT = 1500;
+const HARD_DRIFT = IOS ? 1500 : 400;
 const SEEK_COOLDOWN = 6000;
 const SEEK_GRACE = 3000;
 const CLOCK_SNAP = 1500;
@@ -109,6 +109,13 @@ const getTruePosition = () => {
 function syncClock(apiPos, stamp) {
     if (stamp === clk.lastStamp) return;
     clk.lastStamp = stamp;
+
+    if (!IOS) {
+        clk.pos = apiPos;
+        clk.at = performance.now();
+        return;
+    }
+
     const expected = getTruePosition();
     const diff = apiPos - expected;
     clk.pos = Math.abs(diff) > CLOCK_SNAP ? apiPos : expected + diff * CLOCK_BLEND;
@@ -116,7 +123,7 @@ function syncClock(apiPos, stamp) {
 }
 
 function seekTo(ms) {
-    const t = Math.max(0, ms + ax.latency) / 1000;
+    const t = Math.max(0, ms + (IOS ? ax.latency : 0)) / 1000;
     try {
         audio.currentTime = t;
     } catch (e) { return; }
@@ -125,7 +132,7 @@ function seekTo(ms) {
     ax.lastSeekAt = now;
     ax.graceUntil = now + SEEK_GRACE;
     ax.seekCt = t;
-    ax.learn = true;
+    ax.learn = IOS;
     ax.learnAt = now;
     ax.m = [];
 }
