@@ -4,9 +4,7 @@ const POLL_URL = 'https://akakadir.vercel.app/api/now-playing';
 const AUDIO_API = 'https://api.akakadir.art/api/audio';
 
 const UA = navigator.userAgent;
-const IOS = /iP(hone|ad|od)/.test(UA) ||
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const ENGINE = IOS
+const ENGINE = /iP(hone|ad|od)/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
     ? 'webkit-ios'
     : /Firefox\//.test(UA)
         ? 'gecko'
@@ -21,7 +19,7 @@ const LEAD_MS = 100;
 const FETCH_TIMEOUT = 6000;
 const MAX_POLL_FAILS = 3;
 
-const HARD_DRIFT = IOS ? 1500 : 400;
+const HARD_DRIFT = 1500;
 const SEEK_COOLDOWN = 6000;
 const SEEK_GRACE = 3000;
 const CLOCK_SNAP = 1500;
@@ -117,13 +115,6 @@ const getTruePosition = () => {
 function syncClock(apiPos, stamp) {
     if (stamp === clk.lastStamp) return;
     clk.lastStamp = stamp;
-
-    if (!IOS) {
-        clk.pos = apiPos;
-        clk.at = performance.now();
-        return;
-    }
-
     const expected = getTruePosition();
     const diff = apiPos - expected;
     clk.pos = Math.abs(diff) > CLOCK_SNAP ? apiPos : expected + diff * CLOCK_BLEND;
@@ -131,7 +122,7 @@ function syncClock(apiPos, stamp) {
 }
 
 function seekTo(ms) {
-    const t = Math.max(0, ms + (IOS ? ax.latency : 0)) / 1000;
+    const t = Math.max(0, ms + ax.latency) / 1000;
     try {
         audio.currentTime = t;
     } catch (e) { return; }
@@ -140,7 +131,7 @@ function seekTo(ms) {
     ax.lastSeekAt = now;
     ax.graceUntil = now + SEEK_GRACE;
     ax.seekCt = t;
-    ax.learn = IOS;
+    ax.learn = true;
     ax.learnAt = now;
     ax.m = [];
 }
@@ -580,8 +571,7 @@ function renderDebug() {
     }
     const d = getTruePosition() - audio.currentTime * 1000;
     el.textContent =
-        `${ENGINE} d=${d | 0}ms ` +
-        (IOS ? `L=${ax.latency | 0} try=${ax.tries} ` : '') +
+        `${ENGINE} d=${d | 0}ms L=${ax.latency | 0} try=${ax.tries} ` +
         `fail=${ax.fails}${ax.dead ? '!' : ''} rs=${audio.readyState} ` +
         `${audio.paused ? 'P' : '>'}${ax.learn ? ' learn' : ''}${s.stale ? ' stale' : ''}`;
 }
@@ -619,7 +609,7 @@ function handleData(d, rtt = 0) {
     s.duration = Number(d.durationMs) || toSec(d.duration) * 1000;
 
     const raw = Number(d.progressMs ?? toSec(d.progress) * 1000) || 0;
-    const apiPos = Math.max(0, raw + LEAD_MS + (IOS && s.playing ? rtt / 2 : 0));
+    const apiPos = Math.max(0, raw + LEAD_MS + (s.playing ? rtt / 2 : 0));
     const stamp = String(raw);
 
     if (changed || !s.playing || !wasLive) {
