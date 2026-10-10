@@ -290,8 +290,6 @@ function ensureStyle() {
 #now-playing .mp-n,#mp-ctl{flex:none}
 #mp-ctl{display:inline-flex;align-items:center;gap:6px}
 #mp-ctl[hidden]{display:none}
-#mp-cov{display:block;flex:none;width:32px;height:32px;object-fit:cover;border-radius:0;border:1px solid ${line}}
-#mp-cov[hidden]{display:none}
 #mp-sw{position:relative;flex:none;box-sizing:border-box;width:26px;height:14px;padding:0;margin:0;border:1px solid ${line};border-radius:7px;background:none;color:inherit;cursor:pointer;font:inherit}
 #mp-sw::after{content:"";position:absolute;inset:-13px -8px}
 #mp-sw i{position:absolute;top:2px;left:2px;width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.45;transition:left .15s,opacity .15s}
@@ -315,24 +313,9 @@ function ensurePlayer() {
     const np = $('now-playing') || mk('div', { id: 'now-playing' });
     const mp = mk('div', { id: 'mp' });
     const mid = mk('div', { id: 'mp-mid' });
-    const cov = mk('img', { id: 'mp-cov', alt: '', hidden: true, referrerPolicy: 'no-referrer' });
-    cov.addEventListener('error', () => { cov.hidden = true; });
     lyrics.before(mp);
     mid.append(lyrics, np);
-    mp.append(mid, cov);
-}
-
-function updateCover() {
-    const c = $('mp-cov');
-    if (!c) return;
-    const src = s.track?.albumArt || '';
-    if (!src) {
-        c.hidden = true;
-        c.removeAttribute('src');
-        return;
-    }
-    if (c.getAttribute('src') !== src) c.src = src;
-    c.hidden = false;
+    mp.append(mid);
 }
 
 function setLabel(t) {
@@ -405,7 +388,9 @@ function updateMediaSession() {
                 title: d.name || '',
                 artist: d.artists || '',
                 album: d.album || '',
-                artwork: d.albumArt ? [{ src: d.albumArt, sizes: '640x640' }] : []
+                artwork: d.albumArt
+                    ? [96, 128, 192, 256, 384, 512].map(n => ({ src: d.albumArt, sizes: `${n}x${n}` }))
+                    : []
             })
             : null;
         ['seekbackward', 'seekforward', 'seekto', 'previoustrack', 'nexttrack']
@@ -634,8 +619,6 @@ function clearTrack(d) {
     resetLyricAnim();
     setText($('front'), '');
     setText($('now-playing'), String(d?.error || ''));
-    const c = $('mp-cov');
-    if (c) c.hidden = true;
     updateMediaSession();
 }
 
@@ -680,7 +663,6 @@ function handleData(d, rtt = 0) {
         resetLyricAnim();
         setText($('front'), 'yükleniyor...');
         renderTrack();
-        updateCover();
         updateMediaSession();
         loadLyrics(d);
     } else if (!$('progress-time')) {
