@@ -29,6 +29,8 @@ const CLOCK_BLEND = 0.3;
 const LOAD_TIMEOUT = 60000;
 const MAX_AUDIO_FAILS = 3;
 
+const MARQUEE_PX_PER_SEC = 25;
+
 const STAGE_RANK = { resolving: 1, downloading: 2, uploading: 3, ready: 4 };
 
 const domCache = new Map();
@@ -282,11 +284,16 @@ function ensureStyle() {
         id: 'mp-style',
         textContent: `
 #mp{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto;max-width:100%}
-#mp-mid{min-width:0;flex:1}
+#mp-mid{min-width:0;flex:1;overflow:hidden}
 #mp #lyrics{justify-content:flex-end}
 #mp .side-front,#mp .side-bottom{justify-content:flex-end;text-align:right}
-#now-playing{display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:.8em;line-height:1.45;opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums}
-#now-playing .mp-t{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis}
+#now-playing{display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:6px;min-width:0;font-size:.8em;line-height:1.45;opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums}
+#now-playing .mp-t{flex:1 1 0;min-width:0;overflow:hidden;display:flex;justify-content:flex-end}
+#now-playing .mp-t.mq{justify-content:flex-start;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%)}
+#now-playing .mp-tt{flex:none;white-space:nowrap}
+#now-playing .mp-t.mq .mp-tt{animation:mp-mq var(--mq-t,8s) linear infinite alternate}
+@keyframes mp-mq{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(calc(-1px * var(--mq-d,0)))}}
+@media (prefers-reduced-motion:reduce){#now-playing .mp-t.mq .mp-tt{animation:none}}
 #now-playing .mp-n,#mp-ctl{flex:none}
 #mp-ctl{display:inline-flex;align-items:center;gap:6px}
 #mp-ctl[hidden]{display:none}
@@ -339,6 +346,24 @@ function toggleListen() {
     syncControls();
 }
 
+const marquee = {
+    ro: typeof ResizeObserver === 'function' ? new ResizeObserver(() => fitMarquee()) : null
+};
+
+function fitMarquee() {
+    const box = document.querySelector('#now-playing .mp-t');
+    const inner = box?.firstElementChild;
+    if (!box || !inner) return;
+    const d = Math.ceil(inner.offsetWidth - box.clientWidth);
+    if (d > 1) {
+        box.style.setProperty('--mq-d', String(d));
+        box.style.setProperty('--mq-t', `${(d / MARQUEE_PX_PER_SEC + 3).toFixed(1)}s`);
+        box.classList.add('mq');
+    } else {
+        box.classList.remove('mq');
+    }
+}
+
 function renderTrack() {
     const el = $('now-playing');
     if (!el || !s.track) return;
@@ -353,8 +378,10 @@ function renderTrack() {
         textContent: name || 'bilinmeyen şarkı'
     });
 
+    const tt = mk('span', { className: 'mp-tt' });
+    tt.append(`${artists || 'bilinmeyen sanatçı'} - `, link);
     const t = mk('span', { className: 'mp-t' });
-    t.append(`${artists || 'bilinmeyen sanatçı'} - `, link);
+    t.append(tt);
 
     const time = mk('span', { id: 'progress-time', textContent: fmt(getTruePosition()) });
     const n = mk('span', { className: 'mp-n' });
@@ -371,6 +398,13 @@ function renderTrack() {
 
     el.replaceChildren(t, n, ctl);
     syncControls();
+
+    if (marquee.ro) {
+        marquee.ro.disconnect();
+        marquee.ro.observe(t);
+    }
+    fitMarquee();
+    requestAnimationFrame(fitMarquee);
 }
 
 function updateMediaSession() {
@@ -613,6 +647,7 @@ function clearTrack(d) {
     resetLyricAnim();
     setText($('front'), '');
     setText($('now-playing'), String(d?.error || ''));
+    marquee.ro?.disconnect();
     updateMediaSession();
 }
 
