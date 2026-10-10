@@ -289,7 +289,7 @@ function ensureStyle() {
 #lyrics{--h:1rem;--d:25px;display:block;height:var(--h);perspective:1000px;overflow:visible}
 #lyrics .cube{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:translateZ(calc(-1 * var(--d)))}
 #lyrics .animate{transition:transform .6s cubic-bezier(.23,1,.32,1)}
-#lyrics .side-front,#lyrics .side-bottom{position:absolute;left:0;top:0;width:100%;height:100%;display:block;box-sizing:border-box;backface-visibility:hidden;text-align:right;white-space:nowrap;line-height:var(--h);overflow-x:clip;overflow-y:visible;text-overflow:ellipsis}
+#lyrics .side-front,#lyrics .side-bottom{position:absolute;left:0;top:-.25em;width:100%;height:calc(100% + .5em);display:block;box-sizing:border-box;backface-visibility:hidden;text-align:right;white-space:nowrap;line-height:calc(var(--h) + .5em);overflow-x:clip;overflow-y:visible;text-overflow:ellipsis}
 #lyrics .side-front{transform:rotateX(0deg) translateZ(var(--d))}
 #lyrics .side-bottom{transform:rotateX(-90deg) translateZ(var(--d))}
 #lyrics .show-next{transform:translateZ(calc(-1 * var(--d))) rotateX(90deg)}
