@@ -13,7 +13,6 @@ const ENGINE = IOS
         : /Safari\//.test(UA) && !/Chrome|Chromium|Edg\//.test(UA)
             ? 'webkit'
             : 'blink';
-const DEBUG = /[?&]debug\b/.test(location.search);
 
 const POLL_MS = 7000;
 const TICK_MS = 300;
@@ -298,6 +297,12 @@ function ensureStyle() {
 #mp-sw i{position:absolute;top:2px;left:2px;width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.45;transition:left .15s,opacity .15s}
 #mp-sw[aria-checked="true"]{border-color:currentColor}
 #mp-sw[aria-checked="true"] i{left:14px;opacity:1}
+@media (max-width:640px){
+#mp{position:fixed;right:6px;bottom:max(6px,env(safe-area-inset-bottom));max-width:calc(100vw - 12px);margin:0;z-index:10}
+#now-playing{flex-wrap:wrap;row-gap:2px}
+#now-playing .mp-t{flex:0 1 100%;text-align:right}
+#now-playing .mp-s{display:none}
+}
 `
     }));
 }
@@ -320,7 +325,7 @@ function ensurePlayer() {
 function updateCover() {
     const c = $('mp-cov');
     if (!c) return;
-    const src = s.track?.image || '';
+    const src = s.track?.albumArt || '';
     if (!src) {
         c.hidden = true;
         c.removeAttribute('src');
@@ -376,7 +381,7 @@ function renderTrack() {
 
     const time = mk('span', { id: 'progress-time', textContent: fmt(getTruePosition()) });
     const n = mk('span', { className: 'mp-n' });
-    n.append('| ', time, `/${duration || fmt(s.duration)}`);
+    n.append(mk('span', { className: 'mp-s', textContent: '| ' }), time, `/${duration || fmt(s.duration)}`);
 
     const sw = mk('button', { id: 'mp-sw', type: 'button' });
     sw.setAttribute('role', 'switch');
@@ -400,7 +405,7 @@ function updateMediaSession() {
                 title: d.name || '',
                 artist: d.artists || '',
                 album: d.album || '',
-                artwork: d.image ? [{ src: d.image, sizes: '640x640' }] : []
+                artwork: d.albumArt ? [{ src: d.albumArt, sizes: '640x640' }] : []
             })
             : null;
         ['seekbackward', 'seekforward', 'seekto', 'previoustrack', 'nexttrack']
@@ -619,22 +624,6 @@ function showStatus() {
     pollProgress();
 }
 
-function renderDebug() {
-    if (!DEBUG) return;
-    let el = $('sync-debug');
-    if (!el) {
-        el = mk('div', { id: 'sync-debug' });
-        el.style.cssText = 'position:fixed;right:6px;bottom:6px;font:11px monospace;pointer-events:none';
-        document.body.append(el);
-    }
-    const d = getTruePosition() - audio.currentTime * 1000;
-    el.textContent =
-        `${ENGINE} d=${d | 0}ms ` +
-        (IOS ? `L=${ax.latency | 0} try=${ax.tries} ` : '') +
-        `fail=${ax.fails}${ax.dead ? '!' : ''} rs=${audio.readyState} ` +
-        `${audio.paused ? 'P' : '>'}${ax.learn ? ' learn' : ''}${s.stale ? ' stale' : ''}`;
-}
-
 function clearTrack(d) {
     s.lyricAbort?.abort();
     Object.assign(s, {
@@ -762,7 +751,6 @@ setInterval(() => {
         updateStatus();
     }
     syncAudio();
-    renderDebug();
 }, TICK_MS);
 
 const resume = () => {
