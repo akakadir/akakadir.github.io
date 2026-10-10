@@ -286,7 +286,7 @@ function ensureStyle() {
 #mp{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto;max-width:100%}
 #mp-mid{min-width:0;flex:1}
 
-#lyrics{--h:1rem;--d:calc(var(--h) / 2);display:block;height:var(--h);perspective:1000px;overflow:visible}
+#lyrics{--h:1rem;--d:25px;display:block;height:var(--h);perspective:1000px;overflow:visible}
 #lyrics .cube{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:translateZ(calc(-1 * var(--d)))}
 #lyrics .animate{transition:transform .6s cubic-bezier(.23,1,.32,1)}
 #lyrics .side-front,#lyrics .side-bottom{position:absolute;left:0;top:0;width:100%;height:100%;display:block;box-sizing:border-box;backface-visibility:hidden;text-align:right;white-space:nowrap;line-height:var(--h);overflow-x:clip;overflow-y:visible;text-overflow:ellipsis}
