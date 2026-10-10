@@ -302,6 +302,7 @@ function ensureStyle() {
 @keyframes mp-mq{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(calc(-1px * var(--mq-d,0)))}}
 @media (prefers-reduced-motion:reduce){#now-playing .mp-t.mq .mp-tt{animation:none}}
 #now-playing .mp-n,#mp-ctl{flex:none}
+#now-playing .mp-s{margin-right:6px}
 #mp-ctl{display:inline-flex;align-items:center;gap:6px}
 #mp-ctl[hidden]{display:none}
 #mp-sw{position:relative;flex:none;box-sizing:border-box;width:26px;height:14px;padding:0;margin:0;border:1px solid ${line};border-radius:7px;background:none;color:inherit;cursor:pointer;font:inherit}
@@ -386,13 +387,13 @@ function renderTrack() {
     });
 
     const tt = mk('span', { className: 'mp-tt' });
-    tt.append(`${artists || 'bilinmeyen sanatçı'} - `, link);
+    tt.append(`${artists || 'bilinmeyen sanatçı'} — `, link);
     const t = mk('span', { className: 'mp-t' });
     t.append(tt);
 
     const time = mk('span', { id: 'progress-time', textContent: fmt(getTruePosition()) });
     const n = mk('span', { className: 'mp-n' });
-    n.append(mk('span', { className: 'mp-s', textContent: '| ' }), time, `/${duration || fmt(s.duration)}`);
+    n.append(mk('span', { className: 'mp-s', textContent: '|' }), time, `/${duration || fmt(s.duration)}`);
 
     const sw = mk('button', { id: 'mp-sw', type: 'button' });
     sw.setAttribute('role', 'switch');
@@ -401,7 +402,7 @@ function renderTrack() {
     sw.addEventListener('click', toggleListen);
 
     const ctl = mk('span', { id: 'mp-ctl' });
-    ctl.append('| ', mk('span', { id: 'mp-label', textContent: s.label }), sw);
+    ctl.append('~', mk('span', { id: 'mp-label', textContent: s.label }), sw);
 
     el.replaceChildren(t, n, ctl);
     syncControls();
