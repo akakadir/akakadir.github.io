@@ -42,6 +42,7 @@ const $ = id => {
     return el;
 };
 const setText = (el, t) => { if (el && el.textContent !== t) el.textContent = t; };
+const mk = (tag, props = {}) => Object.assign(document.createElement(tag), props);
 
 const enc = encodeURIComponent;
 const audioUrl = id => `${AUDIO_API}?videoId=${enc(id)}`;
@@ -90,6 +91,8 @@ const s = {
     prog: null,
     progId: '',
     choice: null,
+    statusOn: false,
+    label: 'beraber',
     statusMax: 0,
     statusRank: 0,
     statusAt: 0,
@@ -273,13 +276,94 @@ function syncAudio() {
     }
 }
 
+function ensureStyle() {
+    if ($('mp-style')) return;
+    const line = 'color-mix(in srgb, currentColor 30%, transparent)';
+    document.head.append(mk('style', {
+        id: 'mp-style',
+        textContent: `
+#mp{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto;max-width:100%}
+#mp-mid{min-width:0;flex:1}
+#mp #lyrics{justify-content:flex-end}
+#mp .side-front,#mp .side-bottom{justify-content:flex-end;text-align:right}
+#now-playing{display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:.8em;line-height:1.45;opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums}
+#now-playing .mp-t{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis}
+#now-playing .mp-n,#mp-ctl{flex:none}
+#mp-ctl{display:inline-flex;align-items:center;gap:6px}
+#mp-ctl[hidden]{display:none}
+#mp-cov{display:block;flex:none;width:32px;height:32px;object-fit:cover;border-radius:0;border:1px solid ${line}}
+#mp-cov[hidden]{display:none}
+#mp-sw{position:relative;flex:none;box-sizing:border-box;width:26px;height:14px;padding:0;margin:0;border:1px solid ${line};border-radius:7px;background:none;color:inherit;cursor:pointer;font:inherit}
+#mp-sw::after{content:"";position:absolute;inset:-13px -8px}
+#mp-sw i{position:absolute;top:2px;left:2px;width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.45;transition:left .15s,opacity .15s}
+#mp-sw[aria-checked="true"]{border-color:currentColor}
+#mp-sw[aria-checked="true"] i{left:14px;opacity:1}
+`
+    }));
+}
+
+function ensurePlayer() {
+    if ($('mp')) return;
+    const lyrics = $('lyrics');
+    if (!lyrics) return;
+    ensureStyle();
+    const np = $('now-playing') || mk('div', { id: 'now-playing' });
+    const mp = mk('div', { id: 'mp' });
+    const mid = mk('div', { id: 'mp-mid' });
+    const cov = mk('img', { id: 'mp-cov', alt: '', hidden: true, referrerPolicy: 'no-referrer' });
+    cov.addEventListener('error', () => { cov.hidden = true; });
+    lyrics.before(mp);
+    mid.append(lyrics, np);
+    mp.append(mid, cov);
+}
+
+function updateCover() {
+    const c = $('mp-cov');
+    if (!c) return;
+    const src = s.track?.image || '';
+    if (!src) {
+        c.hidden = true;
+        c.removeAttribute('src');
+        return;
+    }
+    if (c.getAttribute('src') !== src) c.src = src;
+    c.hidden = false;
+}
+
+function setLabel(t) {
+    s.label = t;
+    setText($('mp-label'), t);
+}
+
+function syncControls() {
+    const ctl = $('mp-ctl');
+    if (!ctl) return;
+    ctl.hidden = !(s.playing && s.track?.videoId);
+    $('mp-sw')?.setAttribute('aria-checked', String(s.choice === 'yes'));
+}
+
+function toggleListen() {
+    if (s.choice === 'yes') {
+        s.choice = null;
+        removeStatus();
+        audio.pause();
+        syncControls();
+        return;
+    }
+    s.choice = 'yes';
+    resetAudioFailures();
+    showStatus();
+    startAudio();
+    syncControls();
+}
+
 function renderTrack() {
     const el = $('now-playing');
     if (!el || !s.track) return;
 
     const { artists, name, trackLink, duration } = s.track;
 
-    const link = Object.assign(document.createElement('a'), {
+    const link = mk('a', {
         className: 'no-favicon',
         href: trackLink || '#',
         target: '_blank',
@@ -287,18 +371,24 @@ function renderTrack() {
         textContent: name || 'bilinmeyen şarkı'
     });
 
-    const time = Object.assign(document.createElement('span'), {
-        id: 'progress-time',
-        textContent: fmt(getTruePosition())
-    });
+    const t = mk('span', { className: 'mp-t' });
+    t.append(`${artists || 'bilinmeyen sanatçı'} - `, link);
 
-    el.replaceChildren(
-        `🎧 ${artists || 'bilinmeyen sanatçı'} - `,
-        link,
-        ' | ',
-        time,
-        `/${duration || fmt(s.duration)}`
-    );
+    const time = mk('span', { id: 'progress-time', textContent: fmt(getTruePosition()) });
+    const n = mk('span', { className: 'mp-n' });
+    n.append('| ', time, `/${duration || fmt(s.duration)}`);
+
+    const sw = mk('button', { id: 'mp-sw', type: 'button' });
+    sw.setAttribute('role', 'switch');
+    sw.setAttribute('aria-label', 'beraber dinle');
+    sw.append(mk('i'));
+    sw.addEventListener('click', toggleListen);
+
+    const ctl = mk('span', { id: 'mp-ctl' });
+    ctl.append('| ', mk('span', { id: 'mp-label', textContent: s.label }), sw);
+
+    el.replaceChildren(t, n, ctl);
+    syncControls();
 }
 
 function updateMediaSession() {
@@ -319,6 +409,7 @@ function updateMediaSession() {
 }
 
 function ensureLyrics() {
+    ensurePlayer();
     const el = $('lyrics');
     if (!el || $('cube')) return;
     el.innerHTML = `
@@ -433,15 +524,14 @@ function renderLyrics() {
     triggerCubeAnimation(lyricAt(s.lyrics, getTruePosition()) || '...');
 }
 
-const removePrompt = () => $('music-consent')?.remove();
-
 function removeStatus() {
     progRun++;
     clearTimeout(progTimer);
     s.prog = null;
     s.statusMax = 0;
     s.statusRank = 0;
-    $('music-status')?.remove();
+    s.statusOn = false;
+    setLabel('beraber');
 }
 
 function bufferedAhead() {
@@ -468,11 +558,10 @@ function statusPercent() {
 }
 
 function updateStatus() {
-    const el = $('music-status');
-    if (!el) return;
+    if (!s.statusOn) return;
 
     if (ax.dead) {
-        setText(el, 'sunucum regl olmus, baska zaman');
+        setLabel('sunucum regl olmus, baska zaman');
         return;
     }
     if (audioFlowing()) {
@@ -485,7 +574,7 @@ function updateStatus() {
     const pr = s.prog && s.progId === s.track?.videoId ? s.prog : null;
     s.statusRank = Math.max(s.statusRank, STAGE_RANK[pr?.stage] ?? 0);
 
-    setText(el, [
+    setLabel([
         `hazırlık..${pct}%`,
         `çözümleme..${pct}%`,
         'ıvır zıvır..(1/2)',
@@ -498,7 +587,7 @@ async function pollProgress() {
     clearTimeout(progTimer);
     const run = ++progRun;
     const id = s.track?.videoId;
-    if (!$('music-status') || !id || ax.dead) return;
+    if (!s.statusOn || !id || ax.dead) return;
 
     let delay = 700;
     try {
@@ -514,17 +603,14 @@ async function pollProgress() {
         delay = 2000;
     }
 
-    if (run !== progRun || !$('music-status') || ax.dead) return;
+    if (run !== progRun || !s.statusOn || ax.dead) return;
     progTimer = setTimeout(pollProgress, delay);
 }
 
 function showStatus() {
     if (s.choice !== 'yes' || !s.playing) return;
-    if (!$('music-status')) {
-        const el = Object.assign(document.createElement('div'), { id: 'music-status' });
-        el.style.textAlign = 'center';
-        const host = $('lyrics');
-        host ? host.after(el) : document.body.append(el);
+    if (!s.statusOn) {
+        s.statusOn = true;
         s.statusAt = performance.now();
         s.statusMax = 0;
         s.statusRank = 0;
@@ -533,48 +619,11 @@ function showStatus() {
     pollProgress();
 }
 
-function showPrompt() {
-    const host = $('lyrics');
-    if (!host || !s.playing || !s.track?.videoId || s.choice === 'yes' || $('music-consent')) return;
-
-    const btn = 'background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer';
-    const el = document.createElement('div');
-    el.id = 'music-consent';
-    el.style.textAlign = 'center';
-    el.innerHTML = s.choice === null
-        ? `<div>beraber dinleyelim mi?</div>
-           <div>
-               <button type="button" data-action="yes" style="${btn}">olur</button>
-               <span> / </span>
-               <button type="button" data-action="no" style="${btn}">yok ya</button>
-           </div>`
-        : `<div><button type="button" data-action="yes" style="${btn}">yine de beraber dinleyelim mi?</button></div>`;
-    host.after(el);
-
-    el.addEventListener('click', ({ target }) => {
-        const action = target.closest?.('[data-action]')?.dataset.action;
-        if (!action) return;
-
-        s.choice = action;
-        removePrompt();
-
-        if (action === 'yes') {
-            resetAudioFailures();
-            showStatus();
-            startAudio();
-            return;
-        }
-        removeStatus();
-        audio.pause();
-        showPrompt();
-    });
-}
-
 function renderDebug() {
     if (!DEBUG) return;
     let el = $('sync-debug');
     if (!el) {
-        el = Object.assign(document.createElement('div'), { id: 'sync-debug' });
+        el = mk('div', { id: 'sync-debug' });
         el.style.cssText = 'position:fixed;right:6px;bottom:6px;font:11px monospace;pointer-events:none';
         document.body.append(el);
     }
@@ -591,12 +640,13 @@ function clearTrack(d) {
     Object.assign(s, {
         track: null, key: '', playing: false, stale: false, lyrics: [], loadedId: ''
     });
-    removePrompt();
     removeStatus();
     audio.pause();
     resetLyricAnim();
     setText($('front'), '');
     setText($('now-playing'), String(d?.error || ''));
+    const c = $('mp-cov');
+    if (c) c.hidden = true;
     updateMediaSession();
 }
 
@@ -641,6 +691,7 @@ function handleData(d, rtt = 0) {
         resetLyricAnim();
         setText($('front'), 'yükleniyor...');
         renderTrack();
+        updateCover();
         updateMediaSession();
         loadLyrics(d);
     } else if (!$('progress-time')) {
@@ -648,17 +699,15 @@ function handleData(d, rtt = 0) {
     }
 
     if (!s.playing) {
-        removePrompt();
         removeStatus();
         syncAudio();
+        syncControls();
         return;
     }
 
-    if (!d.videoId) removePrompt();
-    else showPrompt();
-
     renderLyrics();
     syncAudio();
+    syncControls();
 }
 
 let busy = false;
