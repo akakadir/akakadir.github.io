@@ -17,19 +17,19 @@ const ENGINE = IOS
 const POLL_MS_PLAYING = 7_000;
 const POLL_MS_PAUSED  = 15_000;
 
-const TICK_MS       = 300;
-const LEAD_MS       = 100;
-const FETCH_TIMEOUT = 6_000;
+const TICK_MS        = 300;
+const LEAD_MS        = 100;
+const FETCH_TIMEOUT  = 6_000;
 const MAX_POLL_FAILS = 3;
 
-const HARD_DRIFT   = IOS ? 1_500 : 400;
-const SEEK_COOLDOWN = 6_000;
+const HARD_DRIFT    = IOS ? 800 : 400;
+const SEEK_COOLDOWN = 3_000;
 const SEEK_GRACE    = 3_000;
 const CLOCK_SNAP    = 1_500;
 const CLOCK_BLEND   = 0.3;
 
-const LOAD_TIMEOUT     = 60_000;
-const MAX_AUDIO_FAILS  = 3;
+const LOAD_TIMEOUT    = 60_000;
+const MAX_AUDIO_FAILS = 3;
 
 const MARQUEE_PX_PER_SEC = 25;
 const FILL_MAX_MS        = 6_000;
@@ -59,14 +59,14 @@ const $ = id => {
 const setText = (el, t) => { if (el && el.textContent !== t) el.textContent = t; };
 const mk = (tag, props = {}) => Object.assign(document.createElement(tag), props);
 
-const enc       = encodeURIComponent;
-const audioUrl  = id => `${AUDIO_API}?videoId=${enc(id)}`;
+const enc         = encodeURIComponent;
+const audioUrl    = id => `${AUDIO_API}?videoId=${enc(id)}`;
 const progressUrl = id => `${AUDIO_API}/progress?videoId=${enc(id)}`;
 
 const toSec = v => String(v || '0:00').split(':').reduce((a, b) => a * 60 + Number(b), 0);
 const fmt   = ms => {
     const t = Math.max(0, (ms / 1000) | 0);
-    return `${(t / 60) | 0}:${String(t % 60).padStart(2, '00')}`;
+    return `${(t / 60) | 0}:${String(t % 60).padStart(2, '0')}`;
 };
 const clamp   = (v, a, b) => Math.min(b, Math.max(a, v));
 const median3 = a => [...a].sort((x, y) => x - y)[1];
@@ -130,8 +130,16 @@ function syncClock(apiPos, stamp) {
 
     const expected = getTruePosition();
     const diff = apiPos - expected;
-    clk.pos = Math.abs(diff) > CLOCK_SNAP ? apiPos : expected + diff * CLOCK_BLEND;
-    clk.at  = performance.now();
+
+    if (Math.abs(diff) > CLOCK_SNAP) {
+        clk.pos = apiPos;
+    } else if (!wantAudio()) {
+        clk.pos = apiPos;
+    } else {
+        const blend = diff > 0 ? 0.7 : CLOCK_BLEND;
+        clk.pos = expected + diff * blend;
+    }
+    clk.at = performance.now();
 }
 
 function seekTo(ms) {
@@ -187,10 +195,10 @@ function audioFail() {
     audio.pause();
     audio.removeAttribute('src');
     audio.load();
-    s.loadedId  = '';
-    ax.loadAt   = 0;
+    s.loadedId   = '';
+    ax.loadAt    = 0;
     ax.buffering = false;
-    ax.learn    = false;
+    ax.learn     = false;
     if (++ax.fails >= MAX_AUDIO_FAILS) {
         ax.dead = true;
         progRun++;
@@ -351,7 +359,7 @@ function ensurePlayer() {
     const lyrics = $('lyrics');
     if (!lyrics) return;
     ensureStyle();
-    const np = $('now-playing') || mk('div', { id: 'now-playing' });
+    const np  = $('now-playing') || mk('div', { id: 'now-playing' });
     const mp  = mk('div', { id: 'mp' });
     const mid = mk('div', { id: 'mp-mid' });
     lyrics.before(mp);
@@ -360,8 +368,8 @@ function ensurePlayer() {
 }
 
 const shownLabel = () => {
-    if (performance.now() < s.spamUntil)    return SPAM_LABEL;
-    if (s.stale && s.choice === 'yes')      return STALE_LABEL;
+    if (performance.now() < s.spamUntil) return SPAM_LABEL;
+    if (s.stale && s.choice === 'yes')   return STALE_LABEL;
     return s.label;
 };
 
@@ -382,7 +390,7 @@ function toggleListen() {
     s.clicks = now - s.lastClick < SPAM_GAP_MS ? s.clicks + 1 : 1;
     s.lastClick = now;
     if (s.clicks >= SPAM_CLICKS) {
-        s.clicks   = 0;
+        s.clicks    = 0;
         s.spamUntil = now + SPAM_MS;
         setLabel(s.label);
     }
@@ -533,10 +541,10 @@ async function fetchSynced(d, signal) {
 
 async function loadLyrics(d) {
     s.lyricAbort?.abort();
-    const ctrl    = (s.lyricAbort = new AbortController());
-    const key     = s.key;
-    let timedOut  = false;
-    const timer   = setTimeout(() => { timedOut = true; ctrl.abort(); }, 10_000);
+    const ctrl   = (s.lyricAbort = new AbortController());
+    const key    = s.key;
+    let timedOut = false;
+    const timer  = setTimeout(() => { timedOut = true; ctrl.abort(); }, 10_000);
 
     let lyrics = { error: true };
     try {
@@ -624,10 +632,10 @@ function renderLyrics() {
 function removeStatus() {
     progRun++;
     clearTimeout(progTimer);
-    s.prog      = null;
-    s.statusMax = 0;
+    s.prog       = null;
+    s.statusMax  = 0;
     s.statusRank = 0;
-    s.statusOn  = false;
+    s.statusOn   = false;
     setLabel('beraber');
 }
 
@@ -753,7 +761,7 @@ function handleData(d, rtt = 0) {
     s.duration = Number(d.durationMs) || toSec(d.duration) * 1_000;
 
     const raw    = Number(d.progressMs ?? toSec(d.progress) * 1_000) || 0;
-    const apiPos = Math.max(0, raw + LEAD_MS + (IOS && s.playing ? rtt / 2 : 0));
+    const apiPos = Math.max(0, raw + LEAD_MS + (s.playing ? rtt / 2 : 0));
     const stamp  = String(raw);
 
     if (changed || !s.playing || !wasLive) {
@@ -858,8 +866,8 @@ setInterval(() => {
 
 const resume = () => {
     if (document.hidden) return;
-    ax.graceUntil  = 0;
-    ax.lastSeekAt  = 0;
+    ax.graceUntil = 0;
+    ax.lastSeekAt = 0;
     if (ax.dead) resetAudioFailures();
     poll();
 };
