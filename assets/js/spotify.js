@@ -313,6 +313,12 @@ function ensureStyle() {
 #mp-sw i{position:absolute;top:2px;left:2px;width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.45;transition:left .15s,opacity .15s}
 #mp-sw[aria-checked="true"]{border-color:currentColor}
 #mp-sw[aria-checked="true"] i{left:14px;opacity:1}
+@media (max-width:640px){
+#mp{position:fixed;right:6px;bottom:max(6px,env(safe-area-inset-bottom));max-width:calc(100vw - 12px);margin:0;z-index:10}
+#now-playing{flex-wrap:wrap;row-gap:2px}
+#now-playing .mp-t{flex:0 1 100%;text-align:right}
+#now-playing .mp-s{display:none}
+}
 `
     }));
 }
