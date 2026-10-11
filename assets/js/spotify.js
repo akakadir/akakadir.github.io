@@ -290,8 +290,8 @@ function ensureStyle() {
     document.head.append(mk('style', {
         id: 'mp-style',
         textContent: `
-#mp{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto;max-width:100%}
-#mp-mid{min-width:0;flex:1}
+#mp{display:block;width:100%;max-width:100%;margin:0}
+#mp-mid{width:100%;min-width:0}
 
 #lyrics{--h:1rem;display:block;position:relative;height:var(--h)}
 #lyrics .ly{position:absolute;left:0;top:-.25em;width:100%;height:calc(100% + .5em);box-sizing:border-box;text-align:center;white-space:nowrap;line-height:calc(var(--h) + .5em);overflow-x:clip;overflow-y:visible}
