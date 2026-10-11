@@ -298,7 +298,7 @@ function ensureStyle() {
 #lyrics .ly.dim{opacity:.75}
 #lyrics .ly span{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:top;white-space:nowrap}
 
-#now-playing{display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:0;min-width:0;font-size:.8em;line-height:1.45;opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums}
+#now-playing{display:flex;flex-wrap:nowrap;justify-content:center;align-items:center;gap:0;min-width:0;font-size:.8em;line-height:1.45;opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums}
 #now-playing .mp-t{flex:0 1 auto;min-width:0;overflow:hidden;display:flex}
 #now-playing .mp-t.mq{justify-content:flex-start;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%)}
 #now-playing .mp-tt{flex:none;white-space:nowrap}
