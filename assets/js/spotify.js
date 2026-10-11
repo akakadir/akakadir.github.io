@@ -30,6 +30,12 @@ const LOAD_TIMEOUT = 60000;
 const MAX_AUDIO_FAILS = 3;
 
 const MARQUEE_PX_PER_SEC = 25;
+const FILL_MAX_MS = 6000;
+
+const SPAM_CLICKS = 11;
+const SPAM_GAP_MS = 1000;
+const SPAM_MS = 3000;
+const SPAM_LABEL = 'ne deniyon yrrm';
 
 const STAGE_RANK = { resolving: 1, downloading: 2, uploading: 3, ready: 4 };
 
@@ -87,13 +93,15 @@ const s = {
     duration: 0,
     lyrics: [],
     currentLyric: '',
-    pendingLyric: null,
     lyricAbort: null,
     prog: null,
     progId: '',
     choice: null,
     statusOn: false,
     label: 'beraber',
+    clicks: 0,
+    lastClick: 0,
+    spamUntil: 0,
     statusMax: 0,
     statusRank: 0,
     statusAt: 0,
@@ -108,7 +116,6 @@ const ax = {
 
 const clk = { pos: 0, at: 0, lastStamp: '' };
 
-let animTimer;
 let progTimer;
 let progRun = 0;
 
@@ -286,13 +293,10 @@ function ensureStyle() {
 #mp{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto;max-width:100%}
 #mp-mid{min-width:0;flex:1}
 
-#lyrics{--h:1rem;--d:25px;display:block;height:var(--h);perspective:1000px;overflow:visible}
-#lyrics .cube{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:translateZ(calc(-1 * var(--d)))}
-#lyrics .animate{transition:transform .6s cubic-bezier(.23,1,.32,1)}
-#lyrics .side-front,#lyrics .side-bottom{position:absolute;left:0;top:-.25em;width:100%;height:calc(100% + .5em);display:block;box-sizing:border-box;backface-visibility:hidden;text-align:right;white-space:nowrap;line-height:calc(var(--h) + .5em);overflow-x:clip;overflow-y:visible;text-overflow:ellipsis}
-#lyrics .side-front{transform:rotateX(0deg) translateZ(var(--d))}
-#lyrics .side-bottom{transform:rotateX(-90deg) translateZ(var(--d))}
-#lyrics .show-next{transform:translateZ(calc(-1 * var(--d))) rotateX(90deg)}
+#lyrics{--h:1rem;display:block;position:relative;height:var(--h)}
+#lyrics .ly{position:absolute;left:0;top:-.25em;width:100%;height:calc(100% + .5em);box-sizing:border-box;text-align:right;white-space:nowrap;line-height:calc(var(--h) + .5em);overflow-x:clip;overflow-y:visible}
+#lyrics .ly.dim{opacity:.75}
+#lyrics .ly span{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:top;white-space:nowrap}
 
 #now-playing{display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:0;min-width:0;font-size:.8em;line-height:1.45;opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums}
 #now-playing .mp-t{flex:1 1 0;min-width:0;overflow:hidden;display:flex;justify-content:flex-end}
@@ -326,9 +330,11 @@ function ensurePlayer() {
     mp.append(mid);
 }
 
+const shownLabel = () => performance.now() < s.spamUntil ? SPAM_LABEL : s.label;
+
 function setLabel(t) {
     s.label = t;
-    setText($('mp-label'), t);
+    setText($('mp-label'), shownLabel());
 }
 
 function syncControls() {
@@ -339,6 +345,15 @@ function syncControls() {
 }
 
 function toggleListen() {
+    const now = performance.now();
+    s.clicks = now - s.lastClick < SPAM_GAP_MS ? s.clicks + 1 : 1;
+    s.lastClick = now;
+    if (s.clicks >= SPAM_CLICKS) {
+        s.clicks = 0;
+        s.spamUntil = now + SPAM_MS;
+        setLabel(s.label);
+    }
+
     if (s.choice === 'yes') {
         s.choice = null;
         removeStatus();
@@ -402,7 +417,7 @@ function renderTrack() {
 
     const ctl = mk('span', { id: 'mp-ctl' });
     const lead = mk('span');
-    lead.append('\u00A0~\u00A0', mk('span', { id: 'mp-label', textContent: s.label }));
+    lead.append('\u00A0~\u00A0', mk('span', { id: 'mp-label', textContent: shownLabel() }));
     ctl.append(lead, sw);
 
     el.replaceChildren(t, n, ctl);
@@ -438,12 +453,10 @@ function updateMediaSession() {
 function ensureLyrics() {
     ensurePlayer();
     const el = $('lyrics');
-    if (!el || $('cube')) return;
+    if (!el || $('fill')) return;
     el.innerHTML = `
-        <div class="cube" id="cube">
-            <div class="side-front" id="front"></div>
-            <div class="side-bottom" id="bottom"></div>
-        </div>`;
+        <div class="ly dim"><span id="front"></span></div>
+        <div class="ly"><span id="fill"></span></div>`;
 }
 
 const parseLyrics = text =>
@@ -504,51 +517,71 @@ async function loadLyrics(d) {
     renderLyrics();
 }
 
-function lyricAt(lines, ms) {
+function lineAt(lines, ms) {
     let lo = 0, hi = lines.length - 1, ans = -1;
     while (lo <= hi) {
         const mid = (lo + hi) >> 1;
         if (lines[mid].time <= ms) { ans = mid; lo = mid + 1; } else hi = mid - 1;
     }
-    return ans < 0 ? null : lines[ans].text || null;
+    if (ans < 0) return null;
+    const start = lines[ans].time;
+    const end = lines[ans + 1]?.time ?? (s.duration > start ? s.duration : start + 4000);
+    return { text: lines[ans].text, start, end };
+}
+
+function showMsg(t) {
+    const f = $('front'), l = $('fill');
+    if (!f || !l) return;
+    setText(f, t);
+    setText(l, t);
+    l.style.transition = 'none';
+    l.style.clipPath = 'none';
+    s.currentLyric = t;
+    s.lineStart = -1;
 }
 
 function resetLyricAnim() {
-    clearTimeout(animTimer);
     s.currentLyric = '';
-    s.pendingLyric = null;
-    $('cube')?.classList.remove('animate', 'show-next');
-    setText($('bottom'), '');
-}
-
-function triggerCubeAnimation(newText) {
-    if (s.currentLyric === newText || s.pendingLyric === newText) return;
-    const cube = $('cube'), front = $('front'), bottom = $('bottom');
-    if (!cube || !front || !bottom) return;
-
-    s.pendingLyric = newText;
-    bottom.textContent = newText;
-    cube.classList.add('animate', 'show-next');
-
-    animTimer = setTimeout(() => {
-        cube.classList.remove('animate', 'show-next');
-        front.textContent = newText;
-        s.currentLyric = newText;
-        s.pendingLyric = null;
-    }, 600);
+    s.lineStart = -1;
 }
 
 function renderLyrics() {
-    const front = $('front');
-    if (!front || !s.track) return;
+    const f = $('front'), l = $('fill');
+    if (!f || !l || !s.track) return;
 
     if (s.lyrics.error) {
-        setText(front, 'bu şarkı sözleri, henüz eşzamanlı değil.');
+        if (s.currentLyric !== 'err') {
+            showMsg('bu şarkı sözleri, henüz eşzamanlı değil.');
+            s.currentLyric = 'err';
+        }
         return;
     }
     if (!s.lyrics.length) return;
 
-    triggerCubeAnimation(lyricAt(s.lyrics, getTruePosition()) || '...');
+    const pos = getTruePosition();
+    const ln = lineAt(s.lyrics, pos);
+    if (!ln || !ln.text) {
+        if (s.currentLyric !== '...') showMsg('...');
+        return;
+    }
+
+    const len = clamp(ln.end - ln.start, 300, FILL_MAX_MS);
+    const clip = p => `inset(0 ${(100 - clamp(p, 0, 1) * 100).toFixed(1)}% 0 0)`;
+    const at = p => (p - ln.start) / len;
+
+    if (s.lineStart !== ln.start || s.currentLyric !== ln.text) {
+        setText(f, ln.text);
+        setText(l, ln.text);
+        l.style.transition = 'none';
+        l.style.clipPath = clip(at(pos));
+        void l.offsetWidth;
+        s.lineStart = ln.start;
+        s.currentLyric = ln.text;
+    }
+
+    const lead = s.playing && !s.stale ? TICK_MS : 0;
+    l.style.transition = `clip-path ${lead}ms linear`;
+    l.style.clipPath = clip(at(pos + lead));
 }
 
 function removeStatus() {
@@ -588,7 +621,7 @@ function updateStatus() {
     if (!s.statusOn) return;
 
     if (ax.dead) {
-        setLabel('bi dk abi');
+        setLabel('kodöldüaq');
         return;
     }
     if (audioFlowing()) {
@@ -646,7 +679,7 @@ function showStatus() {
     pollProgress();
 }
 
-function clearTrack(d) {
+function clearTrack() {
     s.lyricAbort?.abort();
     Object.assign(s, {
         track: null, key: '', playing: false, stale: false, lyrics: [], loadedId: ''
@@ -654,8 +687,8 @@ function clearTrack(d) {
     removeStatus();
     audio.pause();
     resetLyricAnim();
-    setText($('front'), '');
-    setText($('now-playing'), String(d?.error || ''));
+    showMsg('');
+    setText($('now-playing'), '');
     marquee.ro?.disconnect();
     updateMediaSession();
 }
@@ -664,7 +697,7 @@ function handleData(d, rtt = 0) {
     ensureLyrics();
 
     if (!d || d.error || d.type !== 'track') {
-        clearTrack(d);
+        clearTrack();
         return;
     }
 
@@ -699,7 +732,7 @@ function handleData(d, rtt = 0) {
         ax.learn = false;
         ax.loadAt = 0;
         resetLyricAnim();
-        setText($('front'), 'yükleniyor...');
+        showMsg('yükleniyor...');
         renderTrack();
         updateMediaSession();
         loadLyrics(d);
@@ -765,6 +798,10 @@ ensureLyrics();
 poll();
 
 setInterval(() => {
+    if (s.spamUntil && performance.now() >= s.spamUntil) {
+        s.spamUntil = 0;
+        setLabel(s.label);
+    }
     if (!document.hidden) {
         setText($('progress-time'), fmt(getTruePosition()));
         renderLyrics();
