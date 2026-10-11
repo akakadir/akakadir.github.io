@@ -58,7 +58,7 @@ const progressUrl = id => `${AUDIO_API}/progress?videoId=${enc(id)}`;
 const toSec = v => String(v || '0:00').split(':').reduce((a, b) => a * 60 + Number(b), 0);
 const fmt = ms => {
     const t = Math.max(0, (ms / 1000) | 0);
-    return `${(t / 60) | 0}:${String(t % 60).padStart(2, '0')}`;
+    return `${(t / 60) | 0}:${String(t % 60).padStart(2, '00')}`;
 };
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const median3 = a => [...a].sort((x, y) => x - y)[1];
@@ -294,12 +294,12 @@ function ensureStyle() {
 #mp-mid{min-width:0;flex:1}
 
 #lyrics{--h:1rem;display:block;position:relative;height:var(--h)}
-#lyrics .ly{position:absolute;left:0;top:-.25em;width:100%;height:calc(100% + .5em);box-sizing:border-box;text-align:right;white-space:nowrap;line-height:calc(var(--h) + .5em);overflow-x:clip;overflow-y:visible}
+#lyrics .ly{position:absolute;left:0;top:-.25em;width:100%;height:calc(100% + .5em);box-sizing:border-box;text-align:center;white-space:nowrap;line-height:calc(var(--h) + .5em);overflow-x:clip;overflow-y:visible}
 #lyrics .ly.dim{opacity:.75}
 #lyrics .ly span{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:top;white-space:nowrap}
 
-#now-playing{display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:0;min-width:0;font-size:.8em;line-height:1.45;opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums}
-#now-playing .mp-t{flex:1 1 0;min-width:0;overflow:hidden;display:flex;justify-content:flex-end}
+#now-playing{display:flex;flex-wrap:nowrap;justify-content:center;align-items:center;gap:0;min-width:0;font-size:.8em;line-height:1.45;opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums}
+#now-playing .mp-t{flex:1 1 0;min-width:0;overflow:hidden;display:flex;justify-content:center}
 #now-playing .mp-t.mq{justify-content:flex-start;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%)}
 #now-playing .mp-tt{flex:none;white-space:nowrap}
 #now-playing .mp-t.mq .mp-tt{animation:mp-mq var(--mq-t,8s) linear infinite alternate}
