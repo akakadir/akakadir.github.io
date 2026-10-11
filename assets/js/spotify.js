@@ -294,7 +294,7 @@ function ensureStyle() {
 #lyrics .side-bottom{transform:rotateX(-90deg) translateZ(var(--d))}
 #lyrics .show-next{transform:translateZ(calc(-1 * var(--d))) rotateX(90deg)}
 
-#now-playing{display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:6px;min-width:0;font-size:.8em;line-height:1.45;opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums}
+#now-playing{display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:0;min-width:0;font-size:.8em;line-height:1.45;opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums}
 #now-playing .mp-t{flex:1 1 0;min-width:0;overflow:hidden;display:flex;justify-content:flex-end}
 #now-playing .mp-t.mq{justify-content:flex-start;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%)}
 #now-playing .mp-tt{flex:none;white-space:nowrap}
@@ -302,7 +302,6 @@ function ensureStyle() {
 @keyframes mp-mq{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(calc(-1px * var(--mq-d,0)))}}
 @media (prefers-reduced-motion:reduce){#now-playing .mp-t.mq .mp-tt{animation:none}}
 #now-playing .mp-n,#mp-ctl{flex:none}
-#now-playing .mp-s{margin-right:6px}
 #mp-ctl{display:inline-flex;align-items:center;gap:6px}
 #mp-ctl[hidden]{display:none}
 #mp-sw{position:relative;flex:none;box-sizing:border-box;width:26px;height:14px;padding:0;margin:0;border:1px solid ${line};border-radius:7px;background:none;color:inherit;cursor:pointer;font:inherit}
@@ -393,7 +392,7 @@ function renderTrack() {
 
     const time = mk('span', { id: 'progress-time', textContent: fmt(getTruePosition()) });
     const n = mk('span', { className: 'mp-n' });
-    n.append(mk('span', { className: 'mp-s', textContent: '|' }), time, `/${duration || fmt(s.duration)}`);
+    n.append('\u00A0|\u00A0', time, `/${duration || fmt(s.duration)}`);
 
     const sw = mk('button', { id: 'mp-sw', type: 'button' });
     sw.setAttribute('role', 'switch');
@@ -402,7 +401,9 @@ function renderTrack() {
     sw.addEventListener('click', toggleListen);
 
     const ctl = mk('span', { id: 'mp-ctl' });
-    ctl.append('~', mk('span', { id: 'mp-label', textContent: s.label }), sw);
+    const lead = mk('span');
+    lead.append('\u00A0~\u00A0', mk('span', { id: 'mp-label', textContent: s.label }));
+    ctl.append(lead, sw);
 
     el.replaceChildren(t, n, ctl);
     syncControls();
@@ -587,7 +588,7 @@ function updateStatus() {
     if (!s.statusOn) return;
 
     if (ax.dead) {
-        setLabel('sunucum regl olmus, baska zaman');
+        setLabel('bi dk abi');
         return;
     }
     if (audioFlowing()) {
