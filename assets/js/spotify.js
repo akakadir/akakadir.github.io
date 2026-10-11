@@ -246,9 +246,18 @@ function syncAudio() {
         else if (now - ax.loadAt > LOAD_TIMEOUT) { audioFail(); return; }
     }
 
-    if (audio.ended || audio.readyState < 1 || audio.seeking) return;
+    if (audio.readyState < 1 || audio.seeking) return;
 
     const target = getTruePosition();
+
+    if (audio.ended) {
+        if (target < audio.duration * 1000 - 1500 && now - ax.lastSeekAt > 1500) {
+            seekTo(target);
+            audio.play().catch(() => { });
+        }
+        return;
+    }
+
     const drift = target - audio.currentTime * 1000;
 
     if (audio.paused) {
