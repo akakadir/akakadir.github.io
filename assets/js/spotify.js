@@ -136,7 +136,7 @@ function syncClock(apiPos, stamp) {
     } else if (!wantAudio()) {
         clk.pos = apiPos;
     } else {
-        const blend = diff > 0 ? 0.7 : CLOCK_BLEND;
+        const blend = diff > 0 ? 0.5 : CLOCK_BLEND;
         clk.pos = expected + diff * blend;
     }
     clk.at = performance.now();
@@ -222,7 +222,8 @@ audio.addEventListener('seeked',   () => { ax.graceUntil = performance.now() + S
 audio.addEventListener('loadstart', () => showStatus());
 audio.addEventListener('loadedmetadata', () => {
     if (!wantAudio() || s.loadedId !== s.track?.videoId) return;
-    seekTo(getTruePosition());
+    const target = getTruePosition();
+    if (target < 5_000 || targetIsBuffered(target)) seekTo(target);
 });
 audio.addEventListener('error', () => {
     if (!audio.getAttribute('src')) return;
@@ -241,6 +242,15 @@ function audioFlowing() {
     return !audio.paused && !audio.seeking &&
            audio.readyState >= 3 &&
            audio.currentTime - ax.baseCt >= 1;
+}
+
+function targetIsBuffered(ms) {
+    const t = ms / 1000;
+    const b = audio.buffered;
+    for (let i = 0; i < b.length; i++) {
+        if (b.start(i) <= t + 1 && b.end(i) >= t) return true;
+    }
+    return false;
 }
 
 function syncAudio() {
@@ -319,7 +329,7 @@ function syncAudio() {
     }
 
     if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
-        seekTo(target);
+        if (targetIsBuffered(target)) seekTo(target);
     }
 }
 
@@ -560,8 +570,9 @@ async function loadLyrics(d, attempt = 0) {
 
     if (key !== s.key) return;
 
-    if (lyrics.error && attempt === 0) {
-        setTimeout(() => { if (s.key === key) loadLyrics(d, 1); }, 5_000);
+    if (lyrics.error && attempt < 3) {
+        const delay = [3_000, 6_000, 10_000][attempt];
+        setTimeout(() => { if (s.key === key) loadLyrics(d, attempt + 1); }, delay);
         return;
     }
 
@@ -636,14 +647,14 @@ function renderLyrics() {
     l.style.clipPath   = clip(at(pos + lead));
 }
 
-function removeStatus() {
+function removeStatus(flowing = false) {
     progRun++;
     clearTimeout(progTimer);
     s.prog       = null;
     s.statusMax  = 0;
     s.statusRank = 0;
     s.statusOn   = false;
-    setLabel('beraber');
+    setLabel(flowing ? ENGINE : 'beraber');
 }
 
 function bufferedAhead() {
@@ -672,7 +683,7 @@ function statusPercent() {
 function updateStatus() {
     if (!s.statusOn) return;
     if (ax.dead) { setLabel('kodöldüaq'); return; }
-    if (audioFlowing()) { removeStatus(); return; }
+    if (audioFlowing()) { removeStatus(true); return; }
 
     s.statusMax  = Math.max(s.statusMax, statusPercent());
     const pct    = Math.min(99, Math.floor(s.statusMax));
