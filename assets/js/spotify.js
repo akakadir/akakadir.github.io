@@ -1,4 +1,8 @@
+(() => {
 'use strict';
+
+if (window.__akaNowPlaying) return;
+window.__akaNowPlaying = true;
 
 const POLL_URL  = 'https://akakadir.vercel.app/api/now-playing';
 const AUDIO_API = 'https://api.akakadir.art/api/audio';
@@ -13,9 +17,11 @@ const ENGINE = IOS
         : /Safari\//.test(UA) && !/Chrome|Chromium|Edg\//.test(UA)
             ? 'webkit'
             : 'blink';
+const DEBUG = /[?&]debug\b/.test(location.search);
 
 const POLL_MS_PLAYING = 7_000;
 const POLL_MS_PAUSED  = 15_000;
+const POLL_MS_HIDDEN  = 30_000;
 
 const TICK_MS        = 300;
 const LEAD_MS        = 100;
@@ -23,8 +29,12 @@ const FETCH_TIMEOUT  = 6_000;
 const MAX_POLL_FAILS = 3;
 
 const HARD_DRIFT    = IOS ? 800 : 400;
+const SOFT_DRIFT    = 120;
+const RATE_GAIN     = 3_000;
+const RATE_MAX      = 0.06;
 const SEEK_COOLDOWN = 3_000;
 const SEEK_GRACE    = 3_000;
+const LEARN_WINDOW  = 15_000;
 const CLOCK_SNAP    = 1_500;
 const CLOCK_BLEND   = 0.3;
 
@@ -61,6 +71,13 @@ const $ = id => {
 };
 const setText = (el, t) => { if (el && el.textContent !== t) el.textContent = t; };
 const mk = (tag, props = {}) => Object.assign(document.createElement(tag), props);
+
+const safeUrl = u => {
+    try {
+        const x = new URL(u, location.href);
+        return x.protocol === 'https:' ? x.href : '';
+    } catch { return ''; }
+};
 
 const enc         = encodeURIComponent;
 const audioUrl    = id => `${AUDIO_API}?videoId=${enc(id)}`;
@@ -146,14 +163,14 @@ function syncClock(apiPos, stamp) {
 }
 
 function seekTo(ms) {
-    const t = Math.max(0, ms + (IOS ? ax.latency : 0)) / 1000;
+    const t = Math.max(0, ms + ax.latency) / 1000;
     try { audio.currentTime = t; } catch { return; }
     audio.playbackRate = 1;
     const now = performance.now();
     ax.lastSeekAt = now;
     ax.graceUntil = now + SEEK_GRACE;
     ax.seekCt  = t;
-    ax.learn   = IOS;
+    ax.learn   = true;
     ax.learnAt = now;
     ax.m       = [];
 }
@@ -181,6 +198,7 @@ function startAudio() {
     const id = s.track?.videoId;
     if (!id) return;
     if (s.loadedId !== id) loadSrc(id);
+    else if (audio.readyState >= 1) seekTo(getTruePosition());
     audio.play().catch(err => {
         if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError') {
             console.warn('[spotify.js] audio.play hatası:', err?.name, err?.message);
@@ -216,7 +234,11 @@ audio.addEventListener('waiting',  () => { ax.buffering = true;  });
 audio.addEventListener('stalled',  () => { ax.buffering = true;  });
 audio.addEventListener('playing',  () => { ax.buffering = false; });
 audio.addEventListener('canplay',  () => { ax.buffering = false; });
-audio.addEventListener('seeked',   () => { ax.graceUntil = performance.now() + SEEK_GRACE; });
+audio.addEventListener('seeked',   () => {
+    const now = performance.now();
+    ax.graceUntil = now + SEEK_GRACE;
+    if (ax.learn) ax.learnAt = now;
+});
 
 ['loadstart', 'seeking', 'waiting', 'stalled'].forEach(ev =>
     audio.addEventListener(ev, () => { ax.baseCt = audio.currentTime; })
@@ -302,7 +324,7 @@ function syncAudio() {
     if (ax.buffering || audio.readyState < 3 || now < ax.graceUntil) return;
 
     if (ax.learn) {
-        if (now - ax.learnAt > 12_000) { ax.learn = false; return; }
+        if (now - ax.learnAt > LEARN_WINDOW) { ax.learn = false; return; }
         if (audio.currentTime - ax.seekCt < 0.6) return;
         ax.m.push(drift);
         if (ax.m.length < 3) return;
@@ -320,9 +342,17 @@ function syncAudio() {
         return;
     }
 
-    if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
+    const abs = Math.abs(drift);
+
+    if (abs > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
         seekTo(target);
+        return;
     }
+
+    const rate = abs > SOFT_DRIFT
+        ? 1 + clamp(drift / RATE_GAIN, -RATE_MAX, RATE_MAX)
+        : 1;
+    if (audio.playbackRate !== rate) audio.playbackRate = rate;
 }
 
 function ensureStyle() {
@@ -395,6 +425,7 @@ function startListen() {
     startAudio();
     setLabel(s.label);
     syncControls();
+    poll();
 }
 
 function stopListen() {
@@ -446,7 +477,7 @@ function renderTrack() {
 
     const link = mk('a', {
         className: 'no-favicon',
-        href:   trackLink || '#',
+        href:   safeUrl(trackLink) || '#',
         target: '_blank',
         rel:    'noopener noreferrer',
         textContent: name || 'bilinmeyen şarkı'
@@ -501,14 +532,15 @@ function initMediaSession() {
 function updateMediaSession() {
     if (!('mediaSession' in navigator)) return;
     try {
-        const d = s.track;
+        const d   = s.track;
+        const art = d ? safeUrl(d.albumArt) : '';
         navigator.mediaSession.metadata = d
             ? new MediaMetadata({
                 title:  d.name    || '',
                 artist: d.artists || '',
                 album:  d.album   || '',
-                artwork: d.albumArt
-                    ? [96, 128, 192, 256, 384, 512].map(n => ({ src: d.albumArt, sizes: `${n}x${n}` }))
+                artwork: art
+                    ? [96, 128, 192, 256, 384, 512].map(n => ({ src: art, sizes: `${n}x${n}` }))
                     : []
             })
             : null;
@@ -522,6 +554,8 @@ function ensureLyrics() {
     el.innerHTML = `
         <div class="ly dim"><span id="front"></span></div>
         <div class="ly"><span id="fill"></span></div>`;
+    s.currentLyric = '';
+    s.lineStart    = -1;
 }
 
 const parseLyrics = text =>
@@ -659,14 +693,14 @@ function renderLyrics() {
     l.style.clipPath   = clip(at(pos + lead));
 }
 
-function removeStatus() {
+function removeStatus(flowing = false) {
     progRun++;
     clearTimeout(progTimer);
     s.prog       = null;
     s.statusMax  = 0;
     s.statusRank = 0;
     s.statusOn   = false;
-    setLabel('beraber');
+    setLabel(flowing ? ENGINE : 'beraber');
 }
 
 function bufferedAhead() {
@@ -695,7 +729,7 @@ function statusPercent() {
 function updateStatus() {
     if (!s.statusOn) return;
     if (ax.dead) { setLabel('kodöldüaq'); return; }
-    if (audioFlowing()) { removeStatus(); return; }
+    if (audioFlowing()) { removeStatus(true); return; }
 
     s.statusMax  = Math.max(s.statusMax, statusPercent());
     const pct    = Math.min(99, Math.floor(s.statusMax));
@@ -749,6 +783,22 @@ function showStatus() {
     }
     updateStatus();
     pollProgress();
+}
+
+function renderDebug() {
+    if (!DEBUG) return;
+    let el = $('sync-debug');
+    if (!el) {
+        el = mk('div', { id: 'sync-debug' });
+        el.style.cssText = 'position:fixed;right:6px;bottom:6px;z-index:99999;font:11px/1.3 monospace;pointer-events:none;background:rgba(0,0,0,.6);color:#fff;padding:3px 6px;border-radius:4px';
+        document.body.append(el);
+    }
+    const d = getTruePosition() - audio.currentTime * 1_000;
+    el.textContent =
+        `${ENGINE} d=${d | 0}ms L=${ax.latency | 0} r=${audio.playbackRate.toFixed(2)} ` +
+        `rs=${audio.readyState} ${audio.paused ? 'P' : '>'}` +
+        `${ax.learn ? ' learn' : ''}${ax.buffering ? ' buf' : ''}${s.stale ? ' stale' : ''} ` +
+        `f=${ax.fails}${ax.dead ? '!' : ''}`;
 }
 
 function clearTrack() {
@@ -843,6 +893,11 @@ function onPollFail() {
     setLabel(s.label);
 }
 
+function nextPollMs() {
+    if (document.hidden && s.choice !== 'yes') return POLL_MS_HIDDEN;
+    return s.playing && !s.stale ? POLL_MS_PLAYING : POLL_MS_PAUSED;
+}
+
 async function poll() {
     if (busy) return;
     busy = true;
@@ -873,9 +928,7 @@ async function poll() {
 
     busy = false;
     clearTimeout(timer);
-
-    const nextMs = (s.playing && !s.stale) ? POLL_MS_PLAYING : POLL_MS_PAUSED;
-    timer = setTimeout(poll, nextMs);
+    timer = setTimeout(poll, nextPollMs());
 }
 
 initMediaSession();
@@ -893,6 +946,7 @@ setInterval(() => {
         updateStatus();
     }
     syncAudio();
+    renderDebug();
 }, TICK_MS);
 
 const resume = () => {
@@ -904,3 +958,5 @@ const resume = () => {
 };
 document.addEventListener('visibilitychange', resume);
 window.addEventListener('pageshow', resume);
+window.addEventListener('online', () => poll());
+})();
