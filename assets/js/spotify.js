@@ -31,6 +31,9 @@ const CLOCK_BLEND   = 0.3;
 const LOAD_TIMEOUT    = 60_000;
 const MAX_AUDIO_FAILS = 3;
 
+const LYRIC_TIMEOUT  = 15_000;
+const LYRIC_RETRY_MS = [3_000, 6_000, 10_000];
+
 const MARQUEE_PX_PER_SEC = 25;
 const FILL_MAX_MS        = 6_000;
 
@@ -81,9 +84,9 @@ const LAT_KEY = `sync.latency.${ENGINE}`;
 function loadLatency() {
     try {
         const v = Number(localStorage.getItem(LAT_KEY));
-        if (v >= 100 && v <= 8_000) return v;
+        if (Number.isFinite(v) && v >= 0 && v <= 8_000) return v;
     } catch { }
-    return 1_500;
+    return IOS ? 300 : 0;
 }
 function saveLatency() {
     try { localStorage.setItem(LAT_KEY, String(ax.latency | 0)); } catch { }
@@ -136,7 +139,7 @@ function syncClock(apiPos, stamp) {
     } else if (!wantAudio()) {
         clk.pos = apiPos;
     } else {
-        const blend = diff > 0 ? 0.7 : CLOCK_BLEND;
+        const blend = diff > 0 ? 0.5 : CLOCK_BLEND;
         clk.pos = expected + diff * blend;
     }
     clk.at = performance.now();
@@ -226,8 +229,7 @@ audio.addEventListener('loadedmetadata', () => {
 });
 audio.addEventListener('error', () => {
     if (!audio.getAttribute('src')) return;
-    const code = audio.error?.code;
-    if (code === 1) return;
+    if (audio.error?.code === 1) return;
     audioFail();
 });
 audio.addEventListener('ended', () => {
@@ -308,9 +310,9 @@ function syncAudio() {
         ax.learn = false;
         ax.m     = [];
         if (Math.abs(d) < 4_000) {
-            ax.latency = clamp(ax.latency + 0.7 * d, 100, 8_000);
+            ax.latency = clamp(ax.latency + 0.85 * d, 0, 8_000);
             saveLatency();
-            if (Math.abs(d) > 400 && ax.tries < 2) {
+            if (Math.abs(d) > 400 && ax.tries < 3) {
                 ax.tries++;
                 seekTo(target);
             }
@@ -385,29 +387,37 @@ function syncControls() {
     $('mp-sw')?.setAttribute('aria-checked', String(s.choice === 'yes'));
 }
 
+function startListen() {
+    s.choice = 'yes';
+    ax.tries = 0;
+    resetAudioFailures();
+    showStatus();
+    startAudio();
+    setLabel(s.label);
+    syncControls();
+}
+
+function stopListen() {
+    s.choice = null;
+    removeStatus();
+    audio.pause();
+    syncControls();
+}
+
 function toggleListen() {
     const now = performance.now();
+    if (now < s.spamUntil) return;
+
     s.clicks = now - s.lastClick < SPAM_GAP_MS ? s.clicks + 1 : 1;
     s.lastClick = now;
     if (s.clicks >= SPAM_CLICKS) {
         s.clicks    = 0;
         s.spamUntil = now + SPAM_MS;
         setLabel(s.label);
-    }
-
-    if (s.choice === 'yes') {
-        s.choice = null;
-        removeStatus();
-        audio.pause();
-        syncControls();
         return;
     }
-    s.choice = 'yes';
-    resetAudioFailures();
-    showStatus();
-    startAudio();
-    setLabel(s.label);
-    syncControls();
+
+    s.choice === 'yes' ? stopListen() : startListen();
 }
 
 const marquee = {
@@ -476,6 +486,18 @@ function renderTrack() {
     requestAnimationFrame(fitMarquee);
 }
 
+function initMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+    const set = (action, fn) => {
+        try { navigator.mediaSession.setActionHandler(action, fn); } catch { }
+    };
+    ['seekbackward', 'seekforward', 'seekto', 'previoustrack', 'nexttrack']
+        .forEach(a => set(a, () => { }));
+    set('pause', () => { if (s.choice === 'yes') stopListen(); });
+    set('stop',  () => { if (s.choice === 'yes') stopListen(); });
+    set('play',  () => { if (s.choice !== 'yes' && s.playing && s.track?.videoId) startListen(); });
+}
+
 function updateMediaSession() {
     if (!('mediaSession' in navigator)) return;
     try {
@@ -490,8 +512,6 @@ function updateMediaSession() {
                     : []
             })
             : null;
-        ['seekbackward', 'seekforward', 'seekto', 'previoustrack', 'nexttrack']
-            .forEach(a => { try { navigator.mediaSession.setActionHandler(a, () => { }); } catch { } });
     } catch { }
 }
 
@@ -518,8 +538,10 @@ async function fetchSynced(d, signal) {
     const dur    = Math.round((Number(d.durationMs) || toSec(d.duration) * 1_000) / 1_000);
 
     const getJson = async url => {
-        const r = await fetch(url, { signal });
-        return r.ok ? r.json() : null;
+        const r = await fetch(url, { signal, credentials: 'omit' });
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error(`lrclib ${r.status}`);
+        return r.json();
     };
 
     if (d.album && dur) {
@@ -539,12 +561,13 @@ async function fetchSynced(d, signal) {
     return best && bestDiff <= 8 ? best.syncedLyrics : null;
 }
 
-async function loadLyrics(d) {
+async function loadLyrics(d, attempt = 0) {
     s.lyricAbort?.abort();
     const ctrl   = (s.lyricAbort = new AbortController());
     const key    = s.key;
     let timedOut = false;
-    const timer  = setTimeout(() => { timedOut = true; ctrl.abort(); }, 10_000);
+    let failed   = false;
+    const timer  = setTimeout(() => { timedOut = true; ctrl.abort(); }, LYRIC_TIMEOUT);
 
     let lyrics = { error: true };
     try {
@@ -553,11 +576,18 @@ async function loadLyrics(d) {
         if (parsed.length) lyrics = parsed;
     } catch (e) {
         if (e.name === 'AbortError' && !timedOut) return;
+        failed = true;
     } finally {
         clearTimeout(timer);
     }
 
     if (key !== s.key) return;
+
+    if (failed && attempt < LYRIC_RETRY_MS.length) {
+        setTimeout(() => { if (s.key === key) loadLyrics(d, attempt + 1); }, LYRIC_RETRY_MS[attempt]);
+        return;
+    }
+
     s.lyrics = lyrics;
     renderLyrics();
 }
@@ -848,6 +878,7 @@ async function poll() {
     timer = setTimeout(poll, nextMs);
 }
 
+initMediaSession();
 ensureLyrics();
 poll();
 
