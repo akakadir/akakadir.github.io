@@ -81,9 +81,9 @@ const LAT_KEY = `sync.latency.${ENGINE}`;
 function loadLatency() {
     try {
         const v = Number(localStorage.getItem(LAT_KEY));
-        if (v >= 100 && v <= 8_000) return v;
+        if (Number.isFinite(v) && v >= 0 && v <= 8_000) return v;
     } catch { }
-    return 1_500;
+    return IOS ? 300 : 0;
 }
 function saveLatency() {
     try { localStorage.setItem(LAT_KEY, String(ax.latency | 0)); } catch { }
@@ -308,9 +308,9 @@ function syncAudio() {
         ax.learn = false;
         ax.m     = [];
         if (Math.abs(d) < 4_000) {
-            ax.latency = clamp(ax.latency + 0.7 * d, 100, 8_000);
+            ax.latency = clamp(ax.latency + 0.85 * d, 0, 8_000);
             saveLatency();
-            if (Math.abs(d) > 400 && ax.tries < 2) {
+            if (Math.abs(d) > 400 && ax.tries < 3) {
                 ax.tries++;
                 seekTo(target);
             }
@@ -403,6 +403,7 @@ function toggleListen() {
         return;
     }
     s.choice = 'yes';
+    ax.tries = 0;
     resetAudioFailures();
     showStatus();
     startAudio();
