@@ -168,7 +168,7 @@ function loadSrc(id) {
     s.statusMax  = 0;
     s.statusRank = 0;
     Object.assign(ax, {
-        lastSeekAt: 0, graceUntil: 0, buffering: true,
+        lastSeekAt: performance.now(), graceUntil: 0, buffering: true,
         learn: false, tries: 0, m: [],
         loadAt: performance.now()
     });
@@ -518,7 +518,7 @@ async function fetchSynced(d, signal) {
     const dur    = Math.round((Number(d.durationMs) || toSec(d.duration) * 1_000) / 1_000);
 
     const getJson = async url => {
-        const r = await fetch(url, { signal });
+        const r = await fetch(url, { signal, credentials: 'omit' });
         return r.ok ? r.json() : null;
     };
 
@@ -539,12 +539,12 @@ async function fetchSynced(d, signal) {
     return best && bestDiff <= 8 ? best.syncedLyrics : null;
 }
 
-async function loadLyrics(d) {
+async function loadLyrics(d, attempt = 0) {
     s.lyricAbort?.abort();
     const ctrl   = (s.lyricAbort = new AbortController());
     const key    = s.key;
     let timedOut = false;
-    const timer  = setTimeout(() => { timedOut = true; ctrl.abort(); }, 10_000);
+    const timer  = setTimeout(() => { timedOut = true; ctrl.abort(); }, 15_000);
 
     let lyrics = { error: true };
     try {
@@ -558,6 +558,12 @@ async function loadLyrics(d) {
     }
 
     if (key !== s.key) return;
+
+    if (lyrics.error && attempt === 0) {
+        setTimeout(() => { if (s.key === key) loadLyrics(d, 1); }, 5_000);
+        return;
+    }
+
     s.lyrics = lyrics;
     renderLyrics();
 }
