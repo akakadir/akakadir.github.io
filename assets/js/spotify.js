@@ -81,9 +81,9 @@ const LAT_KEY = `sync.latency.${ENGINE}`;
 function loadLatency() {
     try {
         const v = Number(localStorage.getItem(LAT_KEY));
-        if (Number.isFinite(v) && v >= 0 && v <= 8_000) return v;
+        if (v >= 100 && v <= 8_000) return v;
     } catch { }
-    return IOS ? 300 : 0;
+    return 300;
 }
 function saveLatency() {
     try { localStorage.setItem(LAT_KEY, String(ax.latency | 0)); } catch { }
@@ -136,7 +136,7 @@ function syncClock(apiPos, stamp) {
     } else if (!wantAudio()) {
         clk.pos = apiPos;
     } else {
-        const blend = diff > 0 ? 0.5 : CLOCK_BLEND;
+        const blend = diff > 0 ? 0.7 : CLOCK_BLEND;
         clk.pos = expected + diff * blend;
     }
     clk.at = performance.now();
@@ -151,7 +151,7 @@ function seekTo(ms) {
     ax.graceUntil = now + SEEK_GRACE;
     ax.seekCt  = t;
     ax.learn   = IOS;
-    ax.learnAt = now;
+    ax.learnAt = 0;
     ax.m       = [];
 }
 
@@ -222,11 +222,7 @@ audio.addEventListener('seeked',   () => { ax.graceUntil = performance.now() + S
 audio.addEventListener('loadstart', () => showStatus());
 audio.addEventListener('loadedmetadata', () => {
     if (!wantAudio() || s.loadedId !== s.track?.videoId) return;
-    const target       = getTruePosition();
-    const backendReady = s.progId === s.track?.videoId && s.prog?.stage === 'ready';
-    const cooldownOk   = performance.now() - ax.lastSeekAt > 500;
-    if (ax.loadAt && !backendReady) return;
-    if (cooldownOk && (target < 5_000 || backendReady || targetIsBuffered(target))) seekTo(target);
+    seekTo(getTruePosition());
 });
 audio.addEventListener('error', () => {
     if (!audio.getAttribute('src')) return;
@@ -245,15 +241,6 @@ function audioFlowing() {
     return !audio.paused && !audio.seeking &&
            audio.readyState >= 3 &&
            audio.currentTime - ax.baseCt >= 1;
-}
-
-function targetIsBuffered(ms) {
-    const t = ms / 1000;
-    const b = audio.buffered;
-    for (let i = 0; i < b.length; i++) {
-        if (b.start(i) <= t + 1 && b.end(i) >= t) return true;
-    }
-    return false;
 }
 
 function syncAudio() {
@@ -301,10 +288,7 @@ function syncAudio() {
     const drift = target - audio.currentTime * 1_000;
 
     if (audio.paused) {
-        if (Math.abs(drift) > 400 && now - ax.lastSeekAt > 1_500) {
-            const backendReady = s.progId === s.track?.videoId && s.prog?.stage === 'ready';
-            if (backendReady || targetIsBuffered(target) || target < 5_000) seekTo(target);
-        }
+        if (Math.abs(drift) > 400 && now - ax.lastSeekAt > 1_500) seekTo(target);
         audio.play().catch(err => {
             if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
                 console.warn('[spotify.js] syncAudio play hatası:', err?.name);
@@ -316,7 +300,8 @@ function syncAudio() {
     if (ax.buffering || audio.readyState < 3 || now < ax.graceUntil) return;
 
     if (ax.learn) {
-        if (now - ax.learnAt > 12_000) { ax.learn = false; return; }
+        if (ax.learnAt === 0) ax.learnAt = now;
+        if (now - ax.learnAt > 25_000) { ax.learn = false; return; }
         if (audio.currentTime - ax.seekCt < 0.6) return;
         ax.m.push(drift);
         if (ax.m.length < 3) return;
@@ -324,9 +309,9 @@ function syncAudio() {
         ax.learn = false;
         ax.m     = [];
         if (Math.abs(d) < 4_000) {
-            ax.latency = clamp(ax.latency + 0.85 * d, 0, 8_000);
+            ax.latency = clamp(ax.latency + 0.7 * d, 100, 8_000);
             saveLatency();
-            if (Math.abs(d) > 400 && ax.tries < 3) {
+            if (Math.abs(d) > 400 && ax.tries < 2) {
                 ax.tries++;
                 seekTo(target);
             }
@@ -335,8 +320,7 @@ function syncAudio() {
     }
 
     if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
-        const backendReady = s.progId === s.track?.videoId && s.prog?.stage === 'ready';
-        if (backendReady || targetIsBuffered(target)) seekTo(target);
+        seekTo(target);
     }
 }
 
@@ -420,7 +404,6 @@ function toggleListen() {
         return;
     }
     s.choice = 'yes';
-    ax.tries = 0;
     resetAudioFailures();
     showStatus();
     startAudio();
@@ -577,9 +560,8 @@ async function loadLyrics(d, attempt = 0) {
 
     if (key !== s.key) return;
 
-    if (lyrics.error && attempt < 3) {
-        const delay = [3_000, 6_000, 10_000][attempt];
-        setTimeout(() => { if (s.key === key) loadLyrics(d, attempt + 1); }, delay);
+    if (lyrics.error && attempt === 0) {
+        setTimeout(() => { if (s.key === key) loadLyrics(d, 1); }, 5_000);
         return;
     }
 
@@ -654,14 +636,14 @@ function renderLyrics() {
     l.style.clipPath   = clip(at(pos + lead));
 }
 
-function removeStatus(flowing = false) {
+function removeStatus() {
     progRun++;
     clearTimeout(progTimer);
     s.prog       = null;
     s.statusMax  = 0;
     s.statusRank = 0;
     s.statusOn   = false;
-    setLabel(flowing ? ENGINE : 'beraber');
+    setLabel('beraber');
 }
 
 function bufferedAhead() {
@@ -690,7 +672,7 @@ function statusPercent() {
 function updateStatus() {
     if (!s.statusOn) return;
     if (ax.dead) { setLabel('kodöldüaq'); return; }
-    if (audioFlowing()) { removeStatus(true); return; }
+    if (audioFlowing()) { removeStatus(); return; }
 
     s.statusMax  = Math.max(s.statusMax, statusPercent());
     const pct    = Math.min(99, Math.floor(s.statusMax));
@@ -717,25 +699,12 @@ async function pollProgress() {
         const r = await fetchT(progressUrl(id), { cache: 'no-store', credentials: 'omit' }, 3_000);
         if (run !== progRun) return;
         if (r.ok) {
-            const prevStage = s.progId === id ? s.prog?.stage : null;
-            const newProg   = await r.json();
-            if (run !== progRun) return;
-            s.prog   = newProg;
+            s.prog   = await r.json();
             s.progId = id;
             if (ax.loadAt && /^(resolving|downloading|uploading)$/.test(s.prog.stage))
                 ax.loadAt = performance.now();
             updateStatus();
-            if (s.prog.stage === 'ready') {
-                delay = PROG_POLL_SLOW;
-                if (prevStage !== 'ready' && wantAudio()) {
-                    const nowDrift = Math.abs(getTruePosition() - audio.currentTime * 1_000);
-                    if (nowDrift > HARD_DRIFT || !audioFlowing()) {
-                        if (ax.loadAt) ax.loadAt = performance.now();
-                        seekTo(getTruePosition());
-                        audio.play().catch(() => {});
-                    }
-                }
-            }
+            if (s.prog.stage === 'ready') delay = PROG_POLL_SLOW;
         } else {
             delay = PROG_POLL_SLOW;
         }
