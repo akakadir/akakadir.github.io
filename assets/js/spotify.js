@@ -3,26 +3,19 @@
 const POLL_URL  = 'https://akakadir.vercel.app/api/now-playing';
 const AUDIO_API = 'https://api.akakadir.art/api/audio';
 
-const UA     = navigator.userAgent;
-const IOS    = /iP(hone|ad|od)/.test(UA) ||
-               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const ENGINE = IOS
-    ? 'webkit-ios'
-    : /Firefox\//.test(UA)
-        ? 'gecko'
-        : /Safari\//.test(UA) && !/Chrome|Chromium|Edg\//.test(UA)
-            ? 'webkit'
-            : 'blink';
+const UA  = navigator.userAgent;
+const IOS = /iP(hone|ad|od)/.test(UA) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 const POLL_MS_PLAYING = 7_000;
 const POLL_MS_PAUSED  = 15_000;
 
 const TICK_MS        = 300;
-const LEAD_MS        = 100;
+const LEAD_MS        = 0;
 const FETCH_TIMEOUT  = 6_000;
 const MAX_POLL_FAILS = 3;
 
-const HARD_DRIFT    = IOS ? 800 : 400;
+const HARD_DRIFT    = 400;
 const SEEK_COOLDOWN = 3_000;
 const SEEK_GRACE    = 3_000;
 const CLOCK_SNAP    = 1_500;
@@ -77,18 +70,6 @@ function fetchT(url, opts = {}, ms = FETCH_TIMEOUT) {
     return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(timer));
 }
 
-const LAT_KEY = `sync.latency.${ENGINE}`;
-function loadLatency() {
-    try {
-        const v = Number(localStorage.getItem(LAT_KEY));
-        if (v >= 100 && v <= 8_000) return v;
-    } catch { }
-    return 300;
-}
-function saveLatency() {
-    try { localStorage.setItem(LAT_KEY, String(ax.latency | 0)); } catch { }
-}
-
 const audio = Object.assign(new Audio(), { preload: 'auto' });
 audio.setAttribute('playsinline', '');
 
@@ -101,9 +82,7 @@ const s = {
 };
 
 const ax = {
-    lastSeekAt: 0, graceUntil: 0, buffering: false, retryAt: 0,
-    latency: loadLatency(), baseCt: 0,
-    learn: false, learnAt: 0, seekCt: 0, m: [], tries: 0,
+    lastSeekAt: 0, graceUntil: 0, buffering: false, retryAt: 0, baseCt: 0,
     loadAt: 0, fails: 0, dead: false
 };
 
@@ -143,16 +122,12 @@ function syncClock(apiPos, stamp) {
 }
 
 function seekTo(ms) {
-    const t = Math.max(0, ms + (IOS ? ax.latency : 0)) / 1000;
+    const t = Math.max(0, ms) / 1000;
     try { audio.currentTime = t; } catch { return; }
     audio.playbackRate = 1;
     const now = performance.now();
     ax.lastSeekAt = now;
     ax.graceUntil = now + SEEK_GRACE;
-    ax.seekCt  = t;
-    ax.learn   = IOS;
-    ax.learnAt = 0;
-    ax.m       = [];
 }
 
 function loadSrc(id) {
@@ -169,7 +144,6 @@ function loadSrc(id) {
     s.statusRank = 0;
     Object.assign(ax, {
         lastSeekAt: performance.now(), graceUntil: 0, buffering: true,
-        learn: false, tries: 0, m: [],
         loadAt: performance.now()
     });
 }
@@ -179,9 +153,8 @@ function startAudio() {
     if (!id) return;
     if (s.loadedId !== id) loadSrc(id);
     audio.play().catch(err => {
-        if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError') {
+        if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
             console.warn('[spotify.js] audio.play hatası:', err?.name, err?.message);
-        }
     });
 }
 
@@ -198,7 +171,6 @@ function audioFail() {
     s.loadedId   = '';
     ax.loadAt    = 0;
     ax.buffering = false;
-    ax.learn     = false;
     if (++ax.fails >= MAX_AUDIO_FAILS) {
         ax.dead = true;
         progRun++;
@@ -288,7 +260,7 @@ function syncAudio() {
     const drift = target - audio.currentTime * 1_000;
 
     if (audio.paused) {
-        if (Math.abs(drift) > 400 && now - ax.lastSeekAt > 1_500) seekTo(target);
+        if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > 1_500) seekTo(target);
         audio.play().catch(err => {
             if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
                 console.warn('[spotify.js] syncAudio play hatası:', err?.name);
@@ -298,26 +270,6 @@ function syncAudio() {
 
     if (ax.buffering && audio.readyState >= 3 && audio.currentTime > ax.baseCt + 0.3) ax.buffering = false;
     if (ax.buffering || audio.readyState < 3 || now < ax.graceUntil) return;
-
-    if (ax.learn) {
-        if (ax.learnAt === 0) ax.learnAt = now;
-        if (now - ax.learnAt > 25_000) { ax.learn = false; return; }
-        if (audio.currentTime - ax.seekCt < 0.6) return;
-        ax.m.push(drift);
-        if (ax.m.length < 3) return;
-        const d = median3(ax.m);
-        ax.learn = false;
-        ax.m     = [];
-        if (Math.abs(d) < 4_000) {
-            ax.latency = clamp(ax.latency + 0.7 * d, 100, 8_000);
-            saveLatency();
-            if (Math.abs(d) > 400 && ax.tries < 2) {
-                ax.tries++;
-                seekTo(target);
-            }
-        }
-        return;
-    }
 
     if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
         seekTo(target);
@@ -785,7 +737,6 @@ function handleData(d, rtt = 0) {
         removeStatus();
         resetAudioFailures();
         ax.buffering = false;
-        ax.learn     = false;
         ax.loadAt    = 0;
         resetLyricAnim();
         showMsg('yükleniyor...');
