@@ -225,6 +225,7 @@ audio.addEventListener('loadedmetadata', () => {
     const target       = getTruePosition();
     const backendReady = s.progId === s.track?.videoId && s.prog?.stage === 'ready';
     const cooldownOk   = performance.now() - ax.lastSeekAt > 500;
+    if (ax.loadAt && !backendReady) return;
     if (cooldownOk && (target < 5_000 || backendReady || targetIsBuffered(target))) seekTo(target);
 });
 audio.addEventListener('error', () => {
@@ -300,7 +301,10 @@ function syncAudio() {
     const drift = target - audio.currentTime * 1_000;
 
     if (audio.paused) {
-        if (Math.abs(drift) > 400 && now - ax.lastSeekAt > 1_500) seekTo(target);
+        if (Math.abs(drift) > 400 && now - ax.lastSeekAt > 1_500) {
+            const backendReady = s.progId === s.track?.videoId && s.prog?.stage === 'ready';
+            if (backendReady || targetIsBuffered(target) || target < 5_000) seekTo(target);
+        }
         audio.play().catch(err => {
             if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
                 console.warn('[spotify.js] syncAudio play hatası:', err?.name);
@@ -723,10 +727,13 @@ async function pollProgress() {
             updateStatus();
             if (s.prog.stage === 'ready') {
                 delay = PROG_POLL_SLOW;
-                if (prevStage !== 'ready' && ax.loadAt && wantAudio()) {
-                    ax.loadAt = performance.now();
-                    seekTo(getTruePosition());
-                    audio.play().catch(() => {});
+                if (prevStage !== 'ready' && wantAudio()) {
+                    const nowDrift = Math.abs(getTruePosition() - audio.currentTime * 1_000);
+                    if (nowDrift > HARD_DRIFT || !audioFlowing()) {
+                        if (ax.loadAt) ax.loadAt = performance.now();
+                        seekTo(getTruePosition());
+                        audio.play().catch(() => {});
+                    }
                 }
             }
         } else {
