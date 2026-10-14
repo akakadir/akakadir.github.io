@@ -112,9 +112,9 @@ const ax = {
 const clk = { pos: 0, at: 0, lastStamp: '' };
 
 let progTimer;
-let progRun    = 0;
+let progRun   = 0;
 let bgProgTimer;
-let bgProgRun  = 0;
+let bgProgRun = 0;
 
 const getTruePosition = () => {
     if (!s.playing || s.stale) return clk.pos;
@@ -179,16 +179,12 @@ function loadSrc(id) {
 }
 
 // ─── Background pre-loader ───────────────────────────────────────────────────
-// Loads audio and polls the backend silently while switch is OFF.
-// By the time the user opens the switch, the backend is ready and audio
-// is seeked to the current Spotify position — no delay, no "geriden geldi".
-
-function bgPreSeek() {
-    if (s.choice === 'yes' || !s.trackReady || s.loadedId !== s.bgId) return;
-    if (audio.readyState < 1) return;
-    const t = Math.max(0, getTruePosition() + (IOS ? ax.latency : 0)) / 1000;
-    try { audio.currentTime = t; } catch { }
-}
+// While the switch is OFF, silently loads the audio src and polls the backend.
+// When backend reaches 'ready', s.trackReady is set.
+// On toggle ON:
+//   - Non-iOS: seekTo(pos) then play() — element already has src, range request instant
+//   - iOS: play() first (iOS ignores currentTime before first play),
+//          then seek on the 'playing' event (element is now unlocked)
 
 async function bgPollProgress(id) {
     clearTimeout(bgProgTimer);
@@ -203,7 +199,12 @@ async function bgPollProgress(id) {
             if (run !== bgProgRun || s.bgId !== id || s.choice === 'yes') return;
             if (prog.stage === 'ready') {
                 s.trackReady = true;
-                bgPreSeek();
+                // Non-iOS only: pre-seek so the browser buffers at target pos.
+                // iOS ignores currentTime before first play() — skip.
+                if (!IOS && audio.readyState >= 1 && s.loadedId === id) {
+                    const t = Math.max(0, getTruePosition()) / 1000;
+                    try { audio.currentTime = t; } catch { }
+                }
                 return;
             }
         }
@@ -217,28 +218,32 @@ function maybePreload() {
     const id = s.track?.videoId;
     if (!id || s.choice === 'yes') return;
 
-    if (s.bgId !== id) {
-        s.bgId       = id;
-        s.trackReady = false;
-        bgProgRun++;
-        clearTimeout(bgProgTimer);
-
-        if (s.loadedId !== id) {
-            if (audio.src) {
-                audio.pause();
-                audio.removeAttribute('src');
-                audio.load();
-            }
-            audio.src  = audioUrl(id);
-            s.loadedId = id;
+    if (s.bgId === id) {
+        // Same track: keep non-iOS pre-seek fresh on each Spotify poll.
+        if (!IOS && s.trackReady && audio.readyState >= 1 && s.loadedId === id) {
+            const t = Math.max(0, getTruePosition()) / 1000;
+            try { audio.currentTime = t; } catch { }
         }
-
-        bgPollProgress(id);
         return;
     }
 
-    // Same track, already preloading — keep audio seek fresh on each Spotify poll
-    bgPreSeek();
+    // New track: start background loading.
+    s.bgId       = id;
+    s.trackReady = false;
+    bgProgRun++;
+    clearTimeout(bgProgTimer);
+
+    if (s.loadedId !== id) {
+        if (audio.src) {
+            audio.pause();
+            audio.removeAttribute('src');
+            audio.load();
+        }
+        audio.src  = audioUrl(id);
+        s.loadedId = id;
+    }
+
+    bgPollProgress(id);
 }
 
 function stopBgPreload() {
@@ -297,7 +302,7 @@ audio.addEventListener('loadstart', () => showStatus());
 audio.addEventListener('loadedmetadata', () => {
     if (!wantAudio() || s.loadedId !== s.track?.videoId) return;
     const target       = getTruePosition();
-    const backendReady = s.progId === s.track?.videoId && s.prog?.stage === 'ready';
+    const backendReady = s.trackReady || (s.progId === s.track?.videoId && s.prog?.stage === 'ready');
     const cooldownOk   = performance.now() - ax.lastSeekAt > 500;
     if (ax.loadAt && !backendReady) return;
     if (cooldownOk && (target < 5_000 || backendReady || targetIsBuffered(target))) seekTo(target);
@@ -307,6 +312,7 @@ audio.addEventListener('error', () => {
     const code = audio.error?.code;
     if (code === 1) return;
     if (s.choice !== 'yes') {
+        // Background mode: silent fail, reset so next poll retries.
         s.loadedId   = '';
         s.trackReady = false;
         return;
@@ -506,13 +512,25 @@ function toggleListen() {
     showStatus();
 
     if (s.trackReady && s.loadedId === s.track?.videoId) {
-        // Pre-loaded path: backend was already ready, audio src already loaded.
-        // One accurate seek from gesture context, then play — no lag, no drift.
-        seekTo(getTruePosition());
-        audio.play().catch(err => {
-            if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
-                console.warn('[spotify.js] audio.play hatası:', err?.name, err?.message);
-        });
+        if (IOS) {
+            // iOS ignores currentTime set before the very first play() on a fresh element.
+            // Solution: play() first (user gesture), then seek immediately on 'playing'
+            // (element is now unlocked). User hears <0.5s from wrong pos then correct audio.
+            const seekOnUnlock = () => seekTo(getTruePosition());
+            audio.addEventListener('playing', seekOnUnlock, { once: true });
+            audio.play().catch(err => {
+                audio.removeEventListener('playing', seekOnUnlock);
+                if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
+                    console.warn('[spotify.js] audio.play hatası:', err?.name, err?.message);
+            });
+        } else {
+            // Non-iOS: currentTime respects pre-set value before play().
+            seekTo(getTruePosition());
+            audio.play().catch(err => {
+                if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
+                    console.warn('[spotify.js] audio.play hatası:', err?.name, err?.message);
+            });
+        }
     } else {
         startAudio();
     }
@@ -935,7 +953,6 @@ function handleData(d, rtt = 0) {
     syncAudio();
     syncControls();
 
-    // Background pre-load while switch is off so the first tap is always immediate.
     if (s.choice !== 'yes' && s.track?.videoId) maybePreload();
 }
 
