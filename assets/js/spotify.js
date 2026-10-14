@@ -1,21 +1,47 @@
+(() => {
 'use strict';
+
+if (window.__akaNowPlaying) return;
+window.__akaNowPlaying = true;
 
 const POLL_URL  = 'https://akakadir.vercel.app/api/now-playing';
 const AUDIO_API = 'https://api.akakadir.art/api/audio';
 
-const UA  = navigator.userAgent;
-const IOS = /iP(hone|ad|od)/.test(UA) ||
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const UA     = navigator.userAgent;
+const IOS    = /iP(hone|ad|od)/.test(UA) ||
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const ENGINE = IOS
+    ? 'webkit-ios'
+    : /Firefox\//.test(UA)
+        ? 'gecko'
+        : /Safari\//.test(UA) && !/Chrome|Chromium|Edg\//.test(UA)
+            ? 'webkit'
+            : 'blink';
+const DEBUG = /[?&]debug\b/.test(location.search);
+
+const PRIME            = true;
+const PRIME_TIMEOUT    = 40_000;
+const PRIME_RETRY_MS   = 30_000;
+const PRIME_REFRESH_MS = 8_000;
+const PRIME_MAX_FAILS  = 2;
+
+const ALIGN_OK      = 90;
+const ALIGN_TRIES   = 5;
+const ALIGN_SETTLE  = 0.25;
+const ALIGN_SAMPLES = 3;
+const ALIGN_GAP_MS  = 80;
+const ALIGN_TICK_MS = 100;
 
 const POLL_MS_PLAYING = 7_000;
 const POLL_MS_PAUSED  = 15_000;
+const POLL_MS_HIDDEN  = 30_000;
 
 const TICK_MS        = 300;
-const LEAD_MS        = 0;
+const LEAD_MS        = 100;
 const FETCH_TIMEOUT  = 6_000;
 const MAX_POLL_FAILS = 3;
 
-const HARD_DRIFT    = 400;
+const HARD_DRIFT    = IOS ? 800 : 400;
 const SEEK_COOLDOWN = 3_000;
 const SEEK_GRACE    = 3_000;
 const CLOCK_SNAP    = 1_500;
@@ -23,6 +49,9 @@ const CLOCK_BLEND   = 0.3;
 
 const LOAD_TIMEOUT    = 60_000;
 const MAX_AUDIO_FAILS = 3;
+
+const LYRIC_TIMEOUT  = 15_000;
+const LYRIC_RETRY_MS = [3_000, 6_000, 10_000];
 
 const MARQUEE_PX_PER_SEC = 25;
 const FILL_MAX_MS        = 6_000;
@@ -32,6 +61,7 @@ const SPAM_GAP_MS = 1_000;
 const SPAM_MS     = 3_000;
 const SPAM_LABEL  = 'ne deniyon yrrm';
 const STALE_LABEL = 'bağlantı koptu';
+const ALIGN_LABEL = 'ince ayar..';
 
 const ENDED_RECHECK_MS = 2_500;
 
@@ -52,6 +82,13 @@ const $ = id => {
 const setText = (el, t) => { if (el && el.textContent !== t) el.textContent = t; };
 const mk = (tag, props = {}) => Object.assign(document.createElement(tag), props);
 
+const safeUrl = u => {
+    try {
+        const x = new URL(u, location.href);
+        return x.protocol === 'https:' ? x.href : '';
+    } catch { return ''; }
+};
+
 const enc         = encodeURIComponent;
 const audioUrl    = id => `${AUDIO_API}?videoId=${enc(id)}`;
 const progressUrl = id => `${AUDIO_API}/progress?videoId=${enc(id)}`;
@@ -70,6 +107,18 @@ function fetchT(url, opts = {}, ms = FETCH_TIMEOUT) {
     return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(timer));
 }
 
+const LAT_KEY = `sync.latency.${ENGINE}`;
+function loadLatency() {
+    try {
+        const v = Number(localStorage.getItem(LAT_KEY));
+        if (Number.isFinite(v) && v >= 0 && v <= 8_000) return v;
+    } catch { }
+    return IOS ? 300 : 0;
+}
+function saveLatency() {
+    try { localStorage.setItem(LAT_KEY, String(ax.latency | 0)); } catch { }
+}
+
 const audio = Object.assign(new Audio(), { preload: 'auto' });
 audio.setAttribute('playsinline', '');
 
@@ -78,18 +127,25 @@ const s = {
     lyrics: [], currentLyric: '', lineStart: -1, lyricAbort: null,
     prog: null, progId: '', choice: null, statusOn: false, label: 'beraber',
     clicks: 0, lastClick: 0, spamUntil: 0,
-    statusMax: 0, statusRank: 0, statusAt: 0, loadedId: ''
+    statusMax: 0, statusRank: 0, statusAt: 0, loadedId: '',
+    primeFails: 0, primeRetryAt: 0
 };
 
 const ax = {
-    lastSeekAt: 0, graceUntil: 0, buffering: false, retryAt: 0, baseCt: 0,
-    loadAt: 0, fails: 0, dead: false
+    phase: 'idle',
+    lastSeekAt: 0, graceUntil: 0, buffering: false, retryAt: 0,
+    latency: loadLatency(), baseCt: 0,
+    seekCt: 0, m: [], tries: 0, lastSampleAt: 0,
+    loadAt: 0, loadStartAt: 0, prepMs: 0, dSeek: 0, primeAt: 0, primed: false,
+    fails: 0, dead: false
 };
 
 const clk = { pos: 0, at: 0, lastStamp: '' };
 
 let progTimer;
 let progRun = 0;
+let primeTimer;
+let primeRun = 0;
 
 const getTruePosition = () => {
     if (!s.playing || s.stale) return clk.pos;
@@ -101,33 +157,26 @@ function syncClock(apiPos, stamp) {
     if (stamp === clk.lastStamp) return;
     clk.lastStamp = stamp;
 
-    if (!IOS) {
-        clk.pos = apiPos;
-        clk.at  = performance.now();
-        return;
-    }
-
     const expected = getTruePosition();
-    const diff = apiPos - expected;
+    const diff     = apiPos - expected;
 
-    if (Math.abs(diff) > CLOCK_SNAP) {
-        clk.pos = apiPos;
-    } else if (!wantAudio()) {
+    if (!wantAudio() || Math.abs(diff) > CLOCK_SNAP) {
         clk.pos = apiPos;
     } else {
-        const blend = diff > 0 ? 0.7 : CLOCK_BLEND;
-        clk.pos = expected + diff * blend;
+        clk.pos = expected + diff * (diff > 0 ? 0.5 : CLOCK_BLEND);
     }
     clk.at = performance.now();
 }
 
 function seekTo(ms) {
-    const t = Math.max(0, ms) / 1000;
+    const t = Math.max(0, ms + ax.latency) / 1000;
     try { audio.currentTime = t; } catch { return; }
     audio.playbackRate = 1;
     const now = performance.now();
     ax.lastSeekAt = now;
     ax.graceUntil = now + SEEK_GRACE;
+    ax.seekCt     = t;
+    ax.m          = [];
 }
 
 function loadSrc(id) {
@@ -138,23 +187,28 @@ function loadSrc(id) {
     }
     audio.src = audioUrl(id);
     audio.playbackRate = 1;
+    const now = performance.now();
     s.loadedId   = id;
-    s.statusAt   = performance.now();
+    s.statusAt   = now;
     s.statusMax  = 0;
     s.statusRank = 0;
     Object.assign(ax, {
-        lastSeekAt: performance.now(), graceUntil: 0, buffering: true,
-        loadAt: performance.now()
+        phase: 'load', lastSeekAt: 0, graceUntil: 0, buffering: true,
+        tries: 0, m: [], loadAt: now, loadStartAt: now,
+        prepMs: 0, dSeek: 0, primed: false
     });
 }
 
-function startAudio() {
-    const id = s.track?.videoId;
-    if (!id) return;
-    if (s.loadedId !== id) loadSrc(id);
-    audio.play().catch(err => {
-        if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
+function playSafe() {
+    let p;
+    try { p = audio.play(); } catch { return; }
+    if (!p || !p.catch) return;
+    p.catch(err => {
+        if (err?.name === 'NotAllowedError') {
+            if (s.choice === 'yes') stopListen();
+        } else if (err?.name !== 'AbortError') {
             console.warn('[spotify.js] audio.play hatası:', err?.name, err?.message);
+        }
     });
 }
 
@@ -164,13 +218,28 @@ function resetAudioFailures() {
     ax.retryAt = 0;
 }
 
+function stopPrimePoll() {
+    primeRun++;
+    clearTimeout(primeTimer);
+}
+
 function audioFail() {
     audio.pause();
     audio.removeAttribute('src');
     audio.load();
+    stopPrimePoll();
     s.loadedId   = '';
+    ax.phase     = 'idle';
     ax.loadAt    = 0;
     ax.buffering = false;
+    ax.primed    = false;
+
+    if (s.choice !== 'yes') {
+        s.primeFails++;
+        s.primeRetryAt = performance.now() + PRIME_RETRY_MS;
+        return;
+    }
+
     if (++ax.fails >= MAX_AUDIO_FAILS) {
         ax.dead = true;
         progRun++;
@@ -185,29 +254,47 @@ audio.addEventListener('waiting',  () => { ax.buffering = true;  });
 audio.addEventListener('stalled',  () => { ax.buffering = true;  });
 audio.addEventListener('playing',  () => { ax.buffering = false; });
 audio.addEventListener('canplay',  () => { ax.buffering = false; });
-audio.addEventListener('seeked',   () => { ax.graceUntil = performance.now() + SEEK_GRACE; });
 
 ['loadstart', 'seeking', 'waiting', 'stalled'].forEach(ev =>
     audio.addEventListener(ev, () => { ax.baseCt = audio.currentTime; })
 );
 
 audio.addEventListener('loadstart', () => showStatus());
+
 audio.addEventListener('loadedmetadata', () => {
-    if (!wantAudio() || s.loadedId !== s.track?.videoId) return;
-    seekTo(getTruePosition());
+    if (s.loadedId !== s.track?.videoId) return;
+    if (s.choice === 'yes') {
+        if (wantAudio()) startAligned();
+    } else if (ax.phase === 'load') {
+        primeSeek();
+    }
 });
+
+audio.addEventListener('seeked', () => {
+    const now = performance.now();
+    if (ax.phase === 'prime') {
+        ax.dSeek = now - ax.primeAt;
+        s.primeFails = 0;
+        if (s.choice === 'yes') startAligned();
+        else { ax.phase = 'ready'; ax.primed = true; }
+        return;
+    }
+    if (ax.phase !== 'align') ax.graceUntil = now + SEEK_GRACE;
+});
+
 audio.addEventListener('error', () => {
     if (!audio.getAttribute('src')) return;
-    const code = audio.error?.code;
-    if (code === 1) return;
+    if (audio.error?.code === 1) return;
     audioFail();
 });
+
 audio.addEventListener('ended', () => {
     poll();
     setTimeout(poll, ENDED_RECHECK_MS);
 });
 
-const wantAudio = () => s.playing && !s.stale && s.choice === 'yes' && !!s.track?.videoId;
+const wantAudio = () =>
+    s.playing && !s.stale && s.choice === 'yes' && !!s.track?.videoId;
 
 function audioFlowing() {
     return !audio.paused && !audio.seeking &&
@@ -215,9 +302,128 @@ function audioFlowing() {
            audio.currentTime - ax.baseCt >= 1;
 }
 
+function targetIsBuffered(ms) {
+    const t = ms / 1000;
+    const b = audio.buffered;
+    for (let i = 0; i < b.length; i++) {
+        if (b.start(i) <= t + 1 && b.end(i) >= t) return true;
+    }
+    return false;
+}
+
+/* ---------- çalmadan hazırlık ---------- */
+
+function primeSeek() {
+    ax.phase   = 'prime';
+    ax.primeAt = performance.now();
+    try {
+        audio.currentTime = Math.max(0, getTruePosition()) / 1000;
+    } catch {
+        ax.phase  = 'ready';
+        ax.primed = true;
+    }
+}
+
+async function primePoll() {
+    clearTimeout(primeTimer);
+    const run = ++primeRun;
+    const id  = s.loadedId;
+    const on  = () => run === primeRun && s.choice !== 'yes' &&
+                      (ax.phase === 'load' || ax.phase === 'prime');
+    if (!id || !on()) return;
+
+    try {
+        const r = await fetchT(progressUrl(id), { cache: 'no-store', credentials: 'omit' }, 3_000);
+        if (run !== primeRun) return;
+        if (r.ok) {
+            const p = await r.json();
+            if (s.loadedId === id) {
+                s.prog   = p;
+                s.progId = id;
+                if (p.stage === 'ready' && !ax.prepMs) ax.prepMs = performance.now() - ax.loadStartAt;
+            }
+        }
+    } catch { }
+
+    if (!on()) return;
+    primeTimer = setTimeout(primePoll, PROG_POLL_SLOW);
+}
+
+function primeIfNeeded() {
+    if (!PRIME || s.choice === 'yes' || s.primeFails >= PRIME_MAX_FAILS) return;
+    if (document.hidden || !s.playing || s.stale || !s.track?.videoId || ax.dead) return;
+
+    const now = performance.now();
+    const id  = s.track.videoId;
+
+    if (s.loadedId !== id) {
+        if (now < s.primeRetryAt) return;
+        loadSrc(id);
+        ax.loadAt = 0;
+        primePoll();
+        return;
+    }
+
+    if (ax.phase === 'load' || ax.phase === 'prime') {
+        if (now - ax.loadStartAt > PRIME_TIMEOUT) audioFail();
+        return;
+    }
+
+    if (ax.phase === 'ready' && audio.readyState >= 1 &&
+        now - ax.primeAt > PRIME_REFRESH_MS &&
+        !targetIsBuffered(getTruePosition() + 8_000)) {
+        primeSeek();
+    }
+}
+
+/* ---------- çalma: sessiz hizalama, sonra ses ---------- */
+
+function startAligned() {
+    audio.muted  = true;
+    ax.phase     = 'align';
+    ax.tries     = 0;
+    ax.primed    = true;
+    ax.graceUntil = 0;
+    seekTo(getTruePosition());
+    playSafe();
+}
+
+function finishAlign(d) {
+    ax.latency = clamp(ax.latency + 0.5 * d, 0, 8_000);
+    saveLatency();
+    audio.muted   = false;
+    ax.phase      = 'play';
+    ax.loadAt     = 0;
+    ax.fails      = 0;
+    ax.graceUntil = performance.now() + 1_500;
+    removeStatus(true);
+}
+
+function alignStep(drift, target, now) {
+    if (audio.readyState < 3 || ax.buffering) return;
+    if (audio.currentTime - ax.seekCt < ALIGN_SETTLE) return;
+    if (now - ax.lastSampleAt < ALIGN_GAP_MS) return;
+    ax.lastSampleAt = now;
+
+    ax.m.push(drift);
+    if (ax.m.length < ALIGN_SAMPLES) return;
+
+    const d = median3(ax.m);
+    ax.m = [];
+
+    if (Math.abs(d) <= ALIGN_OK || ax.tries >= ALIGN_TRIES) {
+        finishAlign(d);
+        return;
+    }
+    ax.tries++;
+    ax.latency = clamp(ax.latency + 0.9 * d, 0, 8_000);
+    seekTo(target);
+}
+
 function syncAudio() {
     if (!wantAudio()) {
         if (!audio.paused) audio.pause();
+        if (s.loadedId && (ax.phase === 'align' || ax.phase === 'play')) ax.phase = 'ready';
         return;
     }
     if (ax.dead) return;
@@ -228,15 +434,15 @@ function syncAudio() {
     if (s.loadedId !== id) {
         if (now < ax.retryAt) return;
         loadSrc(id);
-        audio.play().catch(err => {
-            if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
-                console.warn('[spotify.js] syncAudio play hatası:', err?.name);
-        });
+        audio.muted = true;
+        playSafe();
         return;
     }
 
+    if (!ax.loadAt && (ax.phase === 'load' || ax.phase === 'prime')) ax.loadAt = now;
+
     if (ax.loadAt) {
-        if (audioFlowing()) {
+        if (ax.phase === 'play' && audioFlowing()) {
             ax.loadAt = 0;
             ax.fails  = 0;
         } else if (now - ax.loadAt > LOAD_TIMEOUT) {
@@ -245,36 +451,51 @@ function syncAudio() {
         }
     }
 
+    if (ax.phase === 'ready') {
+        startAligned();
+        return;
+    }
+
+    if (ax.phase === 'load' || ax.phase === 'prime') {
+        if (audio.paused) { audio.muted = true; playSafe(); }
+        return;
+    }
+
     if (audio.readyState < 1 || audio.seeking) return;
 
     const target = getTruePosition();
 
     if (audio.ended) {
         if (target < audio.duration * 1_000 - 1_500 && now - ax.lastSeekAt > 1_500) {
-            seekTo(target);
-            audio.play().catch(() => { });
+            ax.phase = 'ready';
+            startAligned();
         }
         return;
     }
 
-    const drift = target - audio.currentTime * 1_000;
-
     if (audio.paused) {
-        if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > 1_500) seekTo(target);
-        audio.play().catch(err => {
-            if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
-                console.warn('[spotify.js] syncAudio play hatası:', err?.name);
-        });
+        if (now - ax.lastSeekAt > 1_500) startAligned();
+        else playSafe();
         return;
     }
 
     if (ax.buffering && audio.readyState >= 3 && audio.currentTime > ax.baseCt + 0.3) ax.buffering = false;
+
+    const drift = target - audio.currentTime * 1_000;
+
+    if (ax.phase === 'align') {
+        alignStep(drift, target, now);
+        return;
+    }
+
     if (ax.buffering || audio.readyState < 3 || now < ax.graceUntil) return;
 
     if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
         seekTo(target);
     }
 }
+
+/* ---------- arayüz ---------- */
 
 function ensureStyle() {
     if ($('mp-style')) return;
@@ -338,29 +559,42 @@ function syncControls() {
     $('mp-sw')?.setAttribute('aria-checked', String(s.choice === 'yes'));
 }
 
+function startListen() {
+    s.choice = 'yes';
+    ax.tries = 0;
+    resetAudioFailures();
+    showStatus();
+    syncAudio();
+    setLabel(s.label);
+    syncControls();
+    poll();
+}
+
+function stopListen() {
+    s.choice = null;
+    removeStatus();
+    audio.pause();
+    audio.muted = false;
+    if (ax.phase === 'align' || ax.phase === 'play') ax.phase = s.loadedId ? 'ready' : 'idle';
+    ax.loadAt = 0;
+    ax.primeAt = performance.now();
+    syncControls();
+}
+
 function toggleListen() {
     const now = performance.now();
+    if (now < s.spamUntil) return;
+
     s.clicks = now - s.lastClick < SPAM_GAP_MS ? s.clicks + 1 : 1;
     s.lastClick = now;
     if (s.clicks >= SPAM_CLICKS) {
         s.clicks    = 0;
         s.spamUntil = now + SPAM_MS;
         setLabel(s.label);
-    }
-
-    if (s.choice === 'yes') {
-        s.choice = null;
-        removeStatus();
-        audio.pause();
-        syncControls();
         return;
     }
-    s.choice = 'yes';
-    resetAudioFailures();
-    showStatus();
-    startAudio();
-    setLabel(s.label);
-    syncControls();
+
+    s.choice === 'yes' ? stopListen() : startListen();
 }
 
 const marquee = {
@@ -389,7 +623,7 @@ function renderTrack() {
 
     const link = mk('a', {
         className: 'no-favicon',
-        href:   trackLink || '#',
+        href:   safeUrl(trackLink) || '#',
         target: '_blank',
         rel:    'noopener noreferrer',
         textContent: name || 'bilinmeyen şarkı'
@@ -429,22 +663,33 @@ function renderTrack() {
     requestAnimationFrame(fitMarquee);
 }
 
+function initMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+    const set = (action, fn) => {
+        try { navigator.mediaSession.setActionHandler(action, fn); } catch { }
+    };
+    ['seekbackward', 'seekforward', 'seekto', 'previoustrack', 'nexttrack']
+        .forEach(a => set(a, () => { }));
+    set('pause', () => { if (s.choice === 'yes') stopListen(); });
+    set('stop',  () => { if (s.choice === 'yes') stopListen(); });
+    set('play',  () => { if (s.choice !== 'yes' && s.playing && s.track?.videoId) startListen(); });
+}
+
 function updateMediaSession() {
     if (!('mediaSession' in navigator)) return;
     try {
-        const d = s.track;
+        const d   = s.track;
+        const art = d ? safeUrl(d.albumArt) : '';
         navigator.mediaSession.metadata = d
             ? new MediaMetadata({
                 title:  d.name    || '',
                 artist: d.artists || '',
                 album:  d.album   || '',
-                artwork: d.albumArt
-                    ? [96, 128, 192, 256, 384, 512].map(n => ({ src: d.albumArt, sizes: `${n}x${n}` }))
+                artwork: art
+                    ? [96, 128, 192, 256, 384, 512].map(n => ({ src: art, sizes: `${n}x${n}` }))
                     : []
             })
             : null;
-        ['seekbackward', 'seekforward', 'seekto', 'previoustrack', 'nexttrack']
-            .forEach(a => { try { navigator.mediaSession.setActionHandler(a, () => { }); } catch { } });
     } catch { }
 }
 
@@ -455,6 +700,8 @@ function ensureLyrics() {
     el.innerHTML = `
         <div class="ly dim"><span id="front"></span></div>
         <div class="ly"><span id="fill"></span></div>`;
+    s.currentLyric = '';
+    s.lineStart    = -1;
 }
 
 const parseLyrics = text =>
@@ -472,7 +719,9 @@ async function fetchSynced(d, signal) {
 
     const getJson = async url => {
         const r = await fetch(url, { signal, credentials: 'omit' });
-        return r.ok ? r.json() : null;
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error(`lrclib ${r.status}`);
+        return r.json();
     };
 
     if (d.album && dur) {
@@ -497,7 +746,8 @@ async function loadLyrics(d, attempt = 0) {
     const ctrl   = (s.lyricAbort = new AbortController());
     const key    = s.key;
     let timedOut = false;
-    const timer  = setTimeout(() => { timedOut = true; ctrl.abort(); }, 15_000);
+    let failed   = false;
+    const timer  = setTimeout(() => { timedOut = true; ctrl.abort(); }, LYRIC_TIMEOUT);
 
     let lyrics = { error: true };
     try {
@@ -506,14 +756,15 @@ async function loadLyrics(d, attempt = 0) {
         if (parsed.length) lyrics = parsed;
     } catch (e) {
         if (e.name === 'AbortError' && !timedOut) return;
+        failed = true;
     } finally {
         clearTimeout(timer);
     }
 
     if (key !== s.key) return;
 
-    if (lyrics.error && attempt === 0) {
-        setTimeout(() => { if (s.key === key) loadLyrics(d, 1); }, 5_000);
+    if (failed && attempt < LYRIC_RETRY_MS.length) {
+        setTimeout(() => { if (s.key === key) loadLyrics(d, attempt + 1); }, LYRIC_RETRY_MS[attempt]);
         return;
     }
 
@@ -588,14 +839,14 @@ function renderLyrics() {
     l.style.clipPath   = clip(at(pos + lead));
 }
 
-function removeStatus() {
+function removeStatus(flowing = false) {
     progRun++;
     clearTimeout(progTimer);
     s.prog       = null;
     s.statusMax  = 0;
     s.statusRank = 0;
     s.statusOn   = false;
-    setLabel('beraber');
+    setLabel(flowing ? ENGINE : 'beraber');
 }
 
 function bufferedAhead() {
@@ -607,15 +858,21 @@ function bufferedAhead() {
     return 0;
 }
 
+const curStage = () => {
+    const pr = s.prog && s.progId === s.track?.videoId ? s.prog : null;
+    return pr?.stage || (ax.primed ? 'ready' : '');
+};
+
 function statusPercent() {
     const pr      = s.prog && s.progId === s.track?.videoId ? s.prog : null;
+    const stage   = curStage();
     const elapsed = (performance.now() - s.statusAt) / 1_000;
     const frac    = Math.min(1, bufferedAhead() / 5);
     let p;
 
-    if (pr?.stage === 'downloading' || pr?.stage === 'uploading') p = 10 + (pr.percent ?? 0) * 0.5;
-    else if (pr?.stage === 'ready')                               p = 60 + 40 * frac;
-    else                                                          p = Math.min(10, elapsed * 2.5);
+    if (stage === 'downloading' || stage === 'uploading') p = 10 + (pr?.percent ?? 0) * 0.5;
+    else if (stage === 'ready')                           p = 60 + 40 * frac;
+    else                                                  p = Math.min(10, elapsed * 2.5);
 
     if (frac > 0) p = Math.max(p, 60 + 40 * frac);
     return p;
@@ -624,12 +881,12 @@ function statusPercent() {
 function updateStatus() {
     if (!s.statusOn) return;
     if (ax.dead) { setLabel('kodöldüaq'); return; }
-    if (audioFlowing()) { removeStatus(); return; }
+    if (ax.phase === 'align') { setLabel(ALIGN_LABEL); return; }
+    if (ax.phase === 'play' && audioFlowing()) { removeStatus(true); return; }
 
     s.statusMax  = Math.max(s.statusMax, statusPercent());
     const pct    = Math.min(99, Math.floor(s.statusMax));
-    const pr     = s.prog && s.progId === s.track?.videoId ? s.prog : null;
-    s.statusRank = Math.max(s.statusRank, STAGE_RANK[pr?.stage] ?? 0);
+    s.statusRank = Math.max(s.statusRank, STAGE_RANK[curStage()] ?? 0);
 
     setLabel([
         `hazırlık..${pct}%`,
@@ -653,6 +910,7 @@ async function pollProgress() {
         if (r.ok) {
             s.prog   = await r.json();
             s.progId = id;
+            if (s.prog.stage === 'ready' && !ax.prepMs) ax.prepMs = performance.now() - ax.loadStartAt;
             if (ax.loadAt && /^(resolving|downloading|uploading)$/.test(s.prog.stage))
                 ax.loadAt = performance.now();
             updateStatus();
@@ -672,12 +930,29 @@ function showStatus() {
     if (s.choice !== 'yes' || !s.playing) return;
     if (!s.statusOn) {
         s.statusOn   = true;
-        s.statusAt   = performance.now();
         s.statusMax  = 0;
         s.statusRank = 0;
+        if (!s.loadedId) s.statusAt = performance.now();
     }
     updateStatus();
     pollProgress();
+}
+
+function renderDebug() {
+    if (!DEBUG) return;
+    let el = $('sync-debug');
+    if (!el) {
+        el = mk('div', { id: 'sync-debug' });
+        el.style.cssText = 'position:fixed;right:6px;bottom:6px;z-index:99999;font:11px/1.3 monospace;pointer-events:none;background:rgba(0,0,0,.6);color:#fff;padding:3px 6px;border-radius:4px';
+        document.body.append(el);
+    }
+    const d = getTruePosition() - audio.currentTime * 1_000;
+    el.textContent =
+        `${ENGINE} ${ax.phase} d=${d | 0}ms L=${ax.latency | 0} ` +
+        `seek=${ax.dSeek | 0}ms prep=${ax.prepMs ? (ax.prepMs / 1000).toFixed(1) + 's' : '-'} ` +
+        `rs=${audio.readyState} ${audio.paused ? 'P' : '>'}${audio.muted ? ' M' : ''}` +
+        `${ax.buffering ? ' buf' : ''}${s.stale ? ' stale' : ''} ` +
+        `try=${ax.tries} f=${ax.fails}${ax.dead ? '!' : ''}`;
 }
 
 function clearTrack() {
@@ -687,9 +962,12 @@ function clearTrack() {
         lyrics: [], loadedId: ''
     });
     removeStatus();
+    stopPrimePoll();
     audio.pause();
     audio.removeAttribute('src');
     audio.load();
+    ax.phase  = 'idle';
+    ax.primed = false;
     resetLyricAnim();
     showMsg('');
     setText($('now-playing'), '');
@@ -734,8 +1012,11 @@ function handleData(d, rtt = 0) {
     if (changed) {
         Object.assign(s, { key, lyrics: [], loadedId: '' });
         audio.pause();
+        stopPrimePoll();
         removeStatus();
         resetAudioFailures();
+        ax.phase     = 'idle';
+        ax.primed    = false;
         ax.buffering = false;
         ax.loadAt    = 0;
         resetLyricAnim();
@@ -757,6 +1038,7 @@ function handleData(d, rtt = 0) {
 
     renderLyrics();
     syncAudio();
+    primeIfNeeded();
     syncControls();
 }
 
@@ -769,6 +1051,11 @@ function onPollFail() {
     clk.at  = performance.now();
     s.stale = true;
     setLabel(s.label);
+}
+
+function nextPollMs() {
+    if (document.hidden && s.choice !== 'yes') return POLL_MS_HIDDEN;
+    return s.playing && !s.stale ? POLL_MS_PLAYING : POLL_MS_PAUSED;
 }
 
 async function poll() {
@@ -801,11 +1088,10 @@ async function poll() {
 
     busy = false;
     clearTimeout(timer);
-
-    const nextMs = (s.playing && !s.stale) ? POLL_MS_PLAYING : POLL_MS_PAUSED;
-    timer = setTimeout(poll, nextMs);
+    timer = setTimeout(poll, nextPollMs());
 }
 
+initMediaSession();
 ensureLyrics();
 poll();
 
@@ -820,7 +1106,13 @@ setInterval(() => {
         updateStatus();
     }
     syncAudio();
+    primeIfNeeded();
+    renderDebug();
 }, TICK_MS);
+
+setInterval(() => {
+    if (ax.phase === 'align') syncAudio();
+}, ALIGN_TICK_MS);
 
 const resume = () => {
     if (document.hidden) return;
@@ -828,6 +1120,11 @@ const resume = () => {
     ax.lastSeekAt = 0;
     if (ax.dead) resetAudioFailures();
     poll();
+    primeIfNeeded();
 };
 document.addEventListener('visibilitychange', resume);
 window.addEventListener('pageshow', resume);
+window.addEventListener('online', () => poll());
+
+if (window.__npExpose) window.__npExpose({ s, ax, clk, audio, toggleListen, startListen, stopListen });
+})();
