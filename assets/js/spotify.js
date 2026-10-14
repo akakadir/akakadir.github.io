@@ -46,7 +46,6 @@ const STAGE_RANK = { resolving: 1, downloading: 2, uploading: 3, ready: 4 };
 
 const PROG_POLL_FAST = 1_000;
 const PROG_POLL_SLOW = 2_000;
-const BG_POLL_MS     = 2_000;
 
 const domCache = new Map();
 const $ = id => {
@@ -98,8 +97,7 @@ const s = {
     lyrics: [], currentLyric: '', lineStart: -1, lyricAbort: null,
     prog: null, progId: '', choice: null, statusOn: false, label: 'beraber',
     clicks: 0, lastClick: 0, spamUntil: 0,
-    statusMax: 0, statusRank: 0, statusAt: 0, loadedId: '',
-    trackReady: false, bgId: ''
+    statusMax: 0, statusRank: 0, statusAt: 0, loadedId: ''
 };
 
 const ax = {
@@ -112,9 +110,7 @@ const ax = {
 const clk = { pos: 0, at: 0, lastStamp: '' };
 
 let progTimer;
-let progRun   = 0;
-let bgProgTimer;
-let bgProgRun = 0;
+let progRun = 0;
 
 const getTruePosition = () => {
     if (!s.playing || s.stale) return clk.pos;
@@ -178,81 +174,6 @@ function loadSrc(id) {
     });
 }
 
-// ─── Background pre-loader ───────────────────────────────────────────────────
-// While the switch is OFF, silently loads the audio src and polls the backend.
-// When backend reaches 'ready', s.trackReady is set.
-// On toggle ON:
-//   - Non-iOS: seekTo(pos) then play() — element already has src, range request instant
-//   - iOS: play() first (iOS ignores currentTime before first play),
-//          then seek on the 'playing' event (element is now unlocked)
-
-async function bgPollProgress(id) {
-    clearTimeout(bgProgTimer);
-    const run = ++bgProgRun;
-    if (s.choice === 'yes' || s.bgId !== id) return;
-
-    try {
-        const r = await fetchT(progressUrl(id), { cache: 'no-store', credentials: 'omit' }, 3_000);
-        if (run !== bgProgRun || s.bgId !== id || s.choice === 'yes') return;
-        if (r.ok) {
-            const prog = await r.json();
-            if (run !== bgProgRun || s.bgId !== id || s.choice === 'yes') return;
-            if (prog.stage === 'ready') {
-                s.trackReady = true;
-                // Non-iOS only: pre-seek so the browser buffers at target pos.
-                // iOS ignores currentTime before first play() — skip.
-                if (!IOS && audio.readyState >= 1 && s.loadedId === id) {
-                    const t = Math.max(0, getTruePosition()) / 1000;
-                    try { audio.currentTime = t; } catch { }
-                }
-                return;
-            }
-        }
-    } catch { }
-
-    if (run !== bgProgRun || s.bgId !== id || s.choice === 'yes') return;
-    bgProgTimer = setTimeout(() => bgPollProgress(id), BG_POLL_MS);
-}
-
-function maybePreload() {
-    const id = s.track?.videoId;
-    if (!id || s.choice === 'yes') return;
-
-    if (s.bgId === id) {
-        // Same track: keep non-iOS pre-seek fresh on each Spotify poll.
-        if (!IOS && s.trackReady && audio.readyState >= 1 && s.loadedId === id) {
-            const t = Math.max(0, getTruePosition()) / 1000;
-            try { audio.currentTime = t; } catch { }
-        }
-        return;
-    }
-
-    // New track: start background loading.
-    s.bgId       = id;
-    s.trackReady = false;
-    bgProgRun++;
-    clearTimeout(bgProgTimer);
-
-    if (s.loadedId !== id) {
-        if (audio.src) {
-            audio.pause();
-            audio.removeAttribute('src');
-            audio.load();
-        }
-        audio.src  = audioUrl(id);
-        s.loadedId = id;
-    }
-
-    bgPollProgress(id);
-}
-
-function stopBgPreload() {
-    bgProgRun++;
-    clearTimeout(bgProgTimer);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
 function startAudio() {
     const id = s.track?.videoId;
     if (!id) return;
@@ -301,22 +222,13 @@ audio.addEventListener('seeked',   () => { ax.graceUntil = performance.now() + S
 audio.addEventListener('loadstart', () => showStatus());
 audio.addEventListener('loadedmetadata', () => {
     if (!wantAudio() || s.loadedId !== s.track?.videoId) return;
-    const target       = getTruePosition();
-    const backendReady = s.trackReady || (s.progId === s.track?.videoId && s.prog?.stage === 'ready');
-    const cooldownOk   = performance.now() - ax.lastSeekAt > 500;
-    if (ax.loadAt && !backendReady) return;
-    if (cooldownOk && (target < 5_000 || backendReady || targetIsBuffered(target))) seekTo(target);
+    const target = getTruePosition();
+    if (target < 5_000 || targetIsBuffered(target)) seekTo(target);
 });
 audio.addEventListener('error', () => {
     if (!audio.getAttribute('src')) return;
     const code = audio.error?.code;
     if (code === 1) return;
-    if (s.choice !== 'yes') {
-        // Background mode: silent fail, reset so next poll retries.
-        s.loadedId   = '';
-        s.trackReady = false;
-        return;
-    }
     audioFail();
 });
 audio.addEventListener('ended', () => {
@@ -386,10 +298,7 @@ function syncAudio() {
     const drift = target - audio.currentTime * 1_000;
 
     if (audio.paused) {
-        if (Math.abs(drift) > 400 && now - ax.lastSeekAt > 1_500) {
-            const backendReady = s.trackReady || (s.progId === s.track?.videoId && s.prog?.stage === 'ready');
-            if (backendReady || targetIsBuffered(target) || target < 5_000) seekTo(target);
-        }
+        if (Math.abs(drift) > 400 && now - ax.lastSeekAt > 1_500) seekTo(target);
         audio.play().catch(err => {
             if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
                 console.warn('[spotify.js] syncAudio play hatası:', err?.name);
@@ -420,8 +329,7 @@ function syncAudio() {
     }
 
     if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
-        const backendReady = s.trackReady || (s.progId === s.track?.videoId && s.prog?.stage === 'ready');
-        if (backendReady || targetIsBuffered(target)) seekTo(target);
+        if (targetIsBuffered(target)) seekTo(target);
     }
 }
 
@@ -504,37 +412,11 @@ function toggleListen() {
         syncControls();
         return;
     }
-
     s.choice = 'yes';
     ax.tries = 0;
-    stopBgPreload();
     resetAudioFailures();
     showStatus();
-
-    if (s.trackReady && s.loadedId === s.track?.videoId) {
-        if (IOS) {
-            // iOS ignores currentTime set before the very first play() on a fresh element.
-            // Solution: play() first (user gesture), then seek immediately on 'playing'
-            // (element is now unlocked). User hears <0.5s from wrong pos then correct audio.
-            const seekOnUnlock = () => seekTo(getTruePosition());
-            audio.addEventListener('playing', seekOnUnlock, { once: true });
-            audio.play().catch(err => {
-                audio.removeEventListener('playing', seekOnUnlock);
-                if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
-                    console.warn('[spotify.js] audio.play hatası:', err?.name, err?.message);
-            });
-        } else {
-            // Non-iOS: currentTime respects pre-set value before play().
-            seekTo(getTruePosition());
-            audio.play().catch(err => {
-                if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
-                    console.warn('[spotify.js] audio.play hatası:', err?.name, err?.message);
-            });
-        }
-    } else {
-        startAudio();
-    }
-
+    startAudio();
     setLabel(s.label);
     syncControls();
 }
@@ -828,26 +710,12 @@ async function pollProgress() {
         const r = await fetchT(progressUrl(id), { cache: 'no-store', credentials: 'omit' }, 3_000);
         if (run !== progRun) return;
         if (r.ok) {
-            const prevStage = s.progId === id ? s.prog?.stage : null;
-            const newProg   = await r.json();
-            if (run !== progRun) return;
-            s.prog   = newProg;
+            s.prog   = await r.json();
             s.progId = id;
             if (ax.loadAt && /^(resolving|downloading|uploading)$/.test(s.prog.stage))
                 ax.loadAt = performance.now();
             updateStatus();
-            if (s.prog.stage === 'ready') {
-                s.trackReady = true;
-                delay = PROG_POLL_SLOW;
-                if (prevStage !== 'ready' && wantAudio()) {
-                    const nowDrift = Math.abs(getTruePosition() - audio.currentTime * 1_000);
-                    if (nowDrift > HARD_DRIFT || !audioFlowing()) {
-                        if (ax.loadAt) ax.loadAt = performance.now();
-                        seekTo(getTruePosition());
-                        audio.play().catch(() => {});
-                    }
-                }
-            }
+            if (s.prog.stage === 'ready') delay = PROG_POLL_SLOW;
         } else {
             delay = PROG_POLL_SLOW;
         }
@@ -873,10 +741,9 @@ function showStatus() {
 
 function clearTrack() {
     s.lyricAbort?.abort();
-    stopBgPreload();
     Object.assign(s, {
         track: null, key: '', playing: false, stale: false,
-        lyrics: [], loadedId: '', trackReady: false, bgId: ''
+        lyrics: [], loadedId: ''
     });
     removeStatus();
     audio.pause();
@@ -924,8 +791,7 @@ function handleData(d, rtt = 0) {
     }
 
     if (changed) {
-        Object.assign(s, { key, lyrics: [], loadedId: '', bgId: '', trackReady: false });
-        stopBgPreload();
+        Object.assign(s, { key, lyrics: [], loadedId: '' });
         audio.pause();
         removeStatus();
         resetAudioFailures();
@@ -952,8 +818,6 @@ function handleData(d, rtt = 0) {
     renderLyrics();
     syncAudio();
     syncControls();
-
-    if (s.choice !== 'yes' && s.track?.videoId) maybePreload();
 }
 
 let busy  = false;
