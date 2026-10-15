@@ -1,62 +1,35 @@
 'use strict';
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   ENDPOINTS
-═══════════════════════════════════════════════════════════════════════════════ */
 const POLL_URL  = 'https://akakadir.vercel.app/api/now-playing';
 const AUDIO_API = 'https://api.akakadir.art/api/audio';
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   PLATFORM
-═══════════════════════════════════════════════════════════════════════════════ */
 const UA  = navigator.userAgent;
 const IOS = /iP(hone|ad|od)/.test(UA) ||
             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   POLLING
-═══════════════════════════════════════════════════════════════════════════════ */
 const POLL_MS_PLAYING = 7_000;
 const POLL_MS_PAUSED  = 15_000;
 const FETCH_TIMEOUT   = 6_000;
 const MAX_POLL_FAILS  = 3;
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   DISPLAY
-═══════════════════════════════════════════════════════════════════════════════ */
 const TICK_MS            = 300;
 const LEAD_MS            = 0;
 const FILL_MAX_MS        = 6_000;
 const MARQUEE_PX_PER_SEC = 25;
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   CLOCK / SYNC
-═══════════════════════════════════════════════════════════════════════════════ */
 const CLOCK_SNAP  = 1_500;
 const CLOCK_BLEND = 0.3;
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   DRIFT CORRECTION  —  seek-only; playbackRate is NEVER changed anywhere
-═══════════════════════════════════════════════════════════════════════════════ */
-const HARD_DRIFT    = 400;    // ms: seek when drift exceeds this
-const SEEK_COOLDOWN = 2_000;  // ms: minimum gap between two seeks
-const SEEK_GRACE    = 2_500;  // ms: suppress drift checks right after a seek
+const HARD_DRIFT    = 400;
+const SEEK_COOLDOWN = 2_000;
+const SEEK_GRACE    = 2_500;
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   PRE-FETCH ENGINE
-═══════════════════════════════════════════════════════════════════════════════ */
-const PF_REANCHOR_MS  = 4_000; // ms: drift-correct muted bg audio this often
-const PF_ACTIVATE_LAG = 80;    // ms: estimated click → first-sample latency (seek-ahead)
+const PF_REANCHOR_MS  = 4_000;
+const PF_ACTIVATE_LAG = 80;
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   AUDIO LOADING
-═══════════════════════════════════════════════════════════════════════════════ */
 const MAX_AUDIO_FAILS = 3;
 const LOAD_TIMEOUT    = 60_000;
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   SPAM DETECTION
-═══════════════════════════════════════════════════════════════════════════════ */
 const SPAM_CLICKS = 11;
 const SPAM_GAP_MS = 1_000;
 const SPAM_MS     = 3_000;
@@ -65,32 +38,10 @@ const STALE_LABEL = 'bağlantı koptu';
 
 const ENDED_RECHECK_MS = 2_500;
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   PROGRESS STAGE
-═══════════════════════════════════════════════════════════════════════════════ */
 const STAGE_RANK     = { resolving: 1, downloading: 2, uploading: 3, ready: 4 };
 const PROG_POLL_FAST = 1_000;
 const PROG_POLL_SLOW = 2_000;
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   PRE-FETCH STATE MACHINE
-   ─────────────────────────────────────────────────────────────────────────────
-   IDLE    → no source loaded
-   LOADING → src assigned; waiting for canplay
-   READY   → canplay fired; playing muted in background (primed for instant switch-on)
-   ACTIVE  → user-activated; audible playback
-   FAILED  → load error; exponential back-off pending
-   ─────────────────────────────────────────────────────────────────────────────
-   Transitions driven by:
-     IDLE → LOADING        startPrefetch()          (on every handleData with live track)
-     LOADING → READY       canplay event             (s.choice null)
-     LOADING → ACTIVE      canplay event             (s.choice 'yes')
-     READY → ACTIVE        activatePrefetch()        (user clicks switch on)
-     ACTIVE → READY        deactivatePrefetch()      (user clicks switch off)
-     * → IDLE              pfWantLoad() false        (Spotify paused / no track)
-     * → FAILED            pfFail()                  (MAX_AUDIO_FAILS exceeded)
-     FAILED → LOADING      resetPfFailures()         (retry / track change)
-═══════════════════════════════════════════════════════════════════════════════ */
 const PF = Object.freeze({
     IDLE:    'idle',
     LOADING: 'loading',
@@ -99,9 +50,6 @@ const PF = Object.freeze({
     FAILED:  'failed',
 });
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   DOM HELPERS
-═══════════════════════════════════════════════════════════════════════════════ */
 const domCache = new Map();
 const $ = id => {
     let el = domCache.get(id);
@@ -114,9 +62,6 @@ const $ = id => {
 const setText = (el, t) => { if (el && el.textContent !== t) el.textContent = t; };
 const mk = (tag, props = {}) => Object.assign(document.createElement(tag), props);
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   URL / TIME HELPERS
-═══════════════════════════════════════════════════════════════════════════════ */
 const enc         = encodeURIComponent;
 const audioUrl    = id => `${AUDIO_API}?videoId=${enc(id)}`;
 const progressUrl = id => `${AUDIO_API}/progress?videoId=${enc(id)}`;
@@ -134,52 +79,40 @@ function fetchT(url, opts = {}, ms = FETCH_TIMEOUT) {
     return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(timer));
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   AUDIO ELEMENT  —  always starts muted; unmuted only in ACTIVE state
-═══════════════════════════════════════════════════════════════════════════════ */
 const audio = Object.assign(new Audio(), { preload: 'auto', muted: true });
 audio.setAttribute('playsinline', '');
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   APPLICATION STATE
-═══════════════════════════════════════════════════════════════════════════════ */
 const s = {
     track: null, key: '', playing: false, stale: false, fails: 0, duration: 0,
     lyrics: [], currentLyric: '', lineStart: -1, lyricAbort: null,
     prog: null, progId: '',
-    choice: null,                      // null | 'yes'
+    choice: null,
     statusOn: false, label: 'beraber',
     clicks: 0, lastClick: 0, spamUntil: 0,
     statusMax: 0, statusRank: 0, statusAt: 0,
 };
 
-/* Pre-fetch engine state */
 const pf = {
     state:        PF.IDLE,
     loadedId:     '',
-    loadAt:       0,           // performance.now() when pfLoadSrc() was called
-    lastSeekAt:   0,           // performance.now() of last seekTo()
-    graceUntil:   0,           // suppress drift checks until this timestamp
-    lastReanchor: 0,           // performance.now() of last READY-state re-anchor
-    baseCt:       0,           // audio.currentTime at last stall / seek / loadstart
+    loadAt:       0,
+    lastSeekAt:   0,
+    graceUntil:   0,
+    lastReanchor: 0,
+    baseCt:       0,
     buffering:    false,
     fails:        0,
     retryAt:      0,
-    gestureOk:    !IOS,        // true once any user gesture has been received
+    gestureOk:    !IOS,
+    everPlayed:   false,
 };
 
-/* Live Spotify clock */
 const clk = { pos: 0, at: 0, lastStamp: '' };
 
-/* Timer handles */
 let pollBusy  = false;
 let pollTimer;
 let progTimer;
 let progRun = 0;
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   CLOCK
-═══════════════════════════════════════════════════════════════════════════════ */
 
 const getTruePosition = () => {
     if (!s.playing || s.stale) return clk.pos;
@@ -201,27 +134,20 @@ function syncClock(apiPos, stamp) {
     const diff     = apiPos - expected;
 
     if (Math.abs(diff) > CLOCK_SNAP) {
-        clk.pos = apiPos;                                              // hard snap
+        clk.pos = apiPos;
     } else if (pf.state === PF.IDLE || pf.state === PF.FAILED) {
-        clk.pos = apiPos;                                              // no audio — accept as-is
+        clk.pos = apiPos;
     } else {
-        clk.pos = expected + diff * (diff > 0 ? 0.7 : CLOCK_BLEND);   // smooth blend
+        clk.pos = expected + diff * (diff > 0 ? 0.7 : CLOCK_BLEND);
     }
     clk.at = performance.now();
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   PRE-FETCH ENGINE  —  helpers
-═══════════════════════════════════════════════════════════════════════════════ */
-
-/** True when a live, sourced track exists and audio should pre-fetch. */
 const pfWantLoad = () => s.playing && !s.stale && !!s.track?.videoId;
 
-/** True when the audio element has a source loaded (any non-idle/non-failed state). */
 const pfHasSrc  = () =>
     pf.state === PF.LOADING || pf.state === PF.READY || pf.state === PF.ACTIVE;
 
-/** Seconds of audio buffered ahead of the current playback cursor. */
 function bufferedAhead() {
     const b = audio.buffered, t = audio.currentTime;
     for (let i = 0; i < b.length; i++) {
@@ -230,17 +156,12 @@ function bufferedAhead() {
     return 0;
 }
 
-/** True when audio is actively emitting samples (flowing, not stalled). */
 function audioFlowing() {
     return !audio.paused && !audio.seeking &&
            audio.readyState >= 3 &&
            audio.currentTime - pf.baseCt >= 1;
 }
 
-/**
- * Seek to a target position (ms).
- * playbackRate is NEVER modified — not here, not anywhere else in this file.
- */
 function seekTo(ms) {
     const sec = Math.max(0, ms) / 1_000;
     try { audio.currentTime = sec; } catch { return; }
@@ -250,10 +171,6 @@ function seekTo(ms) {
     pf.lastReanchor = now;
 }
 
-/**
- * Load a new source into the audio element.
- * Always starts muted; resets the pre-fetch engine tracking fields.
- */
 function pfLoadSrc(id) {
     if (audio.src) {
         audio.pause();
@@ -271,74 +188,50 @@ function pfLoadSrc(id) {
     pf.lastReanchor = 0;
     pf.buffering    = true;
     pf.state        = PF.LOADING;
+    pf.everPlayed   = false;
 
     s.statusAt   = performance.now();
     s.statusMax  = 0;
     s.statusRank = 0;
 }
 
-/**
- * Attempt muted background play (primes the buffer; required for iOS).
- * No-op if gesture has not yet been received on iOS.
- */
 function pfTryMutedPlay() {
     if (!pf.gestureOk) return;
     audio.muted = true;
     audio.play().catch(err => {
-        if (err?.name === 'NotAllowedError') pf.gestureOk = false; // lost gesture blessing
+        if (err?.name === 'NotAllowedError') pf.gestureOk = false;
         else if (err?.name !== 'AbortError')
             console.warn('[pf] muted play error:', err?.name);
     });
 }
 
-/**
- * Call on any user interaction to unlock the audio element on iOS.
- * Safe to call repeatedly — becomes a no-op after the first successful gesture.
- */
 function onGesture() {
     if (pf.gestureOk) return;
     pf.gestureOk = true;
-    // Resume stalled pre-fetch if a source is waiting for a gesture
+
     if (pfWantLoad() && (pf.state === PF.LOADING || pf.state === PF.READY) && audio.paused) {
         pfTryMutedPlay();
     }
 }
 
-/**
- * Kick off background pre-fetch for the current track.
- * Safe to call repeatedly — skips when already loading / loaded.
- *
- * Architecture note:
- *   Called from handleData() as soon as a live track arrives.
- *   The audio element loads and begins buffering silently in the background.
- *   When the user activates the switch, activatePrefetch() simply unmutes it.
- */
 function startPrefetch() {
     if (!pfWantLoad()) return;
     const id = s.track.videoId;
 
-    if (pf.loadedId === id && pfHasSrc()) return;          // already in progress
-    if (pf.state === PF.FAILED && performance.now() < pf.retryAt) return; // back-off
+    if (pf.loadedId === id && pfHasSrc()) return;
+    if (pf.state === PF.FAILED && performance.now() < pf.retryAt) return;
 
     pfLoadSrc(id);
     pfTryMutedPlay();
 }
 
-/**
- * Activate audible playback — called when user turns the switch on (choice → 'yes').
- *
- *   READY  → unmute + optional micro-seek correction → instant audible audio
- *   ACTIVE → already live; no-op
- *   LOADING → show status; canplay handler will go straight to ACTIVE because s.choice==='yes'
- *   IDLE/FAILED → begin loading now; canplay handler will activate on completion
- */
 function activatePrefetch() {
     if (!pfWantLoad()) return;
 
     switch (pf.state) {
 
         case PF.READY: {
-            // ── Best case: buffered and positioned. Just unmute. ──────────────
+
             const live  = getTruePosition();
             const drift = live - audio.currentTime * 1_000;
             if (Math.abs(drift) > HARD_DRIFT) seekTo(live + PF_ACTIVATE_LAG);
@@ -355,18 +248,18 @@ function activatePrefetch() {
         }
 
         case PF.ACTIVE:
-            return; // already live
+            return;
 
         case PF.LOADING: {
-            // ── Still loading: ensure buffering is running (iOS post-gesture) ─
+
             if (audio.paused && pf.gestureOk) pfTryMutedPlay();
-            // canplay handler checks s.choice and jumps straight to ACTIVE.
+
             showStatus();
             return;
         }
 
         default: {
-            // IDLE or FAILED: begin loading from scratch now.
+
             if (pf.state === PF.FAILED) resetPfFailures();
             startPrefetch();
             showStatus();
@@ -374,22 +267,16 @@ function activatePrefetch() {
     }
 }
 
-/**
- * Deactivate audible playback — called when user turns switch off (choice → null).
- * Keeps muted background pre-fetch running so re-activation stays instant.
- */
 function deactivatePrefetch() {
     if (pf.state === PF.ACTIVE) {
         audio.muted = true;
         pf.state    = PF.READY;
-        // Re-anchor immediately so the muted audio stays at the live position.
+
         if (performance.now() - pf.lastSeekAt > 500) seekTo(getTruePosition());
     }
-    // LOADING: audio stays muted (it always was); canplay will check s.choice (now null)
-    //          and will transition to READY rather than ACTIVE.
+
 }
 
-/** Handle an audio element load / decode failure. */
 function pfFail() {
     audio.pause();
     audio.removeAttribute('src');
@@ -401,7 +288,7 @@ function pfFail() {
 
     if (++pf.fails >= MAX_AUDIO_FAILS) {
         pf.state   = PF.FAILED;
-        pf.retryAt = Infinity;  // permanent until track change
+        pf.retryAt = Infinity;
         progRun++;
         clearTimeout(progTimer);
     } else {
@@ -417,27 +304,26 @@ function resetPfFailures() {
     if (pf.state === PF.FAILED) pf.state = PF.IDLE;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   AUDIO EVENT LISTENERS
-═══════════════════════════════════════════════════════════════════════════════ */
-
 audio.addEventListener('waiting', () => { pf.buffering = true; });
 audio.addEventListener('stalled', () => { pf.buffering = true; });
-audio.addEventListener('playing', () => { pf.buffering = false; });
+audio.addEventListener('playing', () => {
+    pf.buffering = false;
+    if (IOS && !pf.everPlayed) {
+        pf.everPlayed = true;
+        if (pf.state === PF.ACTIVE) {
+            const drift = getTruePosition() - audio.currentTime * 1_000;
+            if (Math.abs(drift) > HARD_DRIFT) seekTo(getTruePosition());
+        }
+    }
+});
 
-/**
- * canplay — the central state-machine transition point.
- *
- *   s.choice === 'yes'  → skip READY, jump straight to ACTIVE (instant audible play)
- *   s.choice === null   → enter READY (muted background, primed for next switch-on)
- */
 audio.addEventListener('canplay', () => {
     pf.buffering = false;
     if (pf.state !== PF.LOADING)          return;
     if (pf.loadedId !== s.track?.videoId) return;
 
     if (s.choice === 'yes') {
-        // User is waiting for audio — activate immediately.
+
         const target = getTruePosition() + PF_ACTIVATE_LAG;
         if (Math.abs(target - audio.currentTime * 1_000) > 200) seekTo(target);
         audio.muted = false;
@@ -450,7 +336,7 @@ audio.addEventListener('canplay', () => {
             });
         }
     } else {
-        // Background pre-fetch complete: transition to muted READY state.
+
         pf.state    = PF.READY;
         audio.muted = true;
         const target = getTruePosition();
@@ -468,21 +354,20 @@ audio.addEventListener('seeked', () => {
 );
 
 audio.addEventListener('loadstart', () => {
-    // Show the loading indicator only when the user has already chosen to listen.
+
     if (s.choice === 'yes' && pf.state === PF.LOADING) showStatus();
 });
 
 audio.addEventListener('loadedmetadata', () => {
     if (!pfWantLoad() || pf.loadedId !== s.track?.videoId) return;
-    // Seek to the live position as soon as metadata is available so the browser
-    // buffers from the correct timestamp rather than from t=0.
+
     seekTo(getTruePosition());
     if (audio.paused && pf.gestureOk) pfTryMutedPlay();
 });
 
 audio.addEventListener('error', () => {
     if (!audio.getAttribute('src'))  return;
-    if (audio.error?.code === 1)     return; // MEDIA_ERR_ABORTED — we triggered it
+    if (audio.error?.code === 1)     return;
     pfFail();
 });
 
@@ -491,72 +376,55 @@ audio.addEventListener('ended', () => {
     setTimeout(poll, ENDED_RECHECK_MS);
 });
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   SYNC AUDIO  —  main loop body, called every TICK_MS
-   ─────────────────────────────────────────────────────────────────────────────
-   Handles:
-     • Source / state correctness checks
-     • READY: periodic re-anchor of muted background audio
-     • ACTIVE: audible drift correction via seek (no speed changes)
-═══════════════════════════════════════════════════════════════════════════════ */
 function syncAudio() {
     const now = performance.now();
     const id  = s.track?.videoId;
 
-    /* 1 ── Nothing to do (Spotify paused / no track / stale) ────────────────── */
     if (!pfWantLoad()) {
         if (!audio.paused) audio.pause();
         if (pfHasSrc()) pf.state = PF.IDLE;
         return;
     }
 
-    /* 2 ── Source mismatch: load the correct track ───────────────────────────── */
     if (pf.loadedId !== id) {
         if (pf.state === PF.FAILED && now < pf.retryAt) return;
         startPrefetch();
         return;
     }
 
-    /* 3 ── LOADING: wait for canplay / loadedmetadata events; enforce timeout ── */
     if (pf.state === PF.LOADING) {
         if (pf.loadAt && now - pf.loadAt > LOAD_TIMEOUT) { pfFail(); return; }
-        return; // event-driven; nothing more to do here
+        return;
     }
 
-    /* 4 ── FAILED: retry when back-off window expires ────────────────────────── */
     if (pf.state === PF.FAILED) {
         if (now >= pf.retryAt) { resetPfFailures(); startPrefetch(); }
         return;
     }
 
-    /* 5 ── READY: keep muted audio alive and drift-corrected ─────────────────── */
     if (pf.state === PF.READY) {
-        // Restart if the system or browser paused the muted audio.
+
         if (audio.paused && pf.gestureOk) pfTryMutedPlay();
 
-        // Periodic re-anchor: keep the muted cursor close to the live position so
-        // activation is always within HARD_DRIFT of correct.
         if (now - pf.lastReanchor >= PF_REANCHOR_MS) {
             const target = getTruePosition();
             const drift  = target - audio.currentTime * 1_000;
             if (Math.abs(drift) > HARD_DRIFT && now - pf.lastSeekAt > SEEK_COOLDOWN) {
                 seekTo(target);
             } else {
-                pf.lastReanchor = now; // update timestamp even when no seek is needed
+                pf.lastReanchor = now;
             }
         }
         return;
     }
 
-    /* 6 ── ACTIVE: audible drift correction (seek-only, no speed changes) ────── */
     if (pf.state === PF.ACTIVE) {
-        audio.muted = false; // enforce — never allow accidental mute in active state
+        audio.muted = false;
 
         if (audio.readyState < 1 || audio.seeking) return;
 
         const target = getTruePosition();
 
-        // Edge case: audio ended but Spotify hasn't moved on yet.
         if (audio.ended) {
             if (target < audio.duration * 1_000 - 1_500 && now - pf.lastSeekAt > 1_500) {
                 seekTo(target);
@@ -567,7 +435,6 @@ function syncAudio() {
 
         const drift = target - audio.currentTime * 1_000;
 
-        // Recover from unexpected pause.
         if (audio.paused) {
             if (Math.abs(drift) > HARD_DRIFT && now - pf.lastSeekAt > 1_500) seekTo(target);
             audio.play().catch(err => {
@@ -577,22 +444,16 @@ function syncAudio() {
             return;
         }
 
-        // Clear stale buffering flag when data is flowing again.
         if (pf.buffering && audio.readyState >= 3 && audio.currentTime > pf.baseCt + 0.3) {
             pf.buffering = false;
         }
         if (pf.buffering || audio.readyState < 3 || now < pf.graceUntil) return;
 
-        // Drift correction — one seek, then wait SEEK_COOLDOWN before the next.
         if (Math.abs(drift) > HARD_DRIFT && now - pf.lastSeekAt > SEEK_COOLDOWN) {
             seekTo(target);
         }
     }
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   CSS / DOM SETUP
-═══════════════════════════════════════════════════════════════════════════════ */
 
 function ensureStyle() {
     if ($('mp-style')) return;
@@ -637,10 +498,6 @@ function ensurePlayer() {
     mid.append(lyrics, np);
     mp.append(mid);
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   LABEL / STATUS
-═══════════════════════════════════════════════════════════════════════════════ */
 
 const shownLabel = () => {
     if (performance.now() < s.spamUntil) return SPAM_LABEL;
@@ -716,7 +573,7 @@ async function pollProgress() {
         if (r.ok) {
             s.prog   = await r.json();
             s.progId = id;
-            // Reset the load-timeout clock while the server is actively processing.
+
             if (pf.loadAt && /^(resolving|downloading|uploading)$/.test(s.prog.stage)) {
                 pf.loadAt = performance.now();
             }
@@ -734,9 +591,7 @@ async function pollProgress() {
 }
 
 function showStatus() {
-    // Only show the loading indicator when the user has activated the switch
-    // and the pre-fetch is not yet live. When pre-fetch is READY, activation
-    // is instant, so showStatus() is never reached in the happy path.
+
     if (s.choice !== 'yes' || !s.playing) return;
     if (pf.state === PF.ACTIVE)           return;
 
@@ -750,10 +605,6 @@ function showStatus() {
     pollProgress();
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   TOGGLE LISTEN
-═══════════════════════════════════════════════════════════════════════════════ */
-
 function toggleListen() {
     const now = performance.now();
     s.clicks    = now - s.lastClick < SPAM_GAP_MS ? s.clicks + 1 : 1;
@@ -764,12 +615,12 @@ function toggleListen() {
         setLabel(s.label);
     }
 
-    onGesture(); // every click counts as a gesture — unlocks audio on iOS
+    onGesture();
 
     if (s.choice === 'yes') {
         s.choice = null;
         removeStatus();
-        deactivatePrefetch();   // mute + stay READY; re-activation stays instant
+        deactivatePrefetch();
         syncControls();
         return;
     }
@@ -780,10 +631,6 @@ function toggleListen() {
     setLabel(s.label);
     syncControls();
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   MARQUEE
-═══════════════════════════════════════════════════════════════════════════════ */
 
 const marquee = {
     ro: typeof ResizeObserver === 'function' ? new ResizeObserver(() => fitMarquee()) : null
@@ -802,10 +649,6 @@ function fitMarquee() {
         box.classList.remove('mq');
     }
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   RENDER TRACK
-═══════════════════════════════════════════════════════════════════════════════ */
 
 function renderTrack() {
     const el = $('now-playing');
@@ -873,10 +716,6 @@ function updateMediaSession() {
             .forEach(a => { try { navigator.mediaSession.setActionHandler(a, () => { }); } catch { } });
     } catch { }
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   LYRICS
-═══════════════════════════════════════════════════════════════════════════════ */
 
 function ensureLyrics() {
     ensurePlayer();
@@ -1020,10 +859,6 @@ function renderLyrics() {
     l.style.clipPath   = clip(at(pos + lead));
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   DATA HANDLING
-═══════════════════════════════════════════════════════════════════════════════ */
-
 function clearTrack() {
     s.lyricAbort?.abort();
     Object.assign(s, {
@@ -1082,7 +917,6 @@ function handleData(d, rtt = 0) {
     if (changed) {
         Object.assign(s, { key, lyrics: [] });
 
-        // Tear down the existing audio for the old track.
         audio.pause();
         audio.removeAttribute('src');
         audio.load();
@@ -1105,7 +939,7 @@ function handleData(d, rtt = 0) {
     }
 
     if (!s.playing) {
-        // Spotify is paused — stop audio and collapse pre-fetch state.
+
         removeStatus();
         if (!audio.paused) audio.pause();
         if (pfHasSrc()) pf.state = PF.IDLE;
@@ -1113,20 +947,12 @@ function handleData(d, rtt = 0) {
         return;
     }
 
-    // ── Proactive pre-fetch: begin loading as soon as we have a live track. ───
-    // The audio will silently buffer in the background. If the user later
-    // activates the switch and the state is READY, activation is instantaneous
-    // (just an unmute). If still LOADING, the canplay handler activates on completion.
     startPrefetch();
 
     renderLyrics();
     syncAudio();
     syncControls();
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   POLLING
-═══════════════════════════════════════════════════════════════════════════════ */
 
 function onPollFail() {
     if (++s.fails < MAX_POLL_FAILS || s.stale || !s.track) return;
@@ -1169,14 +995,9 @@ async function poll() {
     pollTimer = setTimeout(poll, (s.playing && !s.stale) ? POLL_MS_PLAYING : POLL_MS_PAUSED);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   BOOT
-═══════════════════════════════════════════════════════════════════════════════ */
-
 ensureLyrics();
 poll();
 
-// Main tick loop — drives display updates, re-anchoring, and drift correction.
 setInterval(() => {
     const now = performance.now();
 
@@ -1194,7 +1015,6 @@ setInterval(() => {
     syncAudio();
 }, TICK_MS);
 
-// Resume on visibility restore / page show.
 const resume = () => {
     if (document.hidden) return;
     pf.graceUntil = 0;
@@ -1205,9 +1025,6 @@ const resume = () => {
 document.addEventListener('visibilitychange', resume);
 window.addEventListener('pageshow', resume);
 
-// iOS: register global gesture listeners so the audio element gets blessed as
-// early as possible (e.g. on first scroll or tap), maximising the pre-fetch
-// head-start before the user ever finds and clicks the switch.
 if (IOS) {
     const iosUnlock = () => onGesture();
     document.addEventListener('touchstart', iosUnlock, { passive: true });
