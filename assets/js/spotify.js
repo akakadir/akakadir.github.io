@@ -3,32 +3,36 @@
 const POLL_URL  = 'https://akakadir.vercel.app/api/now-playing';
 const AUDIO_API = 'https://api.akakadir.art/api/audio';
 
-const UA  = navigator.userAgent;
-const IOS = /iP(hone|ad|od)/.test(UA) ||
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const UA     = navigator.userAgent;
+const IOS    = /iP(hone|ad|od)/.test(UA) ||
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const ENGINE = IOS
+    ? 'webkit-ios'
+    : /Firefox\//.test(UA)
+        ? 'gecko'
+        : /Safari\//.test(UA) && !/Chrome|Chromium|Edg\//.test(UA)
+            ? 'webkit'
+            : 'blink';
 
 const POLL_MS_PLAYING = 7_000;
 const POLL_MS_PAUSED  = 15_000;
-const FETCH_TIMEOUT   = 6_000;
-const MAX_POLL_FAILS  = 3;
 
-const TICK_MS            = 300;
-const LEAD_MS            = 0;
-const FILL_MAX_MS        = 6_000;
-const MARQUEE_PX_PER_SEC = 25;
+const TICK_MS        = 300;
+const LEAD_MS        = 100;
+const FETCH_TIMEOUT  = 6_000;
+const MAX_POLL_FAILS = 3;
 
-const CLOCK_SNAP  = 1_500;
-const CLOCK_BLEND = 0.3;
+const HARD_DRIFT    = IOS ? 800 : 400;
+const SEEK_COOLDOWN = 3_000;
+const SEEK_GRACE    = 3_000;
+const CLOCK_SNAP    = 1_500;
+const CLOCK_BLEND   = 0.3;
 
-const HARD_DRIFT    = 400;
-const SEEK_COOLDOWN = 2_000;
-const SEEK_GRACE    = 2_500;
-
-const PF_REANCHOR_MS  = 4_000;
-const PF_ACTIVATE_LAG = 80;
-
-const MAX_AUDIO_FAILS = 3;
 const LOAD_TIMEOUT    = 60_000;
+const MAX_AUDIO_FAILS = 3;
+
+const MARQUEE_PX_PER_SEC = 25;
+const FILL_MAX_MS        = 6_000;
 
 const SPAM_CLICKS = 11;
 const SPAM_GAP_MS = 1_000;
@@ -38,17 +42,10 @@ const STALE_LABEL = 'bağlantı koptu';
 
 const ENDED_RECHECK_MS = 2_500;
 
-const STAGE_RANK     = { resolving: 1, downloading: 2, uploading: 3, ready: 4 };
+const STAGE_RANK = { resolving: 1, downloading: 2, uploading: 3, ready: 4 };
+
 const PROG_POLL_FAST = 1_000;
 const PROG_POLL_SLOW = 2_000;
-
-const PF = Object.freeze({
-    IDLE:    'idle',
-    LOADING: 'loading',
-    READY:   'ready',
-    ACTIVE:  'active',
-    FAILED:  'failed',
-});
 
 const domCache = new Map();
 const $ = id => {
@@ -71,7 +68,8 @@ const fmt   = ms => {
     const t = Math.max(0, (ms / 1000) | 0);
     return `${(t / 60) | 0}:${String(t % 60).padStart(2, '0')}`;
 };
-const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const clamp   = (v, a, b) => Math.min(b, Math.max(a, v));
+const median3 = a => [...a].sort((x, y) => x - y)[1];
 
 function fetchT(url, opts = {}, ms = FETCH_TIMEOUT) {
     const ctrl  = new AbortController();
@@ -79,37 +77,38 @@ function fetchT(url, opts = {}, ms = FETCH_TIMEOUT) {
     return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(timer));
 }
 
-const audio = Object.assign(new Audio(), { preload: 'auto', muted: true });
+const LAT_KEY = `sync.latency.${ENGINE}`;
+function loadLatency() {
+    try {
+        const v = Number(localStorage.getItem(LAT_KEY));
+        if (v >= 100 && v <= 8_000) return v;
+    } catch { }
+    return 1_500;
+}
+function saveLatency() {
+    try { localStorage.setItem(LAT_KEY, String(ax.latency | 0)); } catch { }
+}
+
+const audio = Object.assign(new Audio(), { preload: 'auto' });
 audio.setAttribute('playsinline', '');
 
 const s = {
     track: null, key: '', playing: false, stale: false, fails: 0, duration: 0,
     lyrics: [], currentLyric: '', lineStart: -1, lyricAbort: null,
-    prog: null, progId: '',
-    choice: null,
-    statusOn: false, label: 'beraber',
+    prog: null, progId: '', choice: null, statusOn: false, label: 'beraber',
     clicks: 0, lastClick: 0, spamUntil: 0,
-    statusMax: 0, statusRank: 0, statusAt: 0,
+    statusMax: 0, statusRank: 0, statusAt: 0, loadedId: ''
 };
 
-const pf = {
-    state:        PF.IDLE,
-    loadedId:     '',
-    loadAt:       0,
-    lastSeekAt:   0,
-    graceUntil:   0,
-    lastReanchor: 0,
-    baseCt:       0,
-    buffering:    false,
-    fails:        0,
-    retryAt:      0,
-    gestureOk:    !IOS,
+const ax = {
+    lastSeekAt: 0, graceUntil: 0, buffering: false, retryAt: 0,
+    latency: loadLatency(), baseCt: 0,
+    learn: false, learnAt: 0, seekCt: 0, m: [], tries: 0,
+    loadAt: 0, fails: 0, dead: false
 };
 
 const clk = { pos: 0, at: 0, lastStamp: '' };
 
-let pollBusy  = false;
-let pollTimer;
 let progTimer;
 let progRun = 0;
 
@@ -130,305 +129,197 @@ function syncClock(apiPos, stamp) {
     }
 
     const expected = getTruePosition();
-    const diff     = apiPos - expected;
+    const diff = apiPos - expected;
 
     if (Math.abs(diff) > CLOCK_SNAP) {
         clk.pos = apiPos;
-    } else if (pf.state === PF.IDLE || pf.state === PF.FAILED) {
+    } else if (!wantAudio()) {
         clk.pos = apiPos;
     } else {
-        clk.pos = expected + diff * (diff > 0 ? 0.7 : CLOCK_BLEND);
+        const blend = diff > 0 ? 0.7 : CLOCK_BLEND;
+        clk.pos = expected + diff * blend;
     }
     clk.at = performance.now();
 }
 
-const pfWantLoad = () => s.playing && !s.stale && !!s.track?.videoId;
-
-const pfHasSrc  = () =>
-    pf.state === PF.LOADING || pf.state === PF.READY || pf.state === PF.ACTIVE;
-
-function bufferedAhead() {
-    const b = audio.buffered, t = audio.currentTime;
-    for (let i = 0; i < b.length; i++) {
-        if (b.start(i) <= t + 0.5 && b.end(i) >= t) return b.end(i) - t;
-    }
-    return 0;
-}
-
-function audioFlowing() {
-    return !audio.paused && !audio.seeking &&
-           audio.readyState >= 3 &&
-           audio.currentTime - pf.baseCt >= 1;
-}
-
 function seekTo(ms) {
-    const sec = Math.max(0, ms) / 1_000;
-    try { audio.currentTime = sec; } catch { return; }
-    const now       = performance.now();
-    pf.lastSeekAt   = now;
-    pf.graceUntil   = now + SEEK_GRACE;
-    pf.lastReanchor = now;
+    const t = Math.max(0, ms + (IOS ? ax.latency : 0)) / 1000;
+    try { audio.currentTime = t; } catch { return; }
+    audio.playbackRate = 1;
+    const now = performance.now();
+    ax.lastSeekAt = now;
+    ax.graceUntil = now + SEEK_GRACE;
+    ax.seekCt  = t;
+    ax.learn   = IOS;
+    ax.learnAt = now;
+    ax.m       = [];
 }
 
-function pfLoadSrc(id) {
+function loadSrc(id) {
     if (audio.src) {
         audio.pause();
         audio.removeAttribute('src');
         audio.load();
     }
-    audio.muted        = true;
+    audio.src = audioUrl(id);
     audio.playbackRate = 1;
-    audio.src          = audioUrl(id);
-
-    pf.loadedId     = id;
-    pf.loadAt       = performance.now();
-    pf.lastSeekAt   = performance.now();
-    pf.graceUntil   = 0;
-    pf.lastReanchor = 0;
-    pf.buffering    = true;
-    pf.state        = PF.LOADING;
-
+    s.loadedId   = id;
     s.statusAt   = performance.now();
     s.statusMax  = 0;
     s.statusRank = 0;
-}
-
-function pfTryMutedPlay() {
-    if (!pf.gestureOk) return;
-    audio.muted = true;
-    audio.play().catch(err => {
-        if (err?.name === 'NotAllowedError') pf.gestureOk = false;
-        else if (err?.name !== 'AbortError')
-            console.warn('[pf] muted play error:', err?.name);
+    Object.assign(ax, {
+        lastSeekAt: 0, graceUntil: 0, buffering: true,
+        learn: false, tries: 0, m: [],
+        loadAt: performance.now()
     });
 }
 
-function onGesture() {
-    if (pf.gestureOk) return;
-    pf.gestureOk = true;
-    if (pfWantLoad() && (pf.state === PF.LOADING || pf.state === PF.READY) && audio.paused) {
-        pfTryMutedPlay();
-    }
-}
-
-function startPrefetch() {
-    if (!pfWantLoad()) return;
-    const id = s.track.videoId;
-
-    if (pf.loadedId === id && pfHasSrc()) return;
-    if (pf.state === PF.FAILED && performance.now() < pf.retryAt) return;
-
-    pfLoadSrc(id);
-    pfTryMutedPlay();
-}
-
-function activatePrefetch() {
-    if (!pfWantLoad()) return;
-
-    switch (pf.state) {
-
-        case PF.READY: {
-            const live  = getTruePosition();
-            const drift = live - audio.currentTime * 1_000;
-            if (Math.abs(drift) > HARD_DRIFT) seekTo(live + PF_ACTIVATE_LAG);
-            audio.muted = false;
-            pf.state    = PF.ACTIVE;
-            removeStatus();
-            if (audio.paused) {
-                audio.play().catch(err => {
-                    if (err?.name !== 'AbortError')
-                        console.warn('[pf] activate play error:', err?.name);
-                });
-            }
-            return;
+function startAudio() {
+    const id = s.track?.videoId;
+    if (!id) return;
+    if (s.loadedId !== id) loadSrc(id);
+    audio.play().catch(err => {
+        if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError') {
+            console.warn('[spotify.js] audio.play hatası:', err?.name, err?.message);
         }
-
-        case PF.ACTIVE:
-            return;
-
-        case PF.LOADING: {
-            if (audio.paused && pf.gestureOk) pfTryMutedPlay();
-            showStatus();
-            return;
-        }
-
-        default: {
-            if (pf.state === PF.FAILED) resetPfFailures();
-            startPrefetch();
-            showStatus();
-        }
-    }
+    });
 }
 
-function deactivatePrefetch() {
-    if (pf.state === PF.ACTIVE) {
-        audio.muted = true;
-        pf.state    = PF.READY;
-        if (performance.now() - pf.lastSeekAt > 500) seekTo(getTruePosition());
-    }
+function resetAudioFailures() {
+    ax.fails   = 0;
+    ax.dead    = false;
+    ax.retryAt = 0;
 }
 
-function pfFail() {
+function audioFail() {
     audio.pause();
     audio.removeAttribute('src');
     audio.load();
-
-    pf.loadedId  = '';
-    pf.loadAt    = 0;
-    pf.buffering = false;
-
-    if (++pf.fails >= MAX_AUDIO_FAILS) {
-        pf.state   = PF.FAILED;
-        pf.retryAt = Infinity;
+    s.loadedId   = '';
+    ax.loadAt    = 0;
+    ax.buffering = false;
+    ax.learn     = false;
+    if (++ax.fails >= MAX_AUDIO_FAILS) {
+        ax.dead = true;
         progRun++;
         clearTimeout(progTimer);
     } else {
-        pf.state   = PF.IDLE;
-        pf.retryAt = performance.now() + 2_000 * (2 ** pf.fails);
+        ax.retryAt = performance.now() + 2_000 * 2 ** ax.fails;
     }
     updateStatus();
 }
 
-function resetPfFailures() {
-    pf.fails   = 0;
-    pf.retryAt = 0;
-    if (pf.state === PF.FAILED) pf.state = PF.IDLE;
-}
-
-audio.addEventListener('waiting', () => { pf.buffering = true; });
-audio.addEventListener('stalled', () => { pf.buffering = true; });
-audio.addEventListener('playing', () => { pf.buffering = false; });
-
-audio.addEventListener('canplay', () => {
-    pf.buffering = false;
-    if (pf.state !== PF.LOADING)          return;
-    if (pf.loadedId !== s.track?.videoId) return;
-
-    if (s.choice === 'yes') {
-        const target = getTruePosition() + PF_ACTIVATE_LAG;
-        if (Math.abs(target - audio.currentTime * 1_000) > 200) seekTo(target);
-        audio.muted = false;
-        pf.state    = PF.ACTIVE;
-        removeStatus();
-        if (audio.paused) {
-            audio.play().catch(err => {
-                if (err?.name !== 'AbortError')
-                    console.warn('[pf] canplay→active play error:', err?.name);
-            });
-        }
-    } else {
-        pf.state    = PF.READY;
-        audio.muted = true;
-        const target = getTruePosition();
-        if (Math.abs(target - audio.currentTime * 1_000) > 300) seekTo(target);
-        if (audio.paused && pf.gestureOk) pfTryMutedPlay();
-    }
-});
-
-audio.addEventListener('seeked', () => {
-    pf.graceUntil = performance.now() + SEEK_GRACE;
-});
+audio.addEventListener('waiting',  () => { ax.buffering = true;  });
+audio.addEventListener('stalled',  () => { ax.buffering = true;  });
+audio.addEventListener('playing',  () => { ax.buffering = false; });
+audio.addEventListener('canplay',  () => { ax.buffering = false; });
+audio.addEventListener('seeked',   () => { ax.graceUntil = performance.now() + SEEK_GRACE; });
 
 ['loadstart', 'seeking', 'waiting', 'stalled'].forEach(ev =>
-    audio.addEventListener(ev, () => { pf.baseCt = audio.currentTime; })
+    audio.addEventListener(ev, () => { ax.baseCt = audio.currentTime; })
 );
 
-audio.addEventListener('loadstart', () => {
-    if (s.choice === 'yes' && pf.state === PF.LOADING) showStatus();
-});
-
+audio.addEventListener('loadstart', () => showStatus());
 audio.addEventListener('loadedmetadata', () => {
-    if (!pfWantLoad() || pf.loadedId !== s.track?.videoId) return;
+    if (!wantAudio() || s.loadedId !== s.track?.videoId) return;
     seekTo(getTruePosition());
-    if (audio.paused && pf.gestureOk) pfTryMutedPlay();
 });
-
 audio.addEventListener('error', () => {
-    if (!audio.getAttribute('src'))  return;
-    if (audio.error?.code === 1)     return;
-    pfFail();
+    if (!audio.getAttribute('src')) return;
+    const code = audio.error?.code;
+    if (code === 1) return;
+    audioFail();
 });
-
 audio.addEventListener('ended', () => {
     poll();
     setTimeout(poll, ENDED_RECHECK_MS);
 });
 
+const wantAudio = () => s.playing && !s.stale && s.choice === 'yes' && !!s.track?.videoId;
+
+function audioFlowing() {
+    return !audio.paused && !audio.seeking &&
+           audio.readyState >= 3 &&
+           audio.currentTime - ax.baseCt >= 1;
+}
+
 function syncAudio() {
-    const now = performance.now();
-    const id  = s.track?.videoId;
-
-    if (!pfWantLoad()) {
+    if (!wantAudio()) {
         if (!audio.paused) audio.pause();
-        if (pfHasSrc()) pf.state = PF.IDLE;
+        return;
+    }
+    if (ax.dead) return;
+
+    const now = performance.now();
+    const id  = s.track.videoId;
+
+    if (s.loadedId !== id) {
+        if (now < ax.retryAt) return;
+        loadSrc(id);
+        audio.play().catch(err => {
+            if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
+                console.warn('[spotify.js] syncAudio play hatası:', err?.name);
+        });
         return;
     }
 
-    if (pf.loadedId !== id) {
-        if (pf.state === PF.FAILED && now < pf.retryAt) return;
-        startPrefetch();
-        return;
-    }
-
-    if (pf.state === PF.LOADING) {
-        if (pf.loadAt && now - pf.loadAt > LOAD_TIMEOUT) { pfFail(); return; }
-        return;
-    }
-
-    if (pf.state === PF.FAILED) {
-        if (now >= pf.retryAt) { resetPfFailures(); startPrefetch(); }
-        return;
-    }
-
-    if (pf.state === PF.READY) {
-        if (audio.paused && pf.gestureOk) pfTryMutedPlay();
-
-        if (now - pf.lastReanchor >= PF_REANCHOR_MS) {
-            const target = getTruePosition();
-            const drift  = target - audio.currentTime * 1_000;
-            if (Math.abs(drift) > HARD_DRIFT && now - pf.lastSeekAt > SEEK_COOLDOWN) {
-                seekTo(target);
-            } else {
-                pf.lastReanchor = now;
-            }
-        }
-        return;
-    }
-
-    if (pf.state === PF.ACTIVE) {
-        audio.muted = false;
-
-        if (audio.readyState < 1 || audio.seeking) return;
-
-        const target = getTruePosition();
-
-        if (audio.ended) {
-            if (target < audio.duration * 1_000 - 1_500 && now - pf.lastSeekAt > 1_500) {
-                seekTo(target);
-                audio.play().catch(() => { });
-            }
+    if (ax.loadAt) {
+        if (audioFlowing()) {
+            ax.loadAt = 0;
+            ax.fails  = 0;
+        } else if (now - ax.loadAt > LOAD_TIMEOUT) {
+            audioFail();
             return;
         }
+    }
 
-        const drift = target - audio.currentTime * 1_000;
+    if (audio.readyState < 1 || audio.seeking) return;
 
-        if (audio.paused) {
-            if (Math.abs(drift) > HARD_DRIFT && now - pf.lastSeekAt > 1_500) seekTo(target);
-            audio.play().catch(err => {
-                if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
-                    console.warn('[pf] active play error:', err?.name);
-            });
-            return;
-        }
+    const target = getTruePosition();
 
-        if (pf.buffering && audio.readyState >= 3 && audio.currentTime > pf.baseCt + 0.3) {
-            pf.buffering = false;
-        }
-        if (pf.buffering || audio.readyState < 3 || now < pf.graceUntil) return;
-
-        if (Math.abs(drift) > HARD_DRIFT && now - pf.lastSeekAt > SEEK_COOLDOWN) {
+    if (audio.ended) {
+        if (target < audio.duration * 1_000 - 1_500 && now - ax.lastSeekAt > 1_500) {
             seekTo(target);
+            audio.play().catch(() => { });
         }
+        return;
+    }
+
+    const drift = target - audio.currentTime * 1_000;
+
+    if (audio.paused) {
+        if (Math.abs(drift) > 400 && now - ax.lastSeekAt > 1_500) seekTo(target);
+        audio.play().catch(err => {
+            if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError')
+                console.warn('[spotify.js] syncAudio play hatası:', err?.name);
+        });
+        return;
+    }
+
+    if (ax.buffering && audio.readyState >= 3 && audio.currentTime > ax.baseCt + 0.3) ax.buffering = false;
+    if (ax.buffering || audio.readyState < 3 || now < ax.graceUntil) return;
+
+    if (ax.learn) {
+        if (now - ax.learnAt > 12_000) { ax.learn = false; return; }
+        if (audio.currentTime - ax.seekCt < 0.6) return;
+        ax.m.push(drift);
+        if (ax.m.length < 3) return;
+        const d = median3(ax.m);
+        ax.learn = false;
+        ax.m     = [];
+        if (Math.abs(d) < 4_000) {
+            ax.latency = clamp(ax.latency + 0.7 * d, 100, 8_000);
+            saveLatency();
+            if (Math.abs(d) > 400 && ax.tries < 2) {
+                ax.tries++;
+                seekTo(target);
+            }
+        }
+        return;
+    }
+
+    if (Math.abs(drift) > HARD_DRIFT && now - ax.lastSeekAt > SEEK_COOLDOWN) {
+        seekTo(target);
     }
 }
 
@@ -494,95 +385,9 @@ function syncControls() {
     $('mp-sw')?.setAttribute('aria-checked', String(s.choice === 'yes'));
 }
 
-function removeStatus() {
-    progRun++;
-    clearTimeout(progTimer);
-    s.prog       = null;
-    s.statusMax  = 0;
-    s.statusRank = 0;
-    s.statusOn   = false;
-    setLabel('beraber');
-}
-
-function statusPercent() {
-    const pr      = s.prog && s.progId === s.track?.videoId ? s.prog : null;
-    const elapsed = (performance.now() - s.statusAt) / 1_000;
-    const frac    = Math.min(1, bufferedAhead() / 5);
-    let p;
-
-    if (pr?.stage === 'downloading' || pr?.stage === 'uploading') p = 10 + (pr.percent ?? 0) * 0.5;
-    else if (pr?.stage === 'ready')                               p = 60 + 40 * frac;
-    else                                                          p = Math.min(10, elapsed * 2.5);
-
-    if (frac > 0) p = Math.max(p, 60 + 40 * frac);
-    return p;
-}
-
-function updateStatus() {
-    if (!s.statusOn) return;
-    if (pf.state === PF.FAILED) { setLabel('kodöldüaq'); return; }
-    if (pf.state === PF.ACTIVE) { removeStatus(); return; }
-
-    s.statusMax  = Math.max(s.statusMax, statusPercent());
-    const pct    = Math.min(99, Math.floor(s.statusMax));
-    const pr     = s.prog && s.progId === s.track?.videoId ? s.prog : null;
-    s.statusRank = Math.max(s.statusRank, STAGE_RANK[pr?.stage] ?? 0);
-
-    setLabel([
-        `hazırlık..${pct}%`,
-        `çözümleme..${pct}%`,
-        'ıvır zıvır..(1/2)',
-        'ıvır zıvır..(2/2)',
-        'bitti.'
-    ][s.statusRank]);
-}
-
-async function pollProgress() {
-    clearTimeout(progTimer);
-    const run = ++progRun;
-    const id  = s.track?.videoId;
-    if (!s.statusOn || !id || pf.state === PF.FAILED) return;
-
-    let delay = PROG_POLL_FAST;
-    try {
-        const r = await fetchT(progressUrl(id), { cache: 'no-store', credentials: 'omit' }, 3_000);
-        if (run !== progRun) return;
-        if (r.ok) {
-            s.prog   = await r.json();
-            s.progId = id;
-            if (pf.loadAt && /^(resolving|downloading|uploading)$/.test(s.prog.stage)) {
-                pf.loadAt = performance.now();
-            }
-            updateStatus();
-            if (s.prog.stage === 'ready') delay = PROG_POLL_SLOW;
-        } else {
-            delay = PROG_POLL_SLOW;
-        }
-    } catch {
-        delay = PROG_POLL_SLOW;
-    }
-
-    if (run !== progRun || !s.statusOn || pf.state === PF.FAILED) return;
-    progTimer = setTimeout(pollProgress, delay);
-}
-
-function showStatus() {
-    if (s.choice !== 'yes' || !s.playing) return;
-    if (pf.state === PF.ACTIVE)           return;
-
-    if (!s.statusOn) {
-        s.statusOn   = true;
-        s.statusAt   = performance.now();
-        s.statusMax  = 0;
-        s.statusRank = 0;
-    }
-    updateStatus();
-    pollProgress();
-}
-
 function toggleListen() {
     const now = performance.now();
-    s.clicks    = now - s.lastClick < SPAM_GAP_MS ? s.clicks + 1 : 1;
+    s.clicks = now - s.lastClick < SPAM_GAP_MS ? s.clicks + 1 : 1;
     s.lastClick = now;
     if (s.clicks >= SPAM_CLICKS) {
         s.clicks    = 0;
@@ -590,19 +395,17 @@ function toggleListen() {
         setLabel(s.label);
     }
 
-    onGesture();
-
     if (s.choice === 'yes') {
         s.choice = null;
         removeStatus();
-        deactivatePrefetch();
+        audio.pause();
         syncControls();
         return;
     }
-
     s.choice = 'yes';
-    resetPfFailures();
-    activatePrefetch();
+    resetAudioFailures();
+    showStatus();
+    startAudio();
     setLabel(s.label);
     syncControls();
 }
@@ -632,10 +435,10 @@ function renderTrack() {
     const { artists, name, trackLink, duration } = s.track;
 
     const link = mk('a', {
-        className:   'no-favicon',
-        href:        trackLink || '#',
-        target:      '_blank',
-        rel:         'noopener noreferrer',
+        className: 'no-favicon',
+        href:   trackLink || '#',
+        target: '_blank',
+        rel:    'noopener noreferrer',
         textContent: name || 'bilinmeyen şarkı'
     });
 
@@ -679,9 +482,9 @@ function updateMediaSession() {
         const d = s.track;
         navigator.mediaSession.metadata = d
             ? new MediaMetadata({
-                title:   d.name    || '',
-                artist:  d.artists || '',
-                album:   d.album   || '',
+                title:  d.name    || '',
+                artist: d.artists || '',
+                album:  d.album   || '',
                 artwork: d.albumArt
                     ? [96, 128, 192, 256, 384, 512].map(n => ({ src: d.albumArt, sizes: `${n}x${n}` }))
                     : []
@@ -715,14 +518,12 @@ async function fetchSynced(d, signal) {
     const dur    = Math.round((Number(d.durationMs) || toSec(d.duration) * 1_000) / 1_000);
 
     const getJson = async url => {
-        const r = await fetch(url, { signal, credentials: 'omit' });
+        const r = await fetch(url, { signal });
         return r.ok ? r.json() : null;
     };
 
     if (d.album && dur) {
-        const p = new URLSearchParams({
-            artist_name: artist, track_name: track, album_name: d.album, duration: dur
-        });
+        const p = new URLSearchParams({ artist_name: artist, track_name: track, album_name: d.album, duration: dur });
         const hit = await getJson(`https://lrclib.net/api/get?${p}`);
         if (hit?.syncedLyrics) return hit.syncedLyrics;
     }
@@ -738,12 +539,12 @@ async function fetchSynced(d, signal) {
     return best && bestDiff <= 8 ? best.syncedLyrics : null;
 }
 
-async function loadLyrics(d, attempt = 0) {
+async function loadLyrics(d) {
     s.lyricAbort?.abort();
     const ctrl   = (s.lyricAbort = new AbortController());
     const key    = s.key;
     let timedOut = false;
-    const timer  = setTimeout(() => { timedOut = true; ctrl.abort(); }, 15_000);
+    const timer  = setTimeout(() => { timedOut = true; ctrl.abort(); }, 10_000);
 
     let lyrics = { error: true };
     try {
@@ -757,12 +558,6 @@ async function loadLyrics(d, attempt = 0) {
     }
 
     if (key !== s.key) return;
-
-    if (lyrics.error && attempt === 0) {
-        setTimeout(() => { if (s.key === key) loadLyrics(d, 1); }, 5_000);
-        return;
-    }
-
     s.lyrics = lyrics;
     renderLyrics();
 }
@@ -834,23 +629,108 @@ function renderLyrics() {
     l.style.clipPath   = clip(at(pos + lead));
 }
 
+function removeStatus() {
+    progRun++;
+    clearTimeout(progTimer);
+    s.prog       = null;
+    s.statusMax  = 0;
+    s.statusRank = 0;
+    s.statusOn   = false;
+    setLabel('beraber');
+}
+
+function bufferedAhead() {
+    const b = audio.buffered;
+    const t = audio.currentTime;
+    for (let i = 0; i < b.length; i++) {
+        if (b.start(i) <= t + 0.5 && b.end(i) >= t) return b.end(i) - t;
+    }
+    return 0;
+}
+
+function statusPercent() {
+    const pr      = s.prog && s.progId === s.track?.videoId ? s.prog : null;
+    const elapsed = (performance.now() - s.statusAt) / 1_000;
+    const frac    = Math.min(1, bufferedAhead() / 5);
+    let p;
+
+    if (pr?.stage === 'downloading' || pr?.stage === 'uploading') p = 10 + (pr.percent ?? 0) * 0.5;
+    else if (pr?.stage === 'ready')                               p = 60 + 40 * frac;
+    else                                                          p = Math.min(10, elapsed * 2.5);
+
+    if (frac > 0) p = Math.max(p, 60 + 40 * frac);
+    return p;
+}
+
+function updateStatus() {
+    if (!s.statusOn) return;
+    if (ax.dead) { setLabel('kodöldüaq'); return; }
+    if (audioFlowing()) { removeStatus(); return; }
+
+    s.statusMax  = Math.max(s.statusMax, statusPercent());
+    const pct    = Math.min(99, Math.floor(s.statusMax));
+    const pr     = s.prog && s.progId === s.track?.videoId ? s.prog : null;
+    s.statusRank = Math.max(s.statusRank, STAGE_RANK[pr?.stage] ?? 0);
+
+    setLabel([
+        `hazırlık..${pct}%`,
+        `çözümleme..${pct}%`,
+        'ıvır zıvır..(1/2)',
+        'ıvır zıvır..(2/2)',
+        'bitti.'
+    ][s.statusRank]);
+}
+
+async function pollProgress() {
+    clearTimeout(progTimer);
+    const run = ++progRun;
+    const id  = s.track?.videoId;
+    if (!s.statusOn || !id || ax.dead) return;
+
+    let delay = PROG_POLL_FAST;
+    try {
+        const r = await fetchT(progressUrl(id), { cache: 'no-store', credentials: 'omit' }, 3_000);
+        if (run !== progRun) return;
+        if (r.ok) {
+            s.prog   = await r.json();
+            s.progId = id;
+            if (ax.loadAt && /^(resolving|downloading|uploading)$/.test(s.prog.stage))
+                ax.loadAt = performance.now();
+            updateStatus();
+            if (s.prog.stage === 'ready') delay = PROG_POLL_SLOW;
+        } else {
+            delay = PROG_POLL_SLOW;
+        }
+    } catch {
+        delay = PROG_POLL_SLOW;
+    }
+
+    if (run !== progRun || !s.statusOn || ax.dead) return;
+    progTimer = setTimeout(pollProgress, delay);
+}
+
+function showStatus() {
+    if (s.choice !== 'yes' || !s.playing) return;
+    if (!s.statusOn) {
+        s.statusOn   = true;
+        s.statusAt   = performance.now();
+        s.statusMax  = 0;
+        s.statusRank = 0;
+    }
+    updateStatus();
+    pollProgress();
+}
+
 function clearTrack() {
     s.lyricAbort?.abort();
     Object.assign(s, {
-        track: null, key: '', playing: false, stale: false, lyrics: [],
+        track: null, key: '', playing: false, stale: false,
+        lyrics: [], loadedId: ''
     });
-
+    removeStatus();
     audio.pause();
     audio.removeAttribute('src');
     audio.load();
-    audio.muted = true;
-
-    pf.state     = PF.IDLE;
-    pf.loadedId  = '';
-    pf.loadAt    = 0;
-    pf.buffering = false;
-
-    removeStatus();
     resetLyricAnim();
     showMsg('');
     setText($('now-playing'), '');
@@ -867,7 +747,10 @@ function handleData(d, rtt = 0) {
     }
 
     const wasLive = s.playing && !s.stale;
-    if (s.stale) { s.stale = false; setLabel(s.label); }
+    if (s.stale) {
+        s.stale = false;
+        setLabel(s.label);
+    }
 
     const key     = [d.trackLink, d.name, d.artists].join('|');
     const changed = key !== s.key;
@@ -890,19 +773,13 @@ function handleData(d, rtt = 0) {
     }
 
     if (changed) {
-        Object.assign(s, { key, lyrics: [] });
-
+        Object.assign(s, { key, lyrics: [], loadedId: '' });
         audio.pause();
-        audio.removeAttribute('src');
-        audio.load();
-        audio.muted  = true;
-        pf.state     = PF.IDLE;
-        pf.loadedId  = '';
-        pf.loadAt    = 0;
-        pf.buffering = false;
-        resetPfFailures();
-
         removeStatus();
+        resetAudioFailures();
+        ax.buffering = false;
+        ax.learn     = false;
+        ax.loadAt    = 0;
         resetLyricAnim();
         showMsg('yükleniyor...');
         renderTrack();
@@ -910,23 +787,23 @@ function handleData(d, rtt = 0) {
         loadLyrics(d);
     } else {
         if (!$('progress-time')) renderTrack();
-        if ((d.videoId || '') !== prevVid) resetPfFailures();
+        if ((d.videoId || '') !== prevVid) resetAudioFailures();
     }
 
     if (!s.playing) {
         removeStatus();
-        if (!audio.paused) audio.pause();
-        if (pfHasSrc()) pf.state = PF.IDLE;
+        syncAudio();
         syncControls();
         return;
     }
-
-    startPrefetch();
 
     renderLyrics();
     syncAudio();
     syncControls();
 }
+
+let busy  = false;
+let timer;
 
 function onPollFail() {
     if (++s.fails < MAX_POLL_FAILS || s.stale || !s.track) return;
@@ -937,8 +814,8 @@ function onPollFail() {
 }
 
 async function poll() {
-    if (pollBusy) return;
-    pollBusy = true;
+    if (busy) return;
+    busy = true;
 
     const ctrl       = new AbortController();
     const abortTimer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
@@ -964,43 +841,35 @@ async function poll() {
         onPollFail();
     }
 
-    pollBusy = false;
-    clearTimeout(pollTimer);
-    pollTimer = setTimeout(poll, (s.playing && !s.stale) ? POLL_MS_PLAYING : POLL_MS_PAUSED);
+    busy = false;
+    clearTimeout(timer);
+
+    const nextMs = (s.playing && !s.stale) ? POLL_MS_PLAYING : POLL_MS_PAUSED;
+    timer = setTimeout(poll, nextMs);
 }
 
 ensureLyrics();
 poll();
 
 setInterval(() => {
-    const now = performance.now();
-
-    if (s.spamUntil && now >= s.spamUntil) {
+    if (s.spamUntil && performance.now() >= s.spamUntil) {
         s.spamUntil = 0;
         setLabel(s.label);
     }
-
     if (!document.hidden) {
         setText($('progress-time'), fmt(getTruePosition()));
         renderLyrics();
         updateStatus();
     }
-
     syncAudio();
 }, TICK_MS);
 
 const resume = () => {
     if (document.hidden) return;
-    pf.graceUntil = 0;
-    pf.lastSeekAt = 0;
-    if (pf.state === PF.FAILED) resetPfFailures();
+    ax.graceUntil = 0;
+    ax.lastSeekAt = 0;
+    if (ax.dead) resetAudioFailures();
     poll();
 };
 document.addEventListener('visibilitychange', resume);
 window.addEventListener('pageshow', resume);
-
-if (IOS) {
-    const iosUnlock = () => onGesture();
-    document.addEventListener('touchstart', iosUnlock, { passive: true });
-    document.addEventListener('click',      iosUnlock, { passive: true });
-}
