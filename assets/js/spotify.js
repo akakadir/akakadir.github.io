@@ -104,7 +104,6 @@ const pf = {
     fails:        0,
     retryAt:      0,
     gestureOk:    !IOS,
-    everPlayed:   false,
 };
 
 const clk = { pos: 0, at: 0, lastStamp: '' };
@@ -188,7 +187,6 @@ function pfLoadSrc(id) {
     pf.lastReanchor = 0;
     pf.buffering    = true;
     pf.state        = PF.LOADING;
-    pf.everPlayed   = false;
 
     s.statusAt   = performance.now();
     s.statusMax  = 0;
@@ -208,7 +206,6 @@ function pfTryMutedPlay() {
 function onGesture() {
     if (pf.gestureOk) return;
     pf.gestureOk = true;
-
     if (pfWantLoad() && (pf.state === PF.LOADING || pf.state === PF.READY) && audio.paused) {
         pfTryMutedPlay();
     }
@@ -231,7 +228,6 @@ function activatePrefetch() {
     switch (pf.state) {
 
         case PF.READY: {
-
             const live  = getTruePosition();
             const drift = live - audio.currentTime * 1_000;
             if (Math.abs(drift) > HARD_DRIFT) seekTo(live + PF_ACTIVATE_LAG);
@@ -251,15 +247,12 @@ function activatePrefetch() {
             return;
 
         case PF.LOADING: {
-
             if (audio.paused && pf.gestureOk) pfTryMutedPlay();
-
             showStatus();
             return;
         }
 
         default: {
-
             if (pf.state === PF.FAILED) resetPfFailures();
             startPrefetch();
             showStatus();
@@ -271,10 +264,8 @@ function deactivatePrefetch() {
     if (pf.state === PF.ACTIVE) {
         audio.muted = true;
         pf.state    = PF.READY;
-
         if (performance.now() - pf.lastSeekAt > 500) seekTo(getTruePosition());
     }
-
 }
 
 function pfFail() {
@@ -306,16 +297,7 @@ function resetPfFailures() {
 
 audio.addEventListener('waiting', () => { pf.buffering = true; });
 audio.addEventListener('stalled', () => { pf.buffering = true; });
-audio.addEventListener('playing', () => {
-    pf.buffering = false;
-    if (IOS && !pf.everPlayed) {
-        pf.everPlayed = true;
-        if (pf.state === PF.ACTIVE) {
-            const drift = getTruePosition() - audio.currentTime * 1_000;
-            if (Math.abs(drift) > HARD_DRIFT) seekTo(getTruePosition());
-        }
-    }
-});
+audio.addEventListener('playing', () => { pf.buffering = false; });
 
 audio.addEventListener('canplay', () => {
     pf.buffering = false;
@@ -323,7 +305,6 @@ audio.addEventListener('canplay', () => {
     if (pf.loadedId !== s.track?.videoId) return;
 
     if (s.choice === 'yes') {
-
         const target = getTruePosition() + PF_ACTIVATE_LAG;
         if (Math.abs(target - audio.currentTime * 1_000) > 200) seekTo(target);
         audio.muted = false;
@@ -336,7 +317,6 @@ audio.addEventListener('canplay', () => {
             });
         }
     } else {
-
         pf.state    = PF.READY;
         audio.muted = true;
         const target = getTruePosition();
@@ -354,13 +334,11 @@ audio.addEventListener('seeked', () => {
 );
 
 audio.addEventListener('loadstart', () => {
-
     if (s.choice === 'yes' && pf.state === PF.LOADING) showStatus();
 });
 
 audio.addEventListener('loadedmetadata', () => {
     if (!pfWantLoad() || pf.loadedId !== s.track?.videoId) return;
-
     seekTo(getTruePosition());
     if (audio.paused && pf.gestureOk) pfTryMutedPlay();
 });
@@ -403,7 +381,6 @@ function syncAudio() {
     }
 
     if (pf.state === PF.READY) {
-
         if (audio.paused && pf.gestureOk) pfTryMutedPlay();
 
         if (now - pf.lastReanchor >= PF_REANCHOR_MS) {
@@ -573,7 +550,6 @@ async function pollProgress() {
         if (r.ok) {
             s.prog   = await r.json();
             s.progId = id;
-
             if (pf.loadAt && /^(resolving|downloading|uploading)$/.test(s.prog.stage)) {
                 pf.loadAt = performance.now();
             }
@@ -591,7 +567,6 @@ async function pollProgress() {
 }
 
 function showStatus() {
-
     if (s.choice !== 'yes' || !s.playing) return;
     if (pf.state === PF.ACTIVE)           return;
 
@@ -939,7 +914,6 @@ function handleData(d, rtt = 0) {
     }
 
     if (!s.playing) {
-
         removeStatus();
         if (!audio.paused) audio.pause();
         if (pfHasSrc()) pf.state = PF.IDLE;
