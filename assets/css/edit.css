@@ -153,7 +153,7 @@
   bottom: calc(100% + 2px);
   display: none;
   width: max-content;
-  max-width: min(21ch, calc(100vw - 24px));
+  max-width: min(27ch, calc(100vw - 24px));
   padding: 4px 8px;
   color: inherit;
   background: transparent;
